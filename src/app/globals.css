@@ -3,25 +3,36 @@
 @tailwind utilities;
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --intonow-coral: #ff4d6d;
+  --intonow-cyan: #22d3ee;
+  --intonow-void: #06040c;
 }
 
 body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+  margin: 0;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background: var(--intonow-void);
+  color: #ededed;
 }
 
-@layer utilities {
-  .text-balance {
-    text-wrap: balance;
-  }
+.maplibregl-popup-content {
+  background: rgba(15, 13, 24, 0.95) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 12px !important;
+  padding: 12px 14px !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5) !important;
+}
+
+.maplibregl-popup-tip {
+  border-top-color: rgba(15, 13, 24, 0.95) !important;
+}
+
+.maplibregl-ctrl-group {
+  background: rgba(15, 13, 24, 0.85) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 10px !important;
+}
+
+.maplibregl-ctrl-group button {
+  filter: invert(1) opacity(0.7);
 }
