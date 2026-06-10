@@ -23,7 +23,10 @@ Respond ONLY with valid JSON in this shape:
 export async function POST(request: NextRequest) {
   const apiKey = process.env.XAI_API_KEY;
   if (!apiKey) {
-    return NextResponse.json({ error: "XAI_API_KEY not configured" }, { status: 503 });
+    return NextResponse.json(
+      { error: "Grok isn't connected. Add XAI_API_KEY to enable post coaching." },
+      { status: 503 }
+    );
   }
 
   const body = await request.json();
@@ -62,7 +65,22 @@ export async function POST(request: NextRequest) {
 
   if (!response.ok) {
     const err = await response.text();
-    return NextResponse.json({ error: "Grok API error", details: err }, { status: 502 });
+    let message = "Grok is unavailable right now. Try again shortly.";
+
+    try {
+      const parsed = JSON.parse(err);
+      const errorText: string = parsed.error ?? "";
+      if (errorText.includes("credits") || errorText.includes("spending limit")) {
+        message =
+          "Grok credits are exhausted. Add credits or raise your spending limit at console.x.ai.";
+      } else if (errorText.includes("doesn't have any credits or licenses")) {
+        message = "Grok isn't licensed yet. Add credits at console.x.ai.";
+      }
+    } catch {
+      // keep default message
+    }
+
+    return NextResponse.json({ error: message }, { status: 502 });
   }
 
   const data = await response.json();

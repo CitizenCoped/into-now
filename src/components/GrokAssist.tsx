@@ -31,7 +31,10 @@ export default function GrokAssist({ category, title, description, onApply }: Pr
         body: JSON.stringify({ category, titleDraft: title, descriptionDraft: description }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? "Assist failed");
+      if (!res.ok) {
+        setSuggestion(null);
+        throw new Error(data.error ?? "Grok assist failed");
+      }
       setSuggestion(data);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Something went wrong");
@@ -54,7 +57,11 @@ export default function GrokAssist({ category, title, description, onApply }: Pr
         </button>
       </div>
 
-      {error && <p className="mt-2 text-xs text-red-400">{error}</p>}
+      {error && (
+        <p className="mt-2 rounded-lg border border-amber-500/30 bg-amber-500/10 px-2 py-1.5 text-xs text-amber-200">
+          {error}
+        </p>
+      )}
 
       {suggestion && (
         <div className="mt-3 space-y-2">
