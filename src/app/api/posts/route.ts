@@ -1,4 +1,4 @@
-import { db } from "@/lib/db";
+import { getDb } from "@/lib/db";
 import { posts } from "@/lib/schema";
 import { and, desc, eq, ilike, or } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
@@ -27,8 +27,7 @@ export async function GET(request: NextRequest) {
     conditions.push(eq(posts.category, category));
   }
 
-  const results = await db
-    .select()
+  const results = await getDb().select()
     .from(posts)
     .where(conditions.length ? and(...conditions) : undefined)
     .orderBy(desc(posts.createdAt));
@@ -43,6 +42,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
-  const [created] = await db.insert(posts).values(parsed.data).returning();
+  const [created] = await getDb().insert(posts).values(parsed.data).returning();
   return NextResponse.json({ post: created }, { status: 201 });
 }
