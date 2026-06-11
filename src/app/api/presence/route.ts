@@ -1,3 +1,4 @@
+import { getAuthUserFromRequest } from "@/lib/auth";
 import { getDb } from "@/lib/db";
 import {
   PRESENCE_CHANNEL,
@@ -36,6 +37,7 @@ export async function POST(request: NextRequest) {
   }
 
   const { sessionId, lat, lng, status = "online" } = parsed.data;
+  const authUser = await getAuthUserFromRequest(request);
   const now = new Date();
 
   if (status === "offline") {
@@ -43,10 +45,21 @@ export async function POST(request: NextRequest) {
   } else {
     await getDb()
       .insert(liveSessions)
-      .values({ id: sessionId, lat, lng, lastSeenAt: now })
+      .values({
+        id: sessionId,
+        lat,
+        lng,
+        userId: authUser?.id ?? null,
+        lastSeenAt: now,
+      })
       .onConflictDoUpdate({
         target: liveSessions.id,
-        set: { lat, lng, lastSeenAt: now },
+        set: {
+          lat,
+          lng,
+          userId: authUser?.id ?? null,
+          lastSeenAt: now,
+        },
       });
   }
 
@@ -54,6 +67,7 @@ export async function POST(request: NextRequest) {
   if (pusher) {
     await pusher.trigger(PRESENCE_CHANNEL, PRESENCE_EVENT, {
       sessionId,
+      userId: authUser?.id ?? null,
       lat,
       lng,
       status,

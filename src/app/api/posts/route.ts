@@ -1,3 +1,4 @@
+import { getAuthUserFromRequest } from "@/lib/auth";
 import { getDb } from "@/lib/db";
 import { posts } from "@/lib/schema";
 import { and, desc, eq, ilike, or } from "drizzle-orm";
@@ -42,6 +43,13 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
-  const [created] = await getDb().insert(posts).values(parsed.data).returning();
+  const authUser = await getAuthUserFromRequest(request);
+  const [created] = await getDb()
+    .insert(posts)
+    .values({
+      ...parsed.data,
+      authorId: authUser?.id ?? null,
+    })
+    .returning();
   return NextResponse.json({ post: created }, { status: 201 });
 }

@@ -28,6 +28,8 @@ type Props = {
   }) => Promise<void>;
   defaultLat: number;
   defaultLng: number;
+  currentUserId: string | null;
+  onMessageAuthor: (authorId: string) => void;
 };
 
 export default function PostPanel({
@@ -46,6 +48,8 @@ export default function PostPanel({
   onSubmitPost,
   defaultLat,
   defaultLng,
+  currentUserId,
+  onMessageAuthor,
 }: Props) {
   const panelPosition =
     "intonow-panel fixed z-20 bottom-[max(1rem,env(safe-area-inset-bottom))] right-[max(1rem,env(safe-area-inset-right))]";
@@ -145,30 +149,41 @@ export default function PostPanel({
               {posts.map((post) => {
                 const color = getCategoryColor(post.category);
                 const active = post.id === selectedId;
+                const canMessage =
+                  post.authorId && post.authorId !== currentUserId;
                 return (
-                  <button
+                  <div
                     key={post.id}
-                    type="button"
-                    onClick={() => onPostClick(post)}
                     className={`w-full rounded-xl border p-3 text-left transition ${
                       active
                         ? "border-[#FF4D6D]/40 bg-white/10"
                         : "border-white/5 bg-white/5 hover:border-white/15 hover:bg-white/8"
                     }`}
                   >
-                    <span
-                      className="inline-block rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white"
-                      style={{ backgroundColor: color }}
-                    >
-                      {post.category}
-                    </span>
-                    <p className="mt-1.5 font-semibold text-white">{post.title}</p>
-                    <p className="mt-1 text-xs text-white/50 line-clamp-2">
-                      {post.description.length > 65
-                        ? `${post.description.substring(0, 65)}...`
-                        : post.description}
-                    </p>
-                  </button>
+                    <button type="button" onClick={() => onPostClick(post)} className="w-full text-left">
+                      <span
+                        className="inline-block rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white"
+                        style={{ backgroundColor: color }}
+                      >
+                        {post.category}
+                      </span>
+                      <p className="mt-1.5 font-semibold text-white">{post.title}</p>
+                      <p className="mt-1 text-xs text-white/50 line-clamp-2">
+                        {post.description.length > 65
+                          ? `${post.description.substring(0, 65)}...`
+                          : post.description}
+                      </p>
+                    </button>
+                    {canMessage && (
+                      <button
+                        type="button"
+                        onClick={() => onMessageAuthor(post.authorId!)}
+                        className="mt-2 w-full rounded-lg border border-[#22D3EE]/30 bg-[#22D3EE]/10 px-3 py-1.5 text-xs font-semibold text-[#22D3EE] transition hover:bg-[#22D3EE]/20"
+                      >
+                        Message author
+                      </button>
+                    )}
+                  </div>
                 );
               })}
             </div>

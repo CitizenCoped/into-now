@@ -19,3 +19,13 @@ export function getPusherServer() {
 export const PRESENCE_CHANNEL = "presence-into-now";
 export const PRESENCE_EVENT = "presence-update";
 export const PRESENCE_TTL_MS = 45_000;
+
+export const MESSAGE_EVENT = "message-new";
+
+export function userChannel(userId: string) {
+  return `private-user-${userId}`;
+}
+
+export function conversationChannel(conversationId: string) {
+  return `private-conversation-${conversationId}`;
+}

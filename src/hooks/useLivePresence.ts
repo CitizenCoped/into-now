@@ -10,6 +10,7 @@ const HEARTBEAT_MS = 20_000;
 
 type PresenceUpdate = {
   sessionId: string;
+  userId?: string | null;
   lat: number;
   lng: number;
   status: "online" | "offline";
@@ -78,6 +79,7 @@ export function useLivePresence() {
           id: update.sessionId,
           lat: update.lat,
           lng: update.lng,
+          userId: update.userId ?? null,
           lastSeenAt: new Date(update.lastSeenAt),
           createdAt: new Date(update.lastSeenAt),
         };

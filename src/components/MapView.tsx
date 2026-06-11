@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Map, { Marker, Popup, NavigationControl } from "react-map-gl/maplibre";
 import type { LiveSession, Post } from "@/lib/schema";
 import { getCategoryColor } from "@/lib/categories";
@@ -16,6 +16,8 @@ type Props = {
   zoom: number;
   selectedId: string | null;
   onSelect: (id: string | null) => void;
+  currentUserId: string | null;
+  onMessageUser: (userId: string) => void;
 };
 
 export default function MapView({
@@ -26,11 +28,20 @@ export default function MapView({
   zoom,
   selectedId,
   onSelect,
+  currentUserId,
+  onMessageUser,
 }: Props) {
   const mapRef = useRef<import("maplibre-gl").Map | null>(null);
+  const [selectedLiveUserId, setSelectedLiveUserId] = useState<string | null>(null);
+
   const selected = useMemo(
     () => posts.find((p) => p.id === selectedId) ?? null,
     [posts, selectedId]
+  );
+
+  const selectedLiveUser = useMemo(
+    () => liveUsers.find((u) => u.userId === selectedLiveUserId) ?? null,
+    [liveUsers, selectedLiveUserId]
   );
 
   const onLoad = useCallback((evt: { target: import("maplibre-gl").Map }) => {
@@ -53,6 +64,9 @@ export default function MapView({
         initialViewState={{ latitude: center.lat, longitude: center.lng, zoom }}
         mapStyle={BASE_MAP_STYLE}
         onLoad={onLoad}
+        onClick={() => {
+          setSelectedLiveUserId(null);
+        }}
         style={{ width: "100%", height: "100%" }}
         attributionControl={false}
       >
@@ -63,7 +77,19 @@ export default function MapView({
           </Marker>
         )}
         {liveUsers.map((user) => (
-          <Marker key={user.id} latitude={user.lat} longitude={user.lng} anchor="center">
+          <Marker
+            key={user.id}
+            latitude={user.lat}
+            longitude={user.lng}
+            anchor="center"
+            onClick={(e) => {
+              e.originalEvent.stopPropagation();
+              if (user.userId) {
+                setSelectedLiveUserId(user.userId);
+                onSelect(null);
+              }
+            }}
+          >
             <LiveUserMarker />
           </Marker>
         ))}
@@ -78,6 +104,7 @@ export default function MapView({
               anchor="center"
               onClick={(e) => {
                 e.originalEvent.stopPropagation();
+                setSelectedLiveUserId(null);
                 onSelect(post.id);
               }}
             >
@@ -112,6 +139,40 @@ export default function MapView({
               </p>
               <p className="mt-1 font-semibold text-white">{selected.title}</p>
               <p className="mt-1 text-sm text-white/70 line-clamp-3">{selected.description}</p>
+              {selected.authorId && selected.authorId !== currentUserId && (
+                <button
+                  type="button"
+                  onClick={() => onMessageUser(selected.authorId!)}
+                  className="mt-3 w-full rounded-lg border border-[#22D3EE]/30 bg-[#22D3EE]/10 px-3 py-1.5 text-xs font-semibold text-[#22D3EE] transition hover:bg-[#22D3EE]/20"
+                >
+                  Message author
+                </button>
+              )}
+            </div>
+          </Popup>
+        )}
+        {selectedLiveUser && selectedLiveUser.userId && (
+          <Popup
+            latitude={selectedLiveUser.lat}
+            longitude={selectedLiveUser.lng}
+            anchor="bottom"
+            closeButton={false}
+            closeOnClick={false}
+            offset={14}
+            className="intonow-popup"
+          >
+            <div className="min-w-[140px]">
+              <p className="text-sm font-semibold text-white">Nearby user</p>
+              <p className="mt-1 text-xs text-white/50">Live on the map now</p>
+              {selectedLiveUser.userId !== currentUserId && (
+                <button
+                  type="button"
+                  onClick={() => onMessageUser(selectedLiveUser.userId!)}
+                  className="mt-3 w-full rounded-lg border border-[#22D3EE]/30 bg-[#22D3EE]/10 px-3 py-1.5 text-xs font-semibold text-[#22D3EE] transition hover:bg-[#22D3EE]/20"
+                >
+                  Message
+                </button>
+              )}
             </div>
           </Popup>
         )}
