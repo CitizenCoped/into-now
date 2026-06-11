@@ -36,3 +36,17 @@ body {
 .maplibregl-ctrl-group button {
   filter: invert(1) opacity(0.7);
 }
+
+.maplibregl-ctrl-bottom-right {
+  transition: bottom 0.2s ease;
+}
+
+body.intonow-panel-open .maplibregl-ctrl-bottom-right {
+  bottom: calc(min(55vh, 480px) + 1.5rem) !important;
+}
+
+@media (max-width: 640px) {
+  body.intonow-panel-open .maplibregl-ctrl-bottom-right {
+    bottom: calc(min(55vh, 480px) + 1rem) !important;
+  }
+}
