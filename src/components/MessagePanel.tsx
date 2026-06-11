@@ -15,6 +15,8 @@ type Props = {
   expanded: boolean;
   view: PanelView;
   activeConversationId: string | null;
+  highlightMessageId: string | null;
+  onHighlightComplete: () => void;
   onExpandedChange: (expanded: boolean) => void;
   onViewChange: (view: PanelView) => void;
   onConversationSelect: (conversationId: string) => void;
@@ -44,6 +46,8 @@ export default function MessagePanel({
   expanded,
   view,
   activeConversationId,
+  highlightMessageId,
+  onHighlightComplete,
   onExpandedChange,
   onViewChange,
   onConversationSelect,
@@ -155,6 +159,8 @@ export default function MessagePanel({
               currentUserId={user.id}
               otherUser={activeConversation?.otherUser ?? null}
               loading={loadingThread}
+              highlightMessageId={highlightMessageId}
+              onHighlightComplete={onHighlightComplete}
               onSend={onSendMessage}
             />
           </>

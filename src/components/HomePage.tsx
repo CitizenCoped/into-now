@@ -22,14 +22,25 @@ type MessagePanelView = "inbox" | "thread";
 
 function openConversationFromUrl(
   conversationId: string,
+  messageId: string | null,
   setMessagesExpanded: (v: boolean) => void,
   setActiveConversationId: (v: string) => void,
+  setHighlightMessageId: (v: string | null) => void,
   setMessagesView: (v: MessagePanelView) => void
 ) {
   setMessagesExpanded(true);
   setActiveConversationId(conversationId);
+  setHighlightMessageId(messageId);
   setMessagesView("thread");
   window.history.replaceState({}, "", "/");
+}
+
+function parseMessageDeepLink(url: string) {
+  const parsed = new URL(url, window.location.origin);
+  return {
+    conversationId: parsed.searchParams.get("conversation"),
+    messageId: parsed.searchParams.get("message"),
+  };
 }
 
 export default function HomePage() {
@@ -41,6 +52,7 @@ export default function HomePage() {
   const [messagesExpanded, setMessagesExpanded] = useState(false);
   const [messagesView, setMessagesView] = useState<MessagePanelView>("inbox");
   const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
+  const [highlightMessageId, setHighlightMessageId] = useState<string | null>(null);
   const [center, setCenter] = useState(DEFAULT_CENTER);
   const [zoom, setZoom] = useState(13);
 
@@ -90,13 +102,14 @@ export default function HomePage() {
 
   useEffect(() => {
     if (!user) return;
-    const params = new URLSearchParams(window.location.search);
-    const conversationId = params.get("conversation");
+    const { conversationId, messageId } = parseMessageDeepLink(window.location.href);
     if (conversationId) {
       openConversationFromUrl(
         conversationId,
+        messageId,
         setMessagesExpanded,
         setActiveConversationId,
+        setHighlightMessageId,
         setMessagesView
       );
     }
@@ -107,13 +120,15 @@ export default function HomePage() {
 
     const onMessage = (event: MessageEvent) => {
       if (event.data?.type !== "OPEN_URL" || !event.data.url) return;
-      const url = new URL(event.data.url, window.location.origin);
-      const conversationId = url.searchParams.get("conversation");
-      if (conversationId && user) {
+      if (!user) return;
+      const { conversationId, messageId } = parseMessageDeepLink(event.data.url);
+      if (conversationId) {
         openConversationFromUrl(
           conversationId,
+          messageId,
           setMessagesExpanded,
           setActiveConversationId,
+          setHighlightMessageId,
           setMessagesView
         );
       }
@@ -212,10 +227,18 @@ export default function HomePage() {
         expanded={messagesExpanded}
         view={messagesView}
         activeConversationId={activeConversationId}
+        highlightMessageId={highlightMessageId}
+        onHighlightComplete={() => setHighlightMessageId(null)}
         onExpandedChange={setMessagesExpanded}
         onViewChange={setMessagesView}
-        onConversationSelect={setActiveConversationId}
-        onBackToInbox={() => setActiveConversationId(null)}
+        onConversationSelect={(id) => {
+          setActiveConversationId(id);
+          setHighlightMessageId(null);
+        }}
+        onBackToInbox={() => {
+          setActiveConversationId(null);
+          setHighlightMessageId(null);
+        }}
         user={user}
         authLoading={authLoading}
         onSendCode={sendCode}

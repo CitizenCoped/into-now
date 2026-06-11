@@ -2,13 +2,15 @@
 
 import { previewMessage } from "@/lib/messagePreview";
 import type { Message } from "@/lib/schema";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 type Props = {
   messages: Message[];
   currentUserId: string;
   otherUser: { maskedPhone: string; isOnline: boolean } | null;
   loading: boolean;
+  highlightMessageId?: string | null;
+  onHighlightComplete?: () => void;
   onSend: (body: string) => Promise<void>;
 };
 
@@ -17,12 +19,17 @@ export default function ConversationThread({
   currentUserId,
   otherUser,
   loading,
+  highlightMessageId,
+  onHighlightComplete,
   onSend,
 }: Props) {
   const [draft, setDraft] = useState("");
   const [sending, setSending] = useState(false);
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
+  const [highlightedId, setHighlightedId] = useState<string | null>(null);
   const [error, setError] = useState("");
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const handledHighlight = useRef<string | null>(null);
 
   function toggleExpanded(id: string) {
     setExpandedIds((prev) => {
@@ -32,6 +39,38 @@ export default function ConversationThread({
       return next;
     });
   }
+
+  useEffect(() => {
+    if (!highlightMessageId) {
+      handledHighlight.current = null;
+    }
+  }, [highlightMessageId]);
+
+  useEffect(() => {
+    if (!highlightMessageId || loading) return;
+    if (handledHighlight.current === highlightMessageId) return;
+
+    const target = messages.find((m) => m.id === highlightMessageId);
+    if (!target) return;
+
+    handledHighlight.current = highlightMessageId;
+
+    const { isTruncated } = previewMessage(target.body);
+    if (isTruncated) {
+      setExpandedIds((prev) => new Set(prev).add(highlightMessageId));
+    }
+
+    requestAnimationFrame(() => {
+      const el = document.getElementById(`message-${highlightMessageId}`);
+      el?.scrollIntoView({ behavior: "smooth", block: "center" });
+      setHighlightedId(highlightMessageId);
+
+      window.setTimeout(() => {
+        setHighlightedId(null);
+        onHighlightComplete?.();
+      }, 2500);
+    });
+  }, [highlightMessageId, loading, messages, onHighlightComplete]);
 
   async function handleSend(e: React.FormEvent) {
     e.preventDefault();
@@ -61,7 +100,7 @@ export default function ConversationThread({
         {otherUser?.isOnline && <span className="text-[10px] text-[#22FF66]">Online</span>}
       </div>
 
-      <div className="min-h-0 flex-1 space-y-2 overflow-y-auto pr-1">
+      <div ref={scrollRef} className="min-h-0 flex-1 space-y-2 overflow-y-auto pr-1">
         {loading && messages.length === 0 && (
           <p className="py-4 text-center text-sm text-white/30">Loading messages...</p>
         )}
@@ -73,17 +112,21 @@ export default function ConversationThread({
           const expanded = expandedIds.has(message.id);
           const { preview, isTruncated } = previewMessage(message.body);
           const showPreview = isTruncated && !expanded;
+          const isHighlighted = highlightedId === message.id;
 
           return (
             <button
               key={message.id}
+              id={`message-${message.id}`}
               type="button"
               onClick={() => isTruncated && toggleExpanded(message.id)}
               className={`block w-full rounded-xl border px-3 py-2.5 text-left transition ${
                 isMine
                   ? "ml-6 border-[#22D3EE]/20 bg-[#22D3EE]/10"
                   : "mr-6 border-white/5 bg-white/5"
-              } ${isTruncated ? "cursor-pointer hover:border-white/15" : "cursor-default"}`}
+              } ${isTruncated ? "cursor-pointer hover:border-white/15" : "cursor-default"} ${
+                isHighlighted ? "ring-2 ring-[#22D3EE]/60 border-[#22D3EE]/40" : ""
+              }`}
             >
               <p className="text-sm text-white whitespace-pre-wrap">
                 {showPreview ? preview : message.body}

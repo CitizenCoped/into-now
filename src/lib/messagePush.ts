@@ -38,7 +38,7 @@ export async function notifyNewMessage(params: {
       await sendPushToUser(recipient.userId, {
         title,
         body: params.body,
-        url: `/?conversation=${params.conversationId}`,
+        url: `/?conversation=${params.conversationId}&message=${params.messageId}`,
         tag: `msg-${params.messageId}`,
       });
     })
