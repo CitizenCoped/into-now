@@ -134,14 +134,6 @@ export default function PostPanel({
               className="mb-3 w-full shrink-0 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/30 outline-none focus:border-[#FF4D6D]/50"
             />
 
-            <button
-              type="button"
-              onClick={() => onViewChange("create")}
-              className="mb-3 w-full shrink-0 rounded-lg bg-gradient-to-r from-[#FF4D6D] to-[#FF6B8A] py-2.5 text-sm font-semibold text-white shadow-lg shadow-[#FF4D6D]/20 transition hover:brightness-110"
-            >
-              + New Post
-            </button>
-
             <h3 className="mb-2 shrink-0 text-xs font-semibold uppercase tracking-wider text-white/40">
               Nearby Posts
             </h3>
@@ -179,6 +171,16 @@ export default function PostPanel({
                   </button>
                 );
               })}
+            </div>
+
+            <div className="mt-3 shrink-0 border-t border-white/5 pt-3">
+              <button
+                type="button"
+                onClick={() => onViewChange("create")}
+                className="w-full rounded-lg bg-gradient-to-r from-[#FF4D6D] to-[#FF6B8A] py-2.5 text-sm font-semibold text-white shadow-lg shadow-[#FF4D6D]/20 transition hover:brightness-110"
+              >
+                + New Post
+              </button>
             </div>
           </>
         )}
