@@ -1,4 +1,5 @@
 import { getAuthUserFromRequest } from "@/lib/auth";
+import { notifyNearbyConversationPartners } from "@/lib/presencePush";
 import { getDb } from "@/lib/db";
 import {
   PRESENCE_CHANNEL,
@@ -72,6 +73,15 @@ export async function POST(request: NextRequest) {
       lng,
       status,
       lastSeenAt: now.toISOString(),
+    });
+  }
+
+  if (status !== "offline" && authUser) {
+    await notifyNearbyConversationPartners({
+      userId: authUser.id,
+      phone: authUser.phone,
+      lat,
+      lng,
     });
   }
 

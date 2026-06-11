@@ -1,4 +1,5 @@
 import { getAuthUserFromRequest } from "@/lib/auth";
+import { notifyNewMessage } from "@/lib/messagePush";
 import { isConversationParticipant } from "@/lib/conversations";
 import { getDb } from "@/lib/db";
 import {
@@ -92,6 +93,12 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
       await pusher.trigger(userChannel(participant.userId), MESSAGE_EVENT, payload);
     }
   }
+
+  await notifyNewMessage({
+    conversationId: params.id,
+    senderId: user.id,
+    body: created.body,
+  });
 
   return NextResponse.json({ message: created }, { status: 201 });
 }

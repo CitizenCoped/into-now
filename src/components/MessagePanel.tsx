@@ -2,10 +2,12 @@
 
 import type { AuthUser } from "@/hooks/useAuth";
 import type { ConversationSummary } from "@/hooks/useMessages";
+import type { PushPreferences } from "@/hooks/usePushNotifications";
 import type { Message } from "@/lib/schema";
 import AuthForm from "./AuthForm";
 import ConversationList from "./ConversationList";
 import ConversationThread from "./ConversationThread";
+import PushSettings from "./PushSettings";
 
 type PanelView = "inbox" | "thread";
 
@@ -28,6 +30,14 @@ type Props = {
   loadingThread: boolean;
   onSendMessage: (body: string) => Promise<void>;
   unreadCount: number;
+  pushPermission: NotificationPermission;
+  pushSubscribed: boolean;
+  pushPreferences: PushPreferences;
+  pushLoading: boolean;
+  pushError: string;
+  onEnablePush: () => Promise<void>;
+  onDisablePush: () => Promise<void>;
+  onPushPreferencesChange: (next: Partial<PushPreferences>) => Promise<void>;
 };
 
 export default function MessagePanel({
@@ -49,6 +59,14 @@ export default function MessagePanel({
   loadingThread,
   onSendMessage,
   unreadCount,
+  pushPermission,
+  pushSubscribed,
+  pushPreferences,
+  pushLoading,
+  pushError,
+  onEnablePush,
+  onDisablePush,
+  onPushPreferencesChange,
 }: Props) {
   const panelPosition =
     "intonow-messages-panel fixed z-20 bottom-[max(1rem,env(safe-area-inset-bottom))] left-[max(1rem,env(safe-area-inset-left))]";
@@ -152,6 +170,16 @@ export default function MessagePanel({
                 onConversationSelect(id);
                 onViewChange("thread");
               }}
+            />
+            <PushSettings
+              permission={pushPermission}
+              subscribed={pushSubscribed}
+              preferences={pushPreferences}
+              loading={pushLoading}
+              error={pushError}
+              onEnable={onEnablePush}
+              onDisable={onDisablePush}
+              onPreferencesChange={onPushPreferencesChange}
             />
           </>
         )}

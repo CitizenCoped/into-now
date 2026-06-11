@@ -5,7 +5,9 @@ import { useCallback, useEffect, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useLivePresence } from "@/hooks/useLivePresence";
 import { useMessages } from "@/hooks/useMessages";
+import { usePushNotifications } from "@/hooks/usePushNotifications";
 import type { Post } from "@/lib/schema";
+import InstallPrompt from "./InstallPrompt";
 import MessagePanel from "./MessagePanel";
 import PostPanel from "./PostPanel";
 
@@ -17,6 +19,18 @@ const MESSAGES_PANEL_STORAGE_KEY = "intonow_messages_panel_expanded";
 
 type PostPanelView = "list" | "create";
 type MessagePanelView = "inbox" | "thread";
+
+function openConversationFromUrl(
+  conversationId: string,
+  setMessagesExpanded: (v: boolean) => void,
+  setActiveConversationId: (v: string) => void,
+  setMessagesView: (v: MessagePanelView) => void
+) {
+  setMessagesExpanded(true);
+  setActiveConversationId(conversationId);
+  setMessagesView("thread");
+  window.history.replaceState({}, "", "/");
+}
 
 export default function HomePage() {
   const [posts, setPosts] = useState<Post[]>([]);
@@ -40,6 +54,16 @@ export default function HomePage() {
     openConversationWith,
     sendMessage,
   } = useMessages(user?.id ?? null, activeConversationId);
+  const {
+    permission: pushPermission,
+    subscribed: pushSubscribed,
+    preferences: pushPreferences,
+    loading: pushLoading,
+    error: pushError,
+    enableNotifications,
+    disableNotifications,
+    updatePreferences,
+  } = usePushNotifications(user?.id ?? null);
 
   useEffect(() => {
     const stored = sessionStorage.getItem(PANEL_STORAGE_KEY);
@@ -63,6 +87,41 @@ export default function HomePage() {
     document.body.classList.toggle("intonow-messages-panel-open", messagesExpanded);
     return () => document.body.classList.remove("intonow-messages-panel-open");
   }, [messagesExpanded]);
+
+  useEffect(() => {
+    if (!user) return;
+    const params = new URLSearchParams(window.location.search);
+    const conversationId = params.get("conversation");
+    if (conversationId) {
+      openConversationFromUrl(
+        conversationId,
+        setMessagesExpanded,
+        setActiveConversationId,
+        setMessagesView
+      );
+    }
+  }, [user]);
+
+  useEffect(() => {
+    if (!("serviceWorker" in navigator)) return;
+
+    const onMessage = (event: MessageEvent) => {
+      if (event.data?.type !== "OPEN_URL" || !event.data.url) return;
+      const url = new URL(event.data.url, window.location.origin);
+      const conversationId = url.searchParams.get("conversation");
+      if (conversationId && user) {
+        openConversationFromUrl(
+          conversationId,
+          setMessagesExpanded,
+          setActiveConversationId,
+          setMessagesView
+        );
+      }
+    };
+
+    navigator.serviceWorker.addEventListener("message", onMessage);
+    return () => navigator.serviceWorker.removeEventListener("message", onMessage);
+  }, [user]);
 
   const fetchPosts = useCallback(async (term?: string) => {
     const params = new URLSearchParams();
@@ -137,6 +196,7 @@ export default function HomePage() {
 
   return (
     <main className="relative h-screen w-full overflow-hidden bg-[#06040c]">
+      <InstallPrompt />
       <MapView
         posts={posts}
         liveUsers={liveUsers}
@@ -169,6 +229,14 @@ export default function HomePage() {
         loadingThread={loadingThread}
         onSendMessage={handleSendMessage}
         unreadCount={conversations.length}
+        pushPermission={pushPermission}
+        pushSubscribed={pushSubscribed}
+        pushPreferences={pushPreferences}
+        pushLoading={pushLoading}
+        pushError={pushError}
+        onEnablePush={enableNotifications}
+        onDisablePush={disableNotifications}
+        onPushPreferencesChange={updatePreferences}
       />
       <PostPanel
         expanded={panelExpanded}
