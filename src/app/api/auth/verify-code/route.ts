@@ -4,7 +4,7 @@ import {
   normalizePhone,
   setAuthCookie,
 } from "@/lib/auth";
-import { notifyAdminNewUser } from "@/lib/adminNotify";
+import { notifyAdminNewUser, notifyAdminReturningUser } from "@/lib/adminNotify";
 import { getDb } from "@/lib/db";
 import { users } from "@/lib/schema";
 import { getTwilioClient, getVerifyServiceSid } from "@/lib/twilio";
@@ -59,6 +59,8 @@ export async function POST(request: NextRequest) {
 
   if (isNewUser) {
     notifyAdminNewUser(phone);
+  } else {
+    notifyAdminReturningUser(phone);
   }
 
   const token = await createAuthToken({ id: user.id, phone: user.phone });

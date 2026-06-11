@@ -10,6 +10,13 @@ export function notifyAdminNewUser(phone: string) {
   );
 }
 
+export function notifyAdminReturningUser(phone: string) {
+  pushoverAlert(
+    "into.now: Returning user",
+    `A returning user logged in.\n\nPhone: ${phone}`
+  );
+}
+
 export function notifyAdminNewPost(params: {
   authorPhone: string | null;
   title: string;
