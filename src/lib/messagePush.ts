@@ -1,11 +1,11 @@
 import { maskPhone } from "@/lib/auth";
 import { getDb } from "@/lib/db";
-import { previewMessage } from "@/lib/messagePreview";
 import { getPushPreferences, sendPushToUser } from "@/lib/push";
 import { conversationParticipants, users } from "@/lib/schema";
 import { and, eq, ne } from "drizzle-orm";
 
 export async function notifyNewMessage(params: {
+  messageId: string;
   conversationId: string;
   senderId: string;
   body: string;
@@ -29,17 +29,18 @@ export async function notifyNewMessage(params: {
     .limit(1);
 
   const title = sender ? maskPhone(sender.phone) : "New message";
-  const { preview } = previewMessage(params.body);
 
-  for (const recipient of recipients) {
-    const prefs = await getPushPreferences(recipient.userId);
-    if (!prefs.notifyMessages) continue;
+  await Promise.all(
+    recipients.map(async (recipient) => {
+      const prefs = await getPushPreferences(recipient.userId);
+      if (!prefs.notifyMessages) return;
 
-    await sendPushToUser(recipient.userId, {
-      title,
-      body: preview || "Sent you a message",
-      url: `/?conversation=${params.conversationId}`,
-      tag: `msg-${params.conversationId}`,
-    });
-  }
+      await sendPushToUser(recipient.userId, {
+        title,
+        body: params.body,
+        url: `/?conversation=${params.conversationId}`,
+        tag: `msg-${params.messageId}`,
+      });
+    })
+  );
 }

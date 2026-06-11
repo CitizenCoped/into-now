@@ -73,7 +73,7 @@ export default function PushSettings({
             />
           </label>
           <label className="flex items-center justify-between gap-3 text-sm text-white/70">
-            <span>Chat partners live nearby</span>
+            <span>New users live nearby</span>
             <input
               type="checkbox"
               checked={preferences.notifyPresence}

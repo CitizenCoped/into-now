@@ -95,6 +95,7 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
   }
 
   await notifyNewMessage({
+    messageId: created.id,
     conversationId: params.id,
     senderId: user.id,
     body: created.body,

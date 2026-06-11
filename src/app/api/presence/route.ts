@@ -1,5 +1,5 @@
 import { getAuthUserFromRequest } from "@/lib/auth";
-import { notifyNearbyConversationPartners } from "@/lib/presencePush";
+import { notifyNearbyUsers } from "@/lib/presencePush";
 import { getDb } from "@/lib/db";
 import {
   PRESENCE_CHANNEL,
@@ -8,7 +8,7 @@ import {
   getPusherServer,
 } from "@/lib/pusher";
 import { liveSessions } from "@/lib/schema";
-import { gt, sql } from "drizzle-orm";
+import { eq, gt, sql } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
@@ -41,9 +41,19 @@ export async function POST(request: NextRequest) {
   const authUser = await getAuthUserFromRequest(request);
   const now = new Date();
 
+  let isNewSession = false;
+
   if (status === "offline") {
     await getDb().delete(liveSessions).where(sql`${liveSessions.id} = ${sessionId}`);
   } else {
+    const [existing] = await getDb()
+      .select({ id: liveSessions.id })
+      .from(liveSessions)
+      .where(eq(liveSessions.id, sessionId))
+      .limit(1);
+
+    isNewSession = !existing;
+
     await getDb()
       .insert(liveSessions)
       .values({
@@ -77,11 +87,12 @@ export async function POST(request: NextRequest) {
   }
 
   if (status !== "offline" && authUser) {
-    await notifyNearbyConversationPartners({
+    await notifyNearbyUsers({
       userId: authUser.id,
       phone: authUser.phone,
       lat,
       lng,
+      isNewSession,
     });
   }
 
