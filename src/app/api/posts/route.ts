@@ -53,8 +53,8 @@ export async function POST(request: NextRequest) {
     })
     .returning();
 
-  notifyAdminNewPost({
-    authorPhone: authUser?.phone ?? null,
+  void notifyAdminNewPost({
+    authorId: created.authorId,
     title: created.title,
     category: created.category,
     description: created.description,

@@ -58,9 +58,9 @@ export async function POST(request: NextRequest) {
   }
 
   if (isNewUser) {
-    notifyAdminNewUser(phone);
+    notifyAdminNewUser(user.phone);
   } else {
-    notifyAdminReturningUser(phone);
+    notifyAdminReturningUser(user.phone);
   }
 
   const token = await createAuthToken({ id: user.id, phone: user.phone });

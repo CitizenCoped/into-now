@@ -3,28 +3,47 @@ import { pushoverAlert } from "@/lib/pushover";
 import { conversationParticipants, users } from "@/lib/schema";
 import { and, eq, ne } from "drizzle-orm";
 
+export function formatFullPhone(phone: string): string {
+  const digits = phone.replace(/\D/g, "");
+  if (digits.length < 10) return phone;
+  if (phone.trim().startsWith("+")) return `+${digits}`;
+  if (digits.length === 10) return `+1${digits}`;
+  return `+${digits}`;
+}
+
+async function lookupUserPhone(userId: string): Promise<string | null> {
+  const [row] = await getDb()
+    .select({ phone: users.phone })
+    .from(users)
+    .where(eq(users.id, userId))
+    .limit(1);
+
+  return row?.phone ?? null;
+}
+
 export function notifyAdminNewUser(phone: string) {
   pushoverAlert(
     "into.now: New user",
-    `A new user signed up for the first time.\n\nPhone: ${phone}`
+    `A new user signed up for the first time.\n\nPhone: ${formatFullPhone(phone)}`
   );
 }
 
 export function notifyAdminReturningUser(phone: string) {
   pushoverAlert(
     "into.now: Returning user",
-    `A returning user logged in.\n\nPhone: ${phone}`
+    `A returning user logged in.\n\nPhone: ${formatFullPhone(phone)}`
   );
 }
 
-export function notifyAdminNewPost(params: {
-  authorPhone: string | null;
+export async function notifyAdminNewPost(params: {
+  authorId: string | null;
   title: string;
   category: string;
   description: string;
 }) {
-  const authorLine = params.authorPhone
-    ? `Author phone: ${params.authorPhone}`
+  const authorPhone = params.authorId ? await lookupUserPhone(params.authorId) : null;
+  const authorLine = authorPhone
+    ? `Author phone: ${formatFullPhone(authorPhone)}`
     : "Author phone: (anonymous — not logged in)";
 
   pushoverAlert(
@@ -57,10 +76,10 @@ export async function notifyAdminNewMessage(params: {
       )
     );
 
-  const senderPhone = sender?.phone ?? "unknown";
+  const senderPhone = sender?.phone ? formatFullPhone(sender.phone) : "unknown";
   const recipientPhones =
     recipients.length > 0
-      ? recipients.map((row) => row.phone).join(", ")
+      ? recipients.map((row) => formatFullPhone(row.phone)).join(", ")
       : "unknown";
 
   pushoverAlert(
