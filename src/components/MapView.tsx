@@ -2,20 +2,31 @@
 
 import { useCallback, useEffect, useMemo, useRef } from "react";
 import Map, { Marker, Popup, NavigationControl } from "react-map-gl/maplibre";
-import type { Post } from "@/lib/schema";
+import type { LiveSession, Post } from "@/lib/schema";
 import { getCategoryColor } from "@/lib/categories";
+import LiveUserMarker from "./LiveUserMarker";
 import { BASE_MAP_STYLE, applyIntoNowMapStyle } from "@/lib/mapStyle";
 import "maplibre-gl/dist/maplibre-gl.css";
 
 type Props = {
   posts: Post[];
+  liveUsers: LiveSession[];
+  myLocation: { lat: number; lng: number } | null;
   center: { lat: number; lng: number };
   zoom: number;
   selectedId: string | null;
   onSelect: (id: string | null) => void;
 };
 
-export default function MapView({ posts, center, zoom, selectedId, onSelect }: Props) {
+export default function MapView({
+  posts,
+  liveUsers,
+  myLocation,
+  center,
+  zoom,
+  selectedId,
+  onSelect,
+}: Props) {
   const mapRef = useRef<import("maplibre-gl").Map | null>(null);
   const selected = useMemo(
     () => posts.find((p) => p.id === selectedId) ?? null,
@@ -46,6 +57,16 @@ export default function MapView({ posts, center, zoom, selectedId, onSelect }: P
         attributionControl={false}
       >
         <NavigationControl position="bottom-right" showCompass={false} />
+        {myLocation && (
+          <Marker latitude={myLocation.lat} longitude={myLocation.lng} anchor="center">
+            <LiveUserMarker isSelf />
+          </Marker>
+        )}
+        {liveUsers.map((user) => (
+          <Marker key={user.id} latitude={user.lat} longitude={user.lng} anchor="center">
+            <LiveUserMarker />
+          </Marker>
+        ))}
         {posts.map((post) => {
           const color = getCategoryColor(post.category);
           const isSelected = post.id === selectedId;

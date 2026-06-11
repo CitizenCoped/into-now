@@ -37,8 +37,8 @@ export default function PostModal({ open, onClose, onSubmit, defaultLat, default
         title: title.trim(),
         description: description.trim(),
         category,
-        lat: defaultLat + (Math.random() * 0.02 - 0.01),
-        lng: defaultLng + (Math.random() * 0.02 - 0.01),
+        lat: defaultLat,
+        lng: defaultLng,
       });
       setTitle("");
       setDescription("");

@@ -10,6 +10,9 @@ type Props = {
   onPostClick: (post: Post) => void;
   onNewPost: () => void;
   selectedId: string | null;
+  liveCount: number;
+  connected: boolean;
+  sharing: boolean;
 };
 
 export default function PostSidebar({
@@ -19,13 +22,28 @@ export default function PostSidebar({
   onPostClick,
   onNewPost,
   selectedId,
+  liveCount,
+  connected,
+  sharing,
 }: Props) {
   return (
     <aside className="absolute left-3 top-3 z-20 w-[min(360px,calc(100vw-24px))] rounded-2xl border border-white/10 bg-[#0f0d18]/80 p-4 shadow-2xl backdrop-blur-xl sm:left-4 sm:top-4">
       <div className="mb-1 flex items-center gap-2">
         <img src="/logo.svg" alt="into.now" className="h-7 w-auto" />
       </div>
-      <p className="mb-4 text-sm text-white/50">what are you into? <span className="text-[#FF4D6D]">NOW?</span></p>
+      <p className="mb-2 text-sm text-white/50">what are you into? <span className="text-[#FF4D6D]">NOW?</span></p>
+
+      <div className="mb-4 flex items-center gap-3 text-xs text-white/50">
+        <span className="flex items-center gap-1.5">
+          <span
+            className={`h-2 w-2 rounded-full ${connected ? "bg-[#22FF66]" : "bg-white/20"}`}
+            style={connected ? { boxShadow: "0 0 6px #22FF66" } : undefined}
+          />
+          {connected ? "Live" : "Connecting..."}
+        </span>
+        <span>{liveCount} nearby now</span>
+        {!sharing && <span className="text-amber-400/80">Location off</span>}
+      </div>
 
       <input
         type="text"

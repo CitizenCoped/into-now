@@ -2,6 +2,7 @@
 
 import dynamic from "next/dynamic";
 import { useCallback, useEffect, useState } from "react";
+import { useLivePresence } from "@/hooks/useLivePresence";
 import type { Post } from "@/lib/schema";
 import PostModal from "./PostModal";
 import PostSidebar from "./PostSidebar";
@@ -17,6 +18,7 @@ export default function HomePage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [center, setCenter] = useState(DEFAULT_CENTER);
   const [zoom, setZoom] = useState(13);
+  const { liveUsers, myLocation, connected, sharing } = useLivePresence();
 
   const fetchPosts = useCallback(async (term?: string) => {
     const params = new URLSearchParams();
@@ -32,13 +34,10 @@ export default function HomePage() {
   }, [search, fetchPosts]);
 
   useEffect(() => {
-    if (!navigator.geolocation) return;
-    navigator.geolocation.getCurrentPosition(
-      (pos) => setCenter({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
-      () => setCenter(DEFAULT_CENTER),
-      { enableHighAccuracy: false, timeout: 8000 }
-    );
-  }, []);
+    if (myLocation) {
+      setCenter(myLocation);
+    }
+  }, [myLocation]);
 
   function handlePostClick(post: Post) {
     setSelectedId(post.id);
@@ -63,10 +62,15 @@ export default function HomePage() {
     setSelectedId((await res.json()).post?.id ?? null);
   }
 
+  const postLat = myLocation?.lat ?? center.lat;
+  const postLng = myLocation?.lng ?? center.lng;
+
   return (
     <main className="relative h-screen w-full overflow-hidden bg-[#06040c]">
       <MapView
         posts={posts}
+        liveUsers={liveUsers}
+        myLocation={myLocation}
         center={center}
         zoom={zoom}
         selectedId={selectedId}
@@ -79,13 +83,16 @@ export default function HomePage() {
         onPostClick={handlePostClick}
         onNewPost={() => setModalOpen(true)}
         selectedId={selectedId}
+        liveCount={liveUsers.length}
+        connected={connected}
+        sharing={sharing}
       />
       <PostModal
         open={modalOpen}
         onClose={() => setModalOpen(false)}
         onSubmit={handleCreatePost}
-        defaultLat={center.lat}
-        defaultLng={center.lng}
+        defaultLat={postLat}
+        defaultLng={postLng}
       />
     </main>
   );
