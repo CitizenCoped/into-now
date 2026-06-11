@@ -4,6 +4,7 @@ import {
   normalizePhone,
   setAuthCookie,
 } from "@/lib/auth";
+import { notifyAdminNewUser } from "@/lib/adminNotify";
 import { getDb } from "@/lib/db";
 import { users } from "@/lib/schema";
 import { getTwilioClient, getVerifyServiceSid } from "@/lib/twilio";
@@ -49,9 +50,15 @@ export async function POST(request: NextRequest) {
   const existing = await db.select().from(users).where(eq(users.phone, phone)).limit(1);
 
   let user = existing[0];
+  let isNewUser = false;
   if (!user) {
     const [created] = await db.insert(users).values({ phone }).returning();
     user = created;
+    isNewUser = true;
+  }
+
+  if (isNewUser) {
+    notifyAdminNewUser(phone);
   }
 
   const token = await createAuthToken({ id: user.id, phone: user.phone });

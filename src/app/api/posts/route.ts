@@ -1,3 +1,4 @@
+import { notifyAdminNewPost } from "@/lib/adminNotify";
 import { getAuthUserFromRequest } from "@/lib/auth";
 import { getDb } from "@/lib/db";
 import { posts } from "@/lib/schema";
@@ -51,5 +52,13 @@ export async function POST(request: NextRequest) {
       authorId: authUser?.id ?? null,
     })
     .returning();
+
+  notifyAdminNewPost({
+    authorPhone: authUser?.phone ?? null,
+    title: created.title,
+    category: created.category,
+    description: created.description,
+  });
+
   return NextResponse.json({ post: created }, { status: 201 });
 }

@@ -1,4 +1,5 @@
 import { getAuthUserFromRequest } from "@/lib/auth";
+import { notifyAdminNewMessage } from "@/lib/adminNotify";
 import { notifyNewMessage } from "@/lib/messagePush";
 import { isConversationParticipant } from "@/lib/conversations";
 import { getDb } from "@/lib/db";
@@ -96,6 +97,12 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
 
   await notifyNewMessage({
     messageId: created.id,
+    conversationId: params.id,
+    senderId: user.id,
+    body: created.body,
+  });
+
+  void notifyAdminNewMessage({
     conversationId: params.id,
     senderId: user.id,
     body: created.body,
