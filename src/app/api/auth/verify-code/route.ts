@@ -4,6 +4,7 @@ import {
   normalizePhone,
   setAuthCookie,
 } from "@/lib/auth";
+import { logActivity } from "@/lib/activity";
 import { notifyAdminNewUser, notifyAdminReturningUser } from "@/lib/adminNotify";
 import { getDb } from "@/lib/db";
 import { users } from "@/lib/schema";
@@ -39,10 +40,12 @@ export async function POST(request: NextRequest) {
       .verificationChecks.create({ to: phone, code: parsed.data.code });
 
     if (check.status !== "approved") {
+      logActivity("auth.verify_failed", { phone, metadata: { reason: "invalid_code" } });
       return NextResponse.json({ error: "Invalid or expired code" }, { status: 401 });
     }
   } catch (error) {
     console.error("Twilio verify-code error:", error);
+    logActivity("auth.verify_failed", { phone, metadata: { reason: "twilio_error" } });
     return NextResponse.json({ error: "Invalid or expired code" }, { status: 401 });
   }
 
@@ -59,8 +62,10 @@ export async function POST(request: NextRequest) {
 
   if (isNewUser) {
     notifyAdminNewUser(user.phone);
+    logActivity("user.signup", { userId: user.id, phone: user.phone });
   } else {
     notifyAdminReturningUser(user.phone);
+    logActivity("user.login", { userId: user.id, phone: user.phone });
   }
 
   const token = await createAuthToken({ id: user.id, phone: user.phone });

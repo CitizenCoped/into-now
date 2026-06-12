@@ -1,6 +1,7 @@
 import {
   boolean,
   doublePrecision,
+  jsonb,
   pgTable,
   primaryKey,
   text,
@@ -97,6 +98,17 @@ export const pushPreferences = pgTable("push_preferences", {
   notifyPresence: boolean("notify_presence").notNull().default(true),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
+
+export const activityLog = pgTable("activity_log", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  action: text("action").notNull(),
+  userId: uuid("user_id"),
+  phone: text("phone"),
+  metadata: jsonb("metadata").$type<Record<string, unknown> | null>(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export type ActivityLogEntry = typeof activityLog.$inferSelect;
 
 export const presencePushLog = pgTable(
   "presence_push_log",

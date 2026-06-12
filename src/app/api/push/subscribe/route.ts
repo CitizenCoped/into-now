@@ -1,3 +1,4 @@
+import { logActivity } from "@/lib/activity";
 import { getAuthUserFromRequest } from "@/lib/auth";
 import { getDb } from "@/lib/db";
 import { pushPreferences, pushSubscriptions } from "@/lib/schema";
@@ -92,6 +93,12 @@ export async function POST(request: NextRequest) {
       set: { notifyMessages, notifyPresence, updatedAt: now },
     });
 
+  logActivity("push.subscribed", {
+    userId: user.id,
+    phone: user.phone,
+    metadata: { notifyMessages, notifyPresence },
+  });
+
   return NextResponse.json({ ok: true });
 }
 
@@ -134,6 +141,12 @@ export async function PATCH(request: NextRequest) {
       set: { notifyMessages, notifyPresence, updatedAt: new Date() },
     });
 
+  logActivity("push.preferences_updated", {
+    userId: user.id,
+    phone: user.phone,
+    metadata: { notifyMessages, notifyPresence },
+  });
+
   return NextResponse.json({ ok: true, preferences: { notifyMessages, notifyPresence } });
 }
 
@@ -154,6 +167,12 @@ export async function DELETE(request: NextRequest) {
   } else {
     await db.delete(pushSubscriptions).where(eq(pushSubscriptions.userId, user.id));
   }
+
+  logActivity("push.unsubscribed", {
+    userId: user.id,
+    phone: user.phone,
+    metadata: { endpoint: endpoint ?? "all" },
+  });
 
   return NextResponse.json({ ok: true });
 }

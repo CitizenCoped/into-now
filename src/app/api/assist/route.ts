@@ -1,3 +1,5 @@
+import { logActivity } from "@/lib/activity";
+import { getAuthUserFromRequest } from "@/lib/auth";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
@@ -85,6 +87,13 @@ export async function POST(request: NextRequest) {
 
   const data = await response.json();
   const content = data.choices?.[0]?.message?.content ?? "";
+
+  const authUser = await getAuthUserFromRequest(request);
+  logActivity("assist.requested", {
+    userId: authUser?.id ?? null,
+    phone: authUser?.phone ?? null,
+    metadata: { category: category ?? null, hasTitleDraft: Boolean(titleDraft) },
+  });
 
   try {
     const jsonMatch = content.match(/\{[\s\S]*\}/);

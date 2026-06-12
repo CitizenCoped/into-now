@@ -1,3 +1,4 @@
+import { logActivity } from "@/lib/activity";
 import { normalizePhone } from "@/lib/auth";
 import { getTwilioClient, getVerifyServiceSid } from "@/lib/twilio";
 import { NextRequest, NextResponse } from "next/server";
@@ -29,9 +30,11 @@ export async function POST(request: NextRequest) {
       channel: "sms",
     });
 
+    logActivity("auth.code_sent", { phone });
     return NextResponse.json({ ok: true, phone });
   } catch (error) {
     console.error("Twilio send-code error:", error);
+    logActivity("auth.code_failed", { phone, metadata: { reason: "twilio_error" } });
     return NextResponse.json(
       { error: "Could not send verification code. Check your number and try again." },
       { status: 502 }

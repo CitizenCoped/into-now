@@ -1,3 +1,4 @@
+import { logActivity } from "@/lib/activity";
 import { getAuthUserFromRequest, maskPhone } from "@/lib/auth";
 import { findOrCreateConversation } from "@/lib/conversations";
 import { getDb } from "@/lib/db";
@@ -147,5 +148,22 @@ export async function POST(request: NextRequest) {
   }
 
   const conversationId = await findOrCreateConversation(user.id, parsed.data.participantId);
+
+  const [otherUser] = await db
+    .select({ phone: users.phone })
+    .from(users)
+    .where(eq(users.id, parsed.data.participantId))
+    .limit(1);
+
+  logActivity("conversation.started", {
+    userId: user.id,
+    phone: user.phone,
+    metadata: {
+      conversationId,
+      participantId: parsed.data.participantId,
+      participantPhone: otherUser?.phone ?? null,
+    },
+  });
+
   return NextResponse.json({ conversationId }, { status: 201 });
 }

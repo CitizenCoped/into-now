@@ -1,3 +1,4 @@
+import { logActivity } from "@/lib/activity";
 import { getAuthUserFromRequest } from "@/lib/auth";
 import { notifyAdminNewMessage } from "@/lib/adminNotify";
 import { notifyNewMessage } from "@/lib/messagePush";
@@ -106,6 +107,16 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
     conversationId: params.id,
     senderId: user.id,
     body: created.body,
+  });
+
+  logActivity("message.sent", {
+    userId: user.id,
+    phone: user.phone,
+    metadata: {
+      conversationId: params.id,
+      messageId: created.id,
+      bodyPreview: created.body.slice(0, 120),
+    },
   });
 
   return NextResponse.json({ message: created }, { status: 201 });

@@ -1,3 +1,4 @@
+import { logActivity } from "@/lib/activity";
 import { getAuthUserFromRequest } from "@/lib/auth";
 import { notifyNearbyUsers } from "@/lib/presencePush";
 import { getDb } from "@/lib/db";
@@ -45,6 +46,13 @@ export async function POST(request: NextRequest) {
 
   if (status === "offline") {
     await getDb().delete(liveSessions).where(sql`${liveSessions.id} = ${sessionId}`);
+    if (authUser) {
+      logActivity("presence.offline", {
+        userId: authUser.id,
+        phone: authUser.phone,
+        metadata: { sessionId },
+      });
+    }
   } else {
     const [existing] = await getDb()
       .select({ id: liveSessions.id })
@@ -87,6 +95,14 @@ export async function POST(request: NextRequest) {
   }
 
   if (status !== "offline" && authUser) {
+    if (isNewSession) {
+      logActivity("presence.online", {
+        userId: authUser.id,
+        phone: authUser.phone,
+        metadata: { sessionId, lat, lng },
+      });
+    }
+
     await notifyNearbyUsers({
       userId: authUser.id,
       phone: authUser.phone,

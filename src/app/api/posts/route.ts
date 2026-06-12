@@ -1,3 +1,4 @@
+import { logActivity } from "@/lib/activity";
 import { notifyAdminNewPost } from "@/lib/adminNotify";
 import { getAuthUserFromRequest } from "@/lib/auth";
 import { getDb } from "@/lib/db";
@@ -58,6 +59,17 @@ export async function POST(request: NextRequest) {
     title: created.title,
     category: created.category,
     description: created.description,
+  });
+
+  logActivity("post.created", {
+    userId: authUser?.id ?? null,
+    phone: authUser?.phone ?? null,
+    metadata: {
+      postId: created.id,
+      title: created.title,
+      category: created.category,
+      anonymous: !authUser,
+    },
   });
 
   return NextResponse.json({ post: created }, { status: 201 });
