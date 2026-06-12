@@ -8,8 +8,12 @@ const OG_IMAGE =
 const PWA_ICON =
   "https://res.cloudinary.com/dq2wjozdk/image/upload/w_192,h_192,c_fill/IMG_1255_eg2rnc.jpg";
 
+const APP_URL =
+  process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") ??
+  "https://into-now.vercel.app";
+
 export const metadata: Metadata = {
-  metadataBase: new URL("https://into-now.vercel.app"),
+  metadataBase: new URL(APP_URL),
   manifest: "/manifest.json",
   title: "into.now — what are you into? NOW?",
   description:
@@ -19,7 +23,7 @@ export const metadata: Metadata = {
     description: "what are you into? NOW?",
     siteName: "into.now",
     type: "website",
-    url: "https://into-now.vercel.app",
+    url: APP_URL,
     images: [
       {
         url: OG_IMAGE,
