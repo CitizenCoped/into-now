@@ -2,6 +2,7 @@
 
 import { formatRelativeTime } from "@/lib/messagePreview";
 import type { ConversationSummary } from "@/hooks/useMessages";
+import ProfileAvatar from "./ProfileAvatar";
 
 type Props = {
   conversations: ConversationSummary[];
@@ -33,6 +34,11 @@ export default function ConversationList({ conversations, loading, onSelect }: P
         >
           <div className="flex items-center justify-between gap-2">
             <div className="flex min-w-0 items-center gap-2">
+              <ProfileAvatar
+                photoUrl={convo.otherUser?.photoUrl}
+                displayName={convo.otherUser?.displayName}
+                size="sm"
+              />
               <span
                 className={`h-2 w-2 shrink-0 rounded-full ${
                   convo.otherUser?.isOnline ? "bg-[#22FF66]" : "bg-white/20"
@@ -42,7 +48,7 @@ export default function ConversationList({ conversations, loading, onSelect }: P
                 }
               />
               <span className="truncate font-semibold text-white">
-                {convo.otherUser?.maskedPhone ?? "Unknown"}
+                {convo.otherUser?.displayLabel ?? "Unknown"}
               </span>
             </div>
             {convo.lastMessage && (
@@ -51,6 +57,9 @@ export default function ConversationList({ conversations, loading, onSelect }: P
               </span>
             )}
           </div>
+          {convo.otherUser?.isExpired && (
+            <p className="mt-1 text-[10px] text-[#FF4D6D]">This user has expired</p>
+          )}
           {convo.lastMessage && (
             <p className="mt-1.5 text-xs text-white/50 line-clamp-2">
               {convo.lastMessage.preview}

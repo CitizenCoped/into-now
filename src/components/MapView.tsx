@@ -2,15 +2,17 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Map, { Marker, Popup, NavigationControl } from "react-map-gl/maplibre";
-import type { LiveSession, Post } from "@/lib/schema";
+import type { MapUser, Post } from "@/lib/schema";
 import { getCategoryColor } from "@/lib/categories";
 import LiveUserMarker from "./LiveUserMarker";
+import ProfileAvatar from "./ProfileAvatar";
 import { BASE_MAP_STYLE, applyIntoNowMapStyle } from "@/lib/mapStyle";
 import "maplibre-gl/dist/maplibre-gl.css";
 
 type Props = {
   posts: Post[];
-  liveUsers: LiveSession[];
+  litUsers: MapUser[];
+  unlitUsers: MapUser[];
   myLocation: { lat: number; lng: number } | null;
   center: { lat: number; lng: number };
   zoom: number;
@@ -22,7 +24,8 @@ type Props = {
 
 export default function MapView({
   posts,
-  liveUsers,
+  litUsers,
+  unlitUsers,
   myLocation,
   center,
   zoom,
@@ -32,16 +35,18 @@ export default function MapView({
   onMessageUser,
 }: Props) {
   const mapRef = useRef<import("maplibre-gl").Map | null>(null);
-  const [selectedLiveUserId, setSelectedLiveUserId] = useState<string | null>(null);
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
 
   const selected = useMemo(
     () => posts.find((p) => p.id === selectedId) ?? null,
     [posts, selectedId]
   );
 
-  const selectedLiveUser = useMemo(
-    () => liveUsers.find((u) => u.userId === selectedLiveUserId) ?? null,
-    [liveUsers, selectedLiveUserId]
+  const allUsers = useMemo(() => [...litUsers, ...unlitUsers], [litUsers, unlitUsers]);
+
+  const selectedUser = useMemo(
+    () => allUsers.find((u) => u.userId === selectedUserId) ?? null,
+    [allUsers, selectedUserId]
   );
 
   const onLoad = useCallback((evt: { target: import("maplibre-gl").Map }) => {
@@ -65,7 +70,7 @@ export default function MapView({
         mapStyle={BASE_MAP_STYLE}
         onLoad={onLoad}
         onClick={() => {
-          setSelectedLiveUserId(null);
+          setSelectedUserId(null);
         }}
         style={{ width: "100%", height: "100%" }}
         attributionControl={false}
@@ -73,24 +78,45 @@ export default function MapView({
         <NavigationControl position="bottom-right" showCompass={false} />
         {myLocation && (
           <Marker latitude={myLocation.lat} longitude={myLocation.lng} anchor="center">
-            <LiveUserMarker isSelf />
+            <LiveUserMarker isSelf isLit />
           </Marker>
         )}
-        {liveUsers.map((user) => (
+        {unlitUsers.map((user) => (
           <Marker
-            key={user.id}
+            key={`unlit-${user.userId}`}
             latitude={user.lat}
             longitude={user.lng}
             anchor="center"
             onClick={(e) => {
               e.originalEvent.stopPropagation();
-              if (user.userId) {
-                setSelectedLiveUserId(user.userId);
-                onSelect(null);
-              }
+              setSelectedUserId(user.userId);
+              onSelect(null);
             }}
           >
-            <LiveUserMarker />
+            <LiveUserMarker
+              isLit={false}
+              photoUrl={user.photoUrl}
+              displayName={user.displayName}
+            />
+          </Marker>
+        ))}
+        {litUsers.map((user) => (
+          <Marker
+            key={`lit-${user.id}`}
+            latitude={user.lat}
+            longitude={user.lng}
+            anchor="center"
+            onClick={(e) => {
+              e.originalEvent.stopPropagation();
+              setSelectedUserId(user.userId);
+              onSelect(null);
+            }}
+          >
+            <LiveUserMarker
+              isLit
+              photoUrl={user.photoUrl}
+              displayName={user.displayName}
+            />
           </Marker>
         ))}
         {posts.map((post) => {
@@ -104,7 +130,7 @@ export default function MapView({
               anchor="center"
               onClick={(e) => {
                 e.originalEvent.stopPropagation();
-                setSelectedLiveUserId(null);
+                setSelectedUserId(null);
                 onSelect(post.id);
               }}
             >
@@ -151,23 +177,39 @@ export default function MapView({
             </div>
           </Popup>
         )}
-        {selectedLiveUser && selectedLiveUser.userId && (
+        {selectedUser && (
           <Popup
-            latitude={selectedLiveUser.lat}
-            longitude={selectedLiveUser.lng}
+            latitude={selectedUser.lat}
+            longitude={selectedUser.lng}
             anchor="bottom"
             closeButton={false}
             closeOnClick={false}
             offset={14}
             className="intonow-popup"
           >
-            <div className="min-w-[140px]">
-              <p className="text-sm font-semibold text-white">Nearby user</p>
-              <p className="mt-1 text-xs text-white/50">Live on the map now</p>
-              {selectedLiveUser.userId !== currentUserId && (
+            <div className="min-w-[200px]">
+              <div className="flex items-center gap-2">
+                <ProfileAvatar
+                  photoUrl={selectedUser.photoUrl}
+                  displayName={selectedUser.displayName}
+                  size="sm"
+                />
+                <div>
+                  <p className="text-sm font-semibold text-white">
+                    {selectedUser.displayName ?? "Nearby user"}
+                  </p>
+                  <p className="text-[10px] text-white/50">
+                    {selectedUser.isLit ? "Live on the map" : "Was here recently"}
+                  </p>
+                </div>
+              </div>
+              {selectedUser.statement && (
+                <p className="mt-2 text-xs text-white/60 line-clamp-3">{selectedUser.statement}</p>
+              )}
+              {selectedUser.userId !== currentUserId && (
                 <button
                   type="button"
-                  onClick={() => onMessageUser(selectedLiveUser.userId!)}
+                  onClick={() => onMessageUser(selectedUser.userId)}
                   className="mt-3 w-full rounded-lg border border-[#22D3EE]/30 bg-[#22D3EE]/10 px-3 py-1.5 text-xs font-semibold text-[#22D3EE] transition hover:bg-[#22D3EE]/20"
                 >
                   Message

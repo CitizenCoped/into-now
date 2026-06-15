@@ -1,3 +1,4 @@
+import { getDisplayLabel } from "@/lib/auth";
 import { getDb } from "@/lib/db";
 import { pushoverAlert } from "@/lib/pushover";
 import { conversationParticipants, users } from "@/lib/schema";
@@ -11,27 +12,43 @@ export function formatFullPhone(phone: string): string {
   return `+${digits}`;
 }
 
-async function lookupUserPhone(userId: string): Promise<string | null> {
+function formatUserContact(user: {
+  phone: string | null;
+  email: string | null;
+  displayName: string | null;
+  isAnonymous: boolean;
+}): string {
+  if (user.phone) return formatFullPhone(user.phone);
+  if (user.email) return user.email;
+  return getDisplayLabel(user);
+}
+
+async function lookupUser(userId: string) {
   const [row] = await getDb()
-    .select({ phone: users.phone })
+    .select({
+      phone: users.phone,
+      email: users.email,
+      displayName: users.displayName,
+      isAnonymous: users.isAnonymous,
+    })
     .from(users)
     .where(eq(users.id, userId))
     .limit(1);
 
-  return row?.phone ?? null;
+  return row ?? null;
 }
 
-export function notifyAdminNewUser(phone: string) {
+export function notifyAdminNewUser(contact: string) {
   pushoverAlert(
     "into.now: New user",
-    `A new user signed up for the first time.\n\nPhone: ${formatFullPhone(phone)}`
+    `A new user signed up for the first time.\n\nContact: ${contact}`
   );
 }
 
-export function notifyAdminReturningUser(phone: string) {
+export function notifyAdminReturningUser(contact: string) {
   pushoverAlert(
     "into.now: Returning user",
-    `A returning user logged in.\n\nPhone: ${formatFullPhone(phone)}`
+    `A returning user logged in.\n\nContact: ${contact}`
   );
 }
 
@@ -41,10 +58,10 @@ export async function notifyAdminNewPost(params: {
   category: string;
   description: string;
 }) {
-  const authorPhone = params.authorId ? await lookupUserPhone(params.authorId) : null;
-  const authorLine = authorPhone
-    ? `Author phone: ${formatFullPhone(authorPhone)}`
-    : "Author phone: (anonymous — not logged in)";
+  const author = params.authorId ? await lookupUser(params.authorId) : null;
+  const authorLine = author
+    ? `Author: ${formatUserContact(author)}`
+    : "Author: (not logged in)";
 
   pushoverAlert(
     "into.now: New post",
@@ -60,13 +77,23 @@ export async function notifyAdminNewMessage(params: {
   const db = getDb();
 
   const [sender] = await db
-    .select({ phone: users.phone })
+    .select({
+      phone: users.phone,
+      email: users.email,
+      displayName: users.displayName,
+      isAnonymous: users.isAnonymous,
+    })
     .from(users)
     .where(eq(users.id, params.senderId))
     .limit(1);
 
   const recipients = await db
-    .select({ phone: users.phone })
+    .select({
+      phone: users.phone,
+      email: users.email,
+      displayName: users.displayName,
+      isAnonymous: users.isAnonymous,
+    })
     .from(conversationParticipants)
     .innerJoin(users, eq(users.id, conversationParticipants.userId))
     .where(
@@ -76,14 +103,14 @@ export async function notifyAdminNewMessage(params: {
       )
     );
 
-  const senderPhone = sender?.phone ? formatFullPhone(sender.phone) : "unknown";
-  const recipientPhones =
+  const senderLabel = sender ? formatUserContact(sender) : "unknown";
+  const recipientLabels =
     recipients.length > 0
-      ? recipients.map((row) => formatFullPhone(row.phone)).join(", ")
+      ? recipients.map((row) => formatUserContact(row)).join(", ")
       : "unknown";
 
   pushoverAlert(
     "into.now: New message",
-    `Sender phone: ${senderPhone}\nRecipient phone(s): ${recipientPhones}\n\nMessage:\n${params.body}`
+    `Sender: ${senderLabel}\nRecipient(s): ${recipientLabels}\n\nMessage:\n${params.body}`
   );
 }

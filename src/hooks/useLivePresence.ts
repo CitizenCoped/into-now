@@ -2,7 +2,7 @@
 
 import { PRESENCE_CHANNEL, PRESENCE_EVENT, PRESENCE_TTL_MS } from "@/lib/pusher";
 import { getOrCreateSessionId } from "@/lib/session";
-import type { LiveSession } from "@/lib/schema";
+import type { MapUser } from "@/lib/schema";
 import PusherClient from "pusher-js";
 import { useCallback, useEffect, useRef, useState } from "react";
 
@@ -15,15 +15,38 @@ type PresenceUpdate = {
   lng: number;
   status: "online" | "offline";
   lastSeenAt: string;
+  displayName?: string | null;
+  photoUrl?: string | null;
+  statement?: string | null;
+  isAnonymous?: boolean;
+  birthDate?: string | null;
 };
 
-function isActive(session: { lastSeenAt: string | Date }) {
-  const seen = new Date(session.lastSeenAt).getTime();
+function isActive(lastSeenAt: string | Date) {
+  const seen = new Date(lastSeenAt).getTime();
   return Date.now() - seen < PRESENCE_TTL_MS;
 }
 
-export function useLivePresence() {
-  const [liveUsers, setLiveUsers] = useState<LiveSession[]>([]);
+function toMapUser(update: PresenceUpdate, isLit: boolean): MapUser | null {
+  if (!update.userId) return null;
+  return {
+    id: isLit ? update.sessionId : update.userId,
+    userId: update.userId,
+    lat: update.lat,
+    lng: update.lng,
+    isLit,
+    displayName: update.displayName ?? null,
+    photoUrl: update.photoUrl ?? null,
+    statement: update.statement ?? null,
+    isAnonymous: Boolean(update.isAnonymous),
+    birthDate: update.birthDate ?? null,
+    lastSeenAt: update.lastSeenAt,
+  };
+}
+
+export function useLivePresence(enabled: boolean, currentUserId: string | null) {
+  const [litUsers, setLitUsers] = useState<MapUser[]>([]);
+  const [unlitUsers, setUnlitUsers] = useState<MapUser[]>([]);
   const [myLocation, setMyLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [connected, setConnected] = useState(false);
   const [sharing, setSharing] = useState(false);
@@ -32,7 +55,7 @@ export function useLivePresence() {
   const watchId = useRef<number | null>(null);
 
   const sendPresence = useCallback(async (status: "online" | "offline" = "online") => {
-    if (!sessionId.current || !latestCoords.current) return;
+    if (!enabled || !sessionId.current || !latestCoords.current) return;
 
     const payload = {
       sessionId: sessionId.current,
@@ -54,52 +77,71 @@ export function useLivePresence() {
       body,
       keepalive: status === "offline",
     });
-  }, []);
-
-  const pruneStale = useCallback(() => {
-    setLiveUsers((prev) => prev.filter((u) => isActive(u)));
-  }, []);
+  }, [enabled]);
 
   const applyUpdate = useCallback(
     (update: PresenceUpdate) => {
-      const selfId = sessionId.current;
+      if (!update.userId || update.userId === currentUserId) return;
 
       if (update.status === "offline") {
-        setLiveUsers((prev) => prev.filter((u) => u.id !== update.sessionId));
+        const unlit = toMapUser(update, false);
+        if (!unlit) return;
+        setLitUsers((prev) => prev.filter((u) => u.userId !== update.userId));
+        setUnlitUsers((prev) => {
+          const others = prev.filter((u) => u.userId !== update.userId);
+          return [...others, unlit];
+        });
         return;
       }
 
-      if (!isActive(update)) return;
+      if (!isActive(update.lastSeenAt)) return;
 
-      setLiveUsers((prev) => {
-        const others = prev.filter((u) => u.id !== update.sessionId && u.id !== selfId);
-        if (update.sessionId === selfId) return others;
+      const lit = toMapUser(update, true);
+      if (!lit) return;
 
-        const entry: LiveSession = {
-          id: update.sessionId,
-          lat: update.lat,
-          lng: update.lng,
-          userId: update.userId ?? null,
-          lastSeenAt: new Date(update.lastSeenAt),
-          createdAt: new Date(update.lastSeenAt),
-        };
-        return [...others, entry];
+      setUnlitUsers((prev) => prev.filter((u) => u.userId !== update.userId));
+      setLitUsers((prev) => {
+        const others = prev.filter((u) => u.userId !== update.userId);
+        return [...others, lit];
       });
     },
-    []
+    [currentUserId]
   );
 
+  const pruneStale = useCallback(() => {
+    setLitUsers((prev) => {
+      const stale = prev.filter((u) => u.lastSeenAt && !isActive(u.lastSeenAt));
+      if (stale.length > 0) {
+        setUnlitUsers((unlitPrev) => {
+          const merged = [...unlitPrev];
+          for (const user of stale) {
+            if (!merged.some((u) => u.userId === user.userId)) {
+              merged.push({ ...user, isLit: false, id: user.userId });
+            }
+          }
+          return merged;
+        });
+      }
+      return prev.filter((u) => !u.lastSeenAt || isActive(u.lastSeenAt));
+    });
+  }, []);
+
   useEffect(() => {
+    if (!enabled) return;
+
     sessionId.current = getOrCreateSessionId();
 
     fetch("/api/presence")
       .then((r) => r.json())
       .then((data) => {
-        const selfId = sessionId.current;
-        const sessions: LiveSession[] = (data.sessions ?? []).filter(
-          (s: LiveSession) => s.id !== selfId && isActive(s)
-        );
-        setLiveUsers(sessions);
+        const lit: MapUser[] = (data.lit ?? data.sessions ?? [])
+          .filter((s: MapUser) => s.userId !== currentUserId)
+          .map((s: MapUser) => ({ ...s, isLit: true }));
+        const unlit: MapUser[] = (data.unlit ?? [])
+          .filter((s: MapUser) => s.userId !== currentUserId)
+          .map((s: MapUser) => ({ ...s, isLit: false }));
+        setLitUsers(lit);
+        setUnlitUsers(unlit);
       })
       .catch(() => {});
 
@@ -164,13 +206,21 @@ export function useLivePresence() {
         pusher.disconnect();
       }
     };
-  }, [applyUpdate, pruneStale, sendPresence]);
+  }, [applyUpdate, currentUserId, enabled, pruneStale, sendPresence]);
 
   useEffect(() => {
-    if (myLocation && document.visibilityState === "visible") {
+    if (enabled && myLocation && document.visibilityState === "visible") {
       sendPresence("online");
     }
-  }, [myLocation, sendPresence]);
+  }, [enabled, myLocation, sendPresence]);
 
-  return { liveUsers, myLocation, connected, sharing, sessionId: sessionId.current };
+  return {
+    litUsers,
+    unlitUsers,
+    liveUsers: litUsers,
+    myLocation,
+    connected,
+    sharing,
+    sessionId: sessionId.current,
+  };
 }

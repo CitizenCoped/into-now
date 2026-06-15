@@ -6,11 +6,14 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.1.0",
     "@serwist/next": "^9.5.11",
+    "@vercel/blob": "^2.4.0",
     "drizzle-orm": "^0.45.2",
     "jose": "^6.2.3",
     "maplibre-gl": "^5.24.0",
@@ -20,6 +23,7 @@
     "react": "^18",
     "react-dom": "^18",
     "react-map-gl": "^8.1.1",
+    "resend": "^6.12.4",
     "serwist": "^9.5.11",
     "twilio": "^6.0.2",
     "web-push": "^3.6.7",

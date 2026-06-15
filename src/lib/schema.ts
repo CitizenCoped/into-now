@@ -1,5 +1,6 @@
 import {
   boolean,
+  date,
   doublePrecision,
   jsonb,
   pgTable,
@@ -11,11 +12,34 @@ import {
 
 export const users = pgTable("users", {
   id: uuid("id").primaryKey().defaultRandom(),
-  phone: text("phone").notNull().unique(),
+  email: text("email").unique(),
+  phone: text("phone").unique(),
+  authMethod: text("auth_method").notNull().default("phone"),
+  isAnonymous: boolean("is_anonymous").notNull().default(false),
+  expiresAt: timestamp("expires_at", { withTimezone: true }),
+  birthDate: date("birth_date"),
+  ageVerifiedAt: timestamp("age_verified_at", { withTimezone: true }),
+  displayName: text("display_name"),
+  photoUrl: text("photo_url"),
+  statement: text("statement"),
+  lastLat: doublePrecision("last_lat"),
+  lastLng: doublePrecision("last_lng"),
+  lastLocationAt: timestamp("last_location_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
 export type User = typeof users.$inferSelect;
+
+export const authCodes = pgTable("auth_codes", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  channel: text("channel").notNull(),
+  destination: text("destination").notNull(),
+  codeHash: text("code_hash").notNull(),
+  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export type AuthCode = typeof authCodes.$inferSelect;
 
 export const posts = pgTable("posts", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -24,7 +48,7 @@ export const posts = pgTable("posts", {
   category: text("category").notNull(),
   lat: doublePrecision("lat").notNull(),
   lng: doublePrecision("lng").notNull(),
-  authorId: uuid("author_id").references(() => users.id),
+  authorId: uuid("author_id").references(() => users.id, { onDelete: "set null" }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
@@ -35,7 +59,7 @@ export const liveSessions = pgTable("live_sessions", {
   id: uuid("id").primaryKey(),
   lat: doublePrecision("lat").notNull(),
   lng: doublePrecision("lng").notNull(),
-  userId: uuid("user_id").references(() => users.id),
+  userId: uuid("user_id").references(() => users.id, { onDelete: "cascade" }),
   lastSeenAt: timestamp("last_seen_at", { withTimezone: true }).notNull().defaultNow(),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
@@ -72,7 +96,7 @@ export const messages = pgTable("messages", {
     .references(() => conversations.id, { onDelete: "cascade" }),
   senderId: uuid("sender_id")
     .notNull()
-    .references(() => users.id),
+    .references(() => users.id, { onDelete: "cascade" }),
   body: text("body").notNull(),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
@@ -125,3 +149,17 @@ export const presencePushLog = pgTable(
     pk: primaryKey({ columns: [table.recipientId, table.senderId] }),
   })
 );
+
+export type MapUser = {
+  id: string;
+  userId: string;
+  lat: number;
+  lng: number;
+  isLit: boolean;
+  displayName: string | null;
+  photoUrl: string | null;
+  statement: string | null;
+  isAnonymous: boolean;
+  birthDate: string | null;
+  lastSeenAt: string | Date | null;
+};

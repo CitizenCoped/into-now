@@ -1,15 +1,18 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useLivePresence } from "@/hooks/useLivePresence";
 import { useMessages } from "@/hooks/useMessages";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
-import type { Post } from "@/lib/schema";
+import { ageFromBirthDate, haversineMiles } from "@/lib/geo";
+import type { MapUser, Post } from "@/lib/schema";
+import FilterPanel, { type UserFilters } from "./FilterPanel";
 import InstallPrompt from "./InstallPrompt";
 import MessagePanel from "./MessagePanel";
 import PostPanel from "./PostPanel";
+import ProfilePanel from "./ProfilePanel";
 
 const MapView = dynamic(() => import("./MapView"), { ssr: false });
 
@@ -19,6 +22,12 @@ const MESSAGES_PANEL_STORAGE_KEY = "intonow_messages_panel_expanded";
 
 type PostPanelView = "list" | "create";
 type MessagePanelView = "inbox" | "thread";
+
+const DEFAULT_USER_FILTERS: UserFilters = {
+  minAge: 18,
+  maxAge: 99,
+  maxDistanceMiles: 25,
+};
 
 function openConversationFromUrl(
   conversationId: string,
@@ -43,6 +52,24 @@ function parseMessageDeepLink(url: string) {
   };
 }
 
+function filterMapUsers(
+  users: MapUser[],
+  filters: UserFilters,
+  origin: { lat: number; lng: number } | null
+) {
+  return users.filter((user) => {
+    if (user.birthDate) {
+      const age = ageFromBirthDate(user.birthDate);
+      if (age < filters.minAge || age > filters.maxAge) return false;
+    }
+    if (origin) {
+      const miles = haversineMiles(origin.lat, origin.lng, user.lat, user.lng);
+      if (miles > filters.maxDistanceMiles) return false;
+    }
+    return true;
+  });
+}
+
 export default function HomePage() {
   const [posts, setPosts] = useState<Post[]>([]);
   const [search, setSearch] = useState("");
@@ -55,9 +82,29 @@ export default function HomePage() {
   const [highlightMessageId, setHighlightMessageId] = useState<string | null>(null);
   const [center, setCenter] = useState(DEFAULT_CENTER);
   const [zoom, setZoom] = useState(13);
+  const [filterExpanded, setFilterExpanded] = useState(false);
+  const [profileExpanded, setProfileExpanded] = useState(false);
+  const [showSignup, setShowSignup] = useState(false);
+  const [categoryFilters, setCategoryFilters] = useState<string[]>([]);
+  const [userFilters, setUserFilters] = useState<UserFilters>(DEFAULT_USER_FILTERS);
 
-  const { user, loading: authLoading, sendCode, verifyCode, logout } = useAuth();
-  const { liveUsers, myLocation, connected, sharing } = useLivePresence();
+  const {
+    user,
+    loading: authLoading,
+    sendPhoneCode,
+    sendEmailCode,
+    verifyPhoneCode,
+    verifyEmailCode,
+    updateProfile,
+    logout,
+  } = useAuth();
+
+  const mapReady = Boolean(user?.ageVerifiedAt && user.profileComplete);
+  const { litUsers, unlitUsers, myLocation, connected, sharing } = useLivePresence(
+    mapReady,
+    user?.id ?? null
+  );
+
   const {
     conversations,
     messages,
@@ -76,6 +123,23 @@ export default function HomePage() {
     disableNotifications,
     updatePreferences,
   } = usePushNotifications(user?.id ?? null);
+
+  const isRegistered = user && !user.isAnonymous;
+
+  const filteredPosts = useMemo(() => {
+    if (!isRegistered || categoryFilters.length === 0) return posts;
+    return posts.filter((post) => categoryFilters.includes(post.category));
+  }, [posts, categoryFilters, isRegistered]);
+
+  const filteredLitUsers = useMemo(() => {
+    if (!isRegistered) return litUsers;
+    return filterMapUsers(litUsers, userFilters, myLocation);
+  }, [litUsers, userFilters, myLocation, isRegistered]);
+
+  const filteredUnlitUsers = useMemo(() => {
+    if (!isRegistered) return unlitUsers;
+    return filterMapUsers(unlitUsers, userFilters, myLocation);
+  }, [unlitUsers, userFilters, myLocation, isRegistered]);
 
   useEffect(() => {
     const stored = sessionStorage.getItem(PANEL_STORAGE_KEY);
@@ -138,9 +202,10 @@ export default function HomePage() {
     return () => navigator.serviceWorker.removeEventListener("message", onMessage);
   }, [user]);
 
-  const fetchPosts = useCallback(async (term?: string) => {
+  const fetchPosts = useCallback(async (term?: string, category?: string) => {
     const params = new URLSearchParams();
     if (term) params.set("search", term);
+    if (category) params.set("category", category);
     const res = await fetch(`/api/posts?${params}`);
     const data = await res.json();
     setPosts(data.posts ?? []);
@@ -185,8 +250,8 @@ export default function HomePage() {
     async (participantId: string) => {
       setMessagesExpanded(true);
       if (!user) {
-        setMessagesView("inbox");
-        setActiveConversationId(null);
+        setProfileExpanded(true);
+        setShowSignup(true);
         return;
       }
 
@@ -213,8 +278,9 @@ export default function HomePage() {
     <main className="relative h-screen w-full overflow-hidden bg-[#06040c]">
       <InstallPrompt />
       <MapView
-        posts={posts}
-        liveUsers={liveUsers}
+        posts={filteredPosts}
+        litUsers={filteredLitUsers}
+        unlitUsers={filteredUnlitUsers}
         myLocation={myLocation}
         center={center}
         zoom={zoom}
@@ -222,6 +288,42 @@ export default function HomePage() {
         onSelect={setSelectedId}
         currentUserId={user?.id ?? null}
         onMessageUser={startConversation}
+      />
+      <FilterPanel
+        expanded={filterExpanded}
+        onExpandedChange={setFilterExpanded}
+        user={user}
+        categories={categoryFilters}
+        onCategoriesChange={setCategoryFilters}
+        userFilters={userFilters}
+        onUserFiltersChange={setUserFilters}
+        onUpgradeClick={() => {
+          setProfileExpanded(true);
+          setShowSignup(true);
+        }}
+      />
+      <ProfilePanel
+        expanded={profileExpanded}
+        onExpandedChange={setProfileExpanded}
+        user={user}
+        authLoading={authLoading}
+        birthDate={user?.birthDate ?? "2000-01-01"}
+        onSendPhoneCode={sendPhoneCode}
+        onSendEmailCode={sendEmailCode}
+        onVerifyPhoneCode={verifyPhoneCode}
+        onVerifyEmailCode={verifyEmailCode}
+        onSaveProfile={updateProfile}
+        onLogout={logout}
+        pushPermission={pushPermission}
+        pushSubscribed={pushSubscribed}
+        pushPreferences={pushPreferences}
+        pushLoading={pushLoading}
+        pushError={pushError}
+        onEnablePush={enableNotifications}
+        onDisablePush={disableNotifications}
+        onPushPreferencesChange={updatePreferences}
+        showSignup={showSignup}
+        onSignupClose={() => setShowSignup(false)}
       />
       <MessagePanel
         expanded={messagesExpanded}
@@ -240,38 +342,24 @@ export default function HomePage() {
           setHighlightMessageId(null);
         }}
         user={user}
-        authLoading={authLoading}
-        onSendCode={sendCode}
-        onVerifyCode={async (phone, code) => {
-          await verifyCode(phone, code);
-        }}
-        onLogout={logout}
         conversations={conversations}
         messages={messages}
         loadingInbox={loadingInbox}
         loadingThread={loadingThread}
         onSendMessage={handleSendMessage}
         unreadCount={conversations.length}
-        pushPermission={pushPermission}
-        pushSubscribed={pushSubscribed}
-        pushPreferences={pushPreferences}
-        pushLoading={pushLoading}
-        pushError={pushError}
-        onEnablePush={enableNotifications}
-        onDisablePush={disableNotifications}
-        onPushPreferencesChange={updatePreferences}
       />
       <PostPanel
         expanded={panelExpanded}
         view={panelView}
         onExpandedChange={setPanelExpanded}
         onViewChange={setPanelView}
-        posts={posts}
+        posts={filteredPosts}
         search={search}
         onSearchChange={setSearch}
         onPostClick={handlePostClick}
         selectedId={selectedId}
-        liveCount={liveUsers.length}
+        liveCount={filteredLitUsers.length}
         connected={connected}
         sharing={sharing}
         onSubmitPost={handleCreatePost}

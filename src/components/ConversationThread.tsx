@@ -1,13 +1,15 @@
 "use client";
 
 import { previewMessage } from "@/lib/messagePreview";
+import type { ConversationSummary } from "@/hooks/useMessages";
 import type { Message } from "@/lib/schema";
 import { useEffect, useRef, useState } from "react";
+import ProfileAvatar from "./ProfileAvatar";
 
 type Props = {
   messages: Message[];
   currentUserId: string;
-  otherUser: { maskedPhone: string; isOnline: boolean } | null;
+  otherUser: ConversationSummary["otherUser"];
   loading: boolean;
   highlightMessageId?: string | null;
   onHighlightComplete?: () => void;
@@ -30,6 +32,8 @@ export default function ConversationThread({
   const [error, setError] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
   const handledHighlight = useRef<string | null>(null);
+
+  const expired = otherUser?.isExpired;
 
   function toggleExpanded(id: string) {
     setExpandedIds((prev) => {
@@ -74,6 +78,7 @@ export default function ConversationThread({
 
   async function handleSend(e: React.FormEvent) {
     e.preventDefault();
+    if (expired) return;
     const body = draft.trim();
     if (!body) return;
 
@@ -92,13 +97,23 @@ export default function ConversationThread({
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       <div className="mb-3 flex shrink-0 items-center gap-2 border-b border-white/5 pb-3">
+        <ProfileAvatar
+          photoUrl={otherUser?.photoUrl}
+          displayName={otherUser?.displayName}
+          size="sm"
+        />
         <span
           className={`h-2 w-2 rounded-full ${otherUser?.isOnline ? "bg-[#22FF66]" : "bg-white/20"}`}
           style={otherUser?.isOnline ? { boxShadow: "0 0 6px #22FF66" } : undefined}
         />
-        <span className="font-semibold text-white">{otherUser?.maskedPhone ?? "Chat"}</span>
+        <span className="font-semibold text-white">{otherUser?.displayLabel ?? "Chat"}</span>
         {otherUser?.isOnline && <span className="text-[10px] text-[#22FF66]">Online</span>}
+        {expired && <span className="text-[10px] text-[#FF4D6D]">Expired</span>}
       </div>
+
+      {otherUser?.statement && (
+        <p className="mb-3 shrink-0 text-xs text-white/50">{otherUser.statement}</p>
+      )}
 
       <div ref={scrollRef} className="min-h-0 flex-1 space-y-2 overflow-y-auto pr-1">
         {loading && messages.length === 0 && (
@@ -142,23 +157,29 @@ export default function ConversationThread({
         })}
       </div>
 
-      <form onSubmit={handleSend} className="mt-3 shrink-0 border-t border-white/5 pt-3">
-        <textarea
-          value={draft}
-          onChange={(e) => setDraft(e.target.value)}
-          placeholder="Reply..."
-          rows={2}
-          className="mb-2 w-full resize-none rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/30 outline-none focus:border-[#22D3EE]/50"
-        />
-        {error && <p className="mb-2 text-xs text-[#FF4D6D]">{error}</p>}
-        <button
-          type="submit"
-          disabled={sending || !draft.trim()}
-          className="w-full rounded-lg bg-gradient-to-r from-[#22D3EE] to-[#38BDF8] py-2.5 text-sm font-semibold text-[#06040c] transition hover:brightness-110 disabled:opacity-50"
-        >
-          {sending ? "Sending..." : "Send"}
-        </button>
-      </form>
+      {expired ? (
+        <p className="mt-3 shrink-0 text-center text-xs text-[#FF4D6D]">
+          This user&apos;s anonymous session has ended.
+        </p>
+      ) : (
+        <form onSubmit={handleSend} className="mt-3 shrink-0 border-t border-white/5 pt-3">
+          <textarea
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            placeholder="Reply..."
+            rows={2}
+            className="mb-2 w-full resize-none rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/30 outline-none focus:border-[#22D3EE]/50"
+          />
+          {error && <p className="mb-2 text-xs text-[#FF4D6D]">{error}</p>}
+          <button
+            type="submit"
+            disabled={sending || !draft.trim()}
+            className="w-full rounded-lg bg-gradient-to-r from-[#22D3EE] to-[#38BDF8] py-2.5 text-sm font-semibold text-[#06040c] transition hover:brightness-110 disabled:opacity-50"
+          >
+            {sending ? "Sending..." : "Send"}
+          </button>
+        </form>
+      )}
     </div>
   );
 }

@@ -14,7 +14,12 @@ export type ConversationSummary = {
   updatedAt: string;
   otherUser: {
     id: string;
-    maskedPhone: string;
+    displayName: string | null;
+    photoUrl: string | null;
+    statement: string | null;
+    displayLabel: string;
+    isAnonymous: boolean;
+    isExpired: boolean;
     isOnline: boolean;
   } | null;
   lastMessage: {

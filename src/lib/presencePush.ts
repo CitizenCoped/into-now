@@ -1,4 +1,4 @@
-import { maskPhone } from "@/lib/auth";
+import { getDisplayLabel } from "@/lib/auth";
 import { distanceKm, NEARBY_RADIUS_KM } from "@/lib/geo";
 import { getDb } from "@/lib/db";
 import { getPushPreferences, sendPushToUser } from "@/lib/push";
@@ -8,7 +8,8 @@ import { and, gt, ne, sql } from "drizzle-orm";
 
 export async function notifyNearbyUsers(params: {
   userId: string;
-  phone: string;
+  displayName: string | null;
+  phone: string | null;
   lat: number;
   lng: number;
   isNewSession: boolean;
@@ -34,7 +35,10 @@ export async function notifyNearbyUsers(params: {
     return distanceKm(params.lat, params.lng, session.lat, session.lng) <= NEARBY_RADIUS_KM;
   });
 
-  const masked = maskPhone(params.phone);
+  const label = getDisplayLabel({
+    displayName: params.displayName,
+    phone: params.phone,
+  });
 
   await Promise.all(
     nearbyRecipients.map(async (session) => {
@@ -45,7 +49,7 @@ export async function notifyNearbyUsers(params: {
 
       await sendPushToUser(session.userId, {
         title: "Someone new is nearby",
-        body: `${masked} just went live on the map`,
+        body: `${label} just went live on the map`,
         url: "/",
         tag: `presence-${params.userId}-${session.userId}`,
       });

@@ -1,4 +1,4 @@
-import { maskPhone } from "@/lib/auth";
+import { getDisplayLabel } from "@/lib/auth";
 import { getDb } from "@/lib/db";
 import { getPushPreferences, sendPushToUser } from "@/lib/push";
 import { conversationParticipants, users } from "@/lib/schema";
@@ -23,12 +23,19 @@ export async function notifyNewMessage(params: {
     );
 
   const [sender] = await db
-    .select({ phone: users.phone })
+    .select({
+      phone: users.phone,
+      email: users.email,
+      displayName: users.displayName,
+      isAnonymous: users.isAnonymous,
+    })
     .from(users)
     .where(eq(users.id, params.senderId))
     .limit(1);
 
-  const title = sender ? maskPhone(sender.phone) : "New message";
+  const title = sender
+    ? getDisplayLabel(sender)
+    : "New message";
 
   await Promise.all(
     recipients.map(async (recipient) => {
