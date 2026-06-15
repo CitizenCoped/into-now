@@ -15,6 +15,7 @@ export type AuthUser = {
   statement: string | null;
   expiresAt: string | null;
   displayLabel: string;
+  maskedPhone: string | null;
   profileComplete: boolean;
 };
 
@@ -55,6 +56,18 @@ export function useAuth() {
     return data.phone as string;
   }, []);
 
+  /** Legacy Twilio Verify flow — phone-only body, no channel or birthDate. */
+  const sendCode = useCallback(async (phone: string) => {
+    const res = await fetch("/api/auth/send-code", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ phone }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error ?? "Failed to send code");
+    return data.phone as string;
+  }, []);
+
   const sendEmailCode = useCallback(async (email: string) => {
     const res = await fetch("/api/auth/send-code", {
       method: "POST",
@@ -72,6 +85,23 @@ export function useAuth() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ channel: "phone", phone, code, birthDate }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Verification failed");
+      setUser(data.user ?? null);
+      await refresh();
+      return data.user as AuthUser;
+    },
+    [refresh]
+  );
+
+  /** Legacy Twilio Verify flow — phone + code only, no age gate at sign-in. */
+  const verifyCode = useCallback(
+    async (phone: string, code: string) => {
+      const res = await fetch("/api/auth/verify-code", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone, code }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Verification failed");
@@ -140,8 +170,10 @@ export function useAuth() {
     refresh,
     sendPhoneCode,
     sendEmailCode,
+    sendCode,
     verifyPhoneCode,
     verifyEmailCode,
+    verifyCode,
     createAnonymous,
     updateProfile,
     logout,

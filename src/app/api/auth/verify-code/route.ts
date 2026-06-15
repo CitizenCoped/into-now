@@ -18,7 +18,7 @@ import { eq } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
-const schema = z.discriminatedUnion("channel", [
+const v2Schema = z.discriminatedUnion("channel", [
   z.object({
     channel: z.literal("phone"),
     phone: z.string().min(7).max(20),
@@ -33,6 +33,25 @@ const schema = z.discriminatedUnion("channel", [
   }),
 ]);
 
+const legacyPhoneSchema = z.object({
+  phone: z.string().min(7).max(20),
+  code: z.string().min(4).max(10),
+  birthDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+});
+
+const schema = z.union([v2Schema, legacyPhoneSchema]);
+
+async function verifyTwilioCode(phone: string, code: string) {
+  const client = getTwilioClient();
+  const serviceSid = getVerifyServiceSid();
+
+  const check = await client.verify.v2
+    .services(serviceSid)
+    .verificationChecks.create({ to: phone, code });
+
+  return check.status === "approved";
+}
+
 export async function POST(request: NextRequest) {
   const body = await request.json();
   const parsed = schema.safeParse(body);
@@ -41,7 +60,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Invalid verification request" }, { status: 400 });
   }
 
-  if (!isAdult(parsed.data.birthDate)) {
+  const birthDate = "birthDate" in parsed.data ? parsed.data.birthDate : undefined;
+
+  if (birthDate && !isAdult(birthDate)) {
     return NextResponse.json({ error: "You must be 18 or older to use Into Now" }, { status: 403 });
   }
 
@@ -50,21 +71,15 @@ export async function POST(request: NextRequest) {
   let isNewUser = false;
   let user;
 
-  if (parsed.data.channel === "phone") {
+  if ("phone" in parsed.data) {
     const phone = normalizePhone(parsed.data.phone);
     if (!phone) {
       return NextResponse.json({ error: "Invalid phone number format" }, { status: 400 });
     }
 
     try {
-      const client = getTwilioClient();
-      const serviceSid = getVerifyServiceSid();
-
-      const check = await client.verify.v2
-        .services(serviceSid)
-        .verificationChecks.create({ to: phone, code: parsed.data.code });
-
-      if (check.status !== "approved") {
+      const approved = await verifyTwilioCode(phone, parsed.data.code);
+      if (!approved) {
         logActivity("auth.verify_failed", { phone, metadata: { reason: "invalid_code" } });
         return NextResponse.json({ error: "Invalid or expired code" }, { status: 401 });
       }
@@ -83,22 +98,27 @@ export async function POST(request: NextRequest) {
           phone,
           authMethod: "phone",
           isAnonymous: false,
-          birthDate: parsed.data.birthDate,
-          ageVerifiedAt: now,
+          ...(birthDate
+            ? { birthDate, ageVerifiedAt: now }
+            : {}),
         })
         .returning();
       user = created;
       isNewUser = true;
     } else {
+      const updates: Partial<typeof users.$inferInsert> = {
+        isAnonymous: false,
+        expiresAt: null,
+        authMethod: "phone",
+      };
+      if (birthDate) {
+        updates.birthDate = birthDate;
+        updates.ageVerifiedAt = now;
+      }
+
       const [updated] = await db
         .update(users)
-        .set({
-          birthDate: parsed.data.birthDate,
-          ageVerifiedAt: now,
-          isAnonymous: false,
-          expiresAt: null,
-          authMethod: "phone",
-        })
+        .set(updates)
         .where(eq(users.id, existing.id))
         .returning();
       user = updated;
@@ -111,7 +131,11 @@ export async function POST(request: NextRequest) {
       notifyAdminReturningUser(phone);
       logActivity("user.login", { userId: user.id, phone });
     }
-  } else {
+  } else if ("email" in parsed.data) {
+    if (!birthDate) {
+      return NextResponse.json({ error: "Invalid verification request" }, { status: 400 });
+    }
+
     const email = normalizeEmail(parsed.data.email);
     if (!email) {
       return NextResponse.json({ error: "Invalid email address" }, { status: 400 });
@@ -132,7 +156,7 @@ export async function POST(request: NextRequest) {
           email,
           authMethod: "email",
           isAnonymous: false,
-          birthDate: parsed.data.birthDate,
+          birthDate: birthDate!,
           ageVerifiedAt: now,
         })
         .returning();
@@ -142,7 +166,7 @@ export async function POST(request: NextRequest) {
       const [updated] = await db
         .update(users)
         .set({
-          birthDate: parsed.data.birthDate,
+          birthDate: birthDate!,
           ageVerifiedAt: now,
           isAnonymous: false,
           expiresAt: null,
@@ -160,6 +184,8 @@ export async function POST(request: NextRequest) {
       notifyAdminReturningUser(email);
       logActivity("user.login", { userId: user.id, metadata: { email } });
     }
+  } else {
+    return NextResponse.json({ error: "Invalid verification request" }, { status: 400 });
   }
 
   const authUser = userToAuthUser(user);

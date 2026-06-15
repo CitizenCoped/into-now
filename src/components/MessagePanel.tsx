@@ -2,9 +2,12 @@
 
 import type { AuthUser } from "@/hooks/useAuth";
 import type { ConversationSummary } from "@/hooks/useMessages";
+import type { PushPreferences } from "@/hooks/usePushNotifications";
 import type { Message } from "@/lib/schema";
 import ConversationList from "./ConversationList";
 import ConversationThread from "./ConversationThread";
+import PhoneAuthForm from "./PhoneAuthForm";
+import PushSettings from "./PushSettings";
 
 type PanelView = "inbox" | "thread";
 
@@ -19,13 +22,31 @@ type Props = {
   onConversationSelect: (conversationId: string) => void;
   onBackToInbox: () => void;
   user: AuthUser | null;
+  authLoading: boolean;
+  onSendCode: (phone: string) => Promise<string>;
+  onVerifyCode: (phone: string, code: string) => Promise<void>;
+  onLogout: () => Promise<void>;
   conversations: ConversationSummary[];
   messages: Message[];
   loadingInbox: boolean;
   loadingThread: boolean;
   onSendMessage: (body: string) => Promise<void>;
   unreadCount: number;
+  pushPermission: NotificationPermission;
+  pushSubscribed: boolean;
+  pushPreferences: PushPreferences;
+  pushLoading: boolean;
+  pushError: string;
+  onEnablePush: () => Promise<void>;
+  onDisablePush: () => Promise<void>;
+  onPushPreferencesChange: (next: Partial<PushPreferences>) => Promise<void>;
 };
+
+function sessionLabel(user: AuthUser) {
+  if (user.maskedPhone) return user.maskedPhone;
+  if (user.displayLabel) return user.displayLabel;
+  return "Signed in";
+}
 
 export default function MessagePanel({
   expanded,
@@ -38,12 +59,24 @@ export default function MessagePanel({
   onConversationSelect,
   onBackToInbox,
   user,
+  authLoading,
+  onSendCode,
+  onVerifyCode,
+  onLogout,
   conversations,
   messages,
   loadingInbox,
   loadingThread,
   onSendMessage,
   unreadCount,
+  pushPermission,
+  pushSubscribed,
+  pushPreferences,
+  pushLoading,
+  pushError,
+  onEnablePush,
+  onDisablePush,
+  onPushPreferencesChange,
 }: Props) {
   const panelPosition =
     "intonow-messages-panel fixed z-20 bottom-[max(1rem,env(safe-area-inset-bottom))] left-[max(1rem,env(safe-area-inset-left))]";
@@ -81,29 +114,40 @@ export default function MessagePanel({
       <header className="flex shrink-0 items-center justify-between border-b border-white/5 px-4 py-3">
         <div className="min-w-0">
           <p className="text-sm font-semibold text-[#22D3EE]">Messages</p>
-          <p className="mt-0.5 text-[11px] text-white/40">
-            {user ? "Chat with people nearby" : "Sign in from profile to chat"}
+          <p className="mt-0.5 truncate text-[11px] text-white/40">
+            {user ? sessionLabel(user) : "Sign in to chat"}
           </p>
         </div>
-        <button
-          type="button"
-          onClick={() => {
-            onViewChange("inbox");
-            onBackToInbox();
-            onExpandedChange(false);
-          }}
-          className="shrink-0 rounded-lg border border-white/10 px-2.5 py-1.5 text-sm text-white/60 transition hover:text-white"
-          aria-label="Minimize panel"
-        >
-          ▼
-        </button>
+        <div className="flex items-center gap-2">
+          {user && (
+            <button
+              type="button"
+              onClick={() => onLogout()}
+              className="rounded-lg border border-white/10 px-2 py-1 text-[10px] text-white/50 transition hover:text-white"
+            >
+              Log out
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={() => {
+              onViewChange("inbox");
+              onBackToInbox();
+              onExpandedChange(false);
+            }}
+            className="shrink-0 rounded-lg border border-white/10 px-2.5 py-1.5 text-sm text-white/60 transition hover:text-white"
+            aria-label="Minimize panel"
+          >
+            ▼
+          </button>
+        </div>
       </header>
 
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden p-4 pt-3">
-        {!user ? (
-          <p className="py-6 text-center text-sm text-white/40">
-            Open the profile panel (top-right) to sign in or continue as anonymous.
-          </p>
+        {authLoading ? (
+          <p className="py-6 text-center text-sm text-white/30">Checking session...</p>
+        ) : !user ? (
+          <PhoneAuthForm onSendCode={onSendCode} onVerifyCode={onVerifyCode} />
         ) : view === "thread" && activeConversationId ? (
           <>
             <button
@@ -138,6 +182,16 @@ export default function MessagePanel({
                 onConversationSelect(id);
                 onViewChange("thread");
               }}
+            />
+            <PushSettings
+              permission={pushPermission}
+              subscribed={pushSubscribed}
+              preferences={pushPreferences}
+              loading={pushLoading}
+              error={pushError}
+              onEnable={onEnablePush}
+              onDisable={onDisablePush}
+              onPreferencesChange={onPushPreferencesChange}
             />
           </>
         )}

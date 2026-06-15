@@ -140,17 +140,27 @@ export async function verifyAuthToken(token: string): Promise<JwtPayload | null>
   try {
     const { payload } = await jwtVerify(token, getSecret());
     const userId = payload.userId;
-    const authMethod = payload.authMethod;
-    const isAnonymous = payload.isAnonymous;
     if (typeof userId !== "string") return null;
-    if (authMethod !== "phone" && authMethod !== "email" && authMethod !== "anonymous") {
-      return null;
+
+    const authMethod = payload.authMethod;
+    if (authMethod === "phone" || authMethod === "email" || authMethod === "anonymous") {
+      return {
+        userId,
+        authMethod,
+        isAnonymous: Boolean(payload.isAnonymous),
+      };
     }
-    return {
-      userId,
-      authMethod,
-      isAnonymous: Boolean(isAnonymous),
-    };
+
+    // Legacy Twilio phone tokens: { userId, phone }
+    if (typeof payload.phone === "string") {
+      return {
+        userId,
+        authMethod: "phone",
+        isAnonymous: false,
+      };
+    }
+
+    return null;
   } catch {
     return null;
   }
@@ -229,6 +239,7 @@ export function serializeAuthUser(user: AuthUser) {
     statement: user.statement,
     expiresAt: user.expiresAt?.toISOString() ?? null,
     displayLabel: getDisplayLabel(user),
+    maskedPhone: user.phone ? maskPhone(user.phone) : null,
     profileComplete: isProfileComplete(user),
   };
 }

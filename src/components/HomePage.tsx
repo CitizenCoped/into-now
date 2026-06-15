@@ -93,8 +93,10 @@ export default function HomePage() {
     loading: authLoading,
     sendPhoneCode,
     sendEmailCode,
+    sendCode,
     verifyPhoneCode,
     verifyEmailCode,
+    verifyCode,
     updateProfile,
     logout,
   } = useAuth();
@@ -250,8 +252,8 @@ export default function HomePage() {
     async (participantId: string) => {
       setMessagesExpanded(true);
       if (!user) {
-        setProfileExpanded(true);
-        setShowSignup(true);
+        setMessagesView("inbox");
+        setActiveConversationId(null);
         return;
       }
 
@@ -342,12 +344,26 @@ export default function HomePage() {
           setHighlightMessageId(null);
         }}
         user={user}
+        authLoading={authLoading}
+        onSendCode={sendCode}
+        onVerifyCode={async (phone, code) => {
+          await verifyCode(phone, code);
+        }}
+        onLogout={logout}
         conversations={conversations}
         messages={messages}
         loadingInbox={loadingInbox}
         loadingThread={loadingThread}
         onSendMessage={handleSendMessage}
         unreadCount={conversations.length}
+        pushPermission={pushPermission}
+        pushSubscribed={pushSubscribed}
+        pushPreferences={pushPreferences}
+        pushLoading={pushLoading}
+        pushError={pushError}
+        onEnablePush={enableNotifications}
+        onDisablePush={disableNotifications}
+        onPushPreferencesChange={updatePreferences}
       />
       <PostPanel
         expanded={panelExpanded}
