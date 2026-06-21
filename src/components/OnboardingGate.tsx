@@ -1,10 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import type { AuthUser } from "@/hooks/useAuth";
 import AuthForm from "./AuthForm";
 import IntroVideo from "./IntroVideo";
-import ProfileEditor from "./ProfileEditor";
 
 type Props = {
   user: AuthUser | null;
@@ -14,19 +13,43 @@ type Props = {
   onSendEmailCode: (email: string) => Promise<string>;
   onVerifyPhoneCode: (phone: string, code: string, birthDate: string) => Promise<unknown>;
   onVerifyEmailCode: (email: string, code: string, birthDate: string) => Promise<unknown>;
-  onSaveProfile: (updates: { displayName: string; statement: string; photoUrl: string }) => Promise<unknown>;
   children: React.ReactNode;
 };
 
-type Step = "birthday" | "mode" | "auth" | "profile" | "ready";
+type Step = "birthday" | "mode" | "auth" | "ready";
+
+const MONTHS = [
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
+];
 
 function isAdult(birthDate: string) {
   const born = new Date(birthDate);
+  if (Number.isNaN(born.getTime())) return false;
   const today = new Date();
   let age = today.getFullYear() - born.getFullYear();
   const monthDiff = today.getMonth() - born.getMonth();
   if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < born.getDate())) age -= 1;
   return age >= 18;
+}
+
+function daysInMonth(year: number, month: number) {
+  if (!year || !month) return 31;
+  return new Date(year, month, 0).getDate();
+}
+
+function pad(value: number) {
+  return String(value).padStart(2, "0");
 }
 
 function OnboardingBackdrop() {
@@ -57,6 +80,9 @@ function OnboardingHero() {
   );
 }
 
+const selectClass =
+  "w-full appearance-none rounded-xl border border-white/10 bg-white/5 px-3 py-3.5 text-base text-white outline-none transition focus:border-[#22D3EE]/60 focus:bg-white/10";
+
 export default function OnboardingGate({
   user,
   loading,
@@ -65,14 +91,32 @@ export default function OnboardingGate({
   onSendEmailCode,
   onVerifyPhoneCode,
   onVerifyEmailCode,
-  onSaveProfile,
   children,
 }: Props) {
-  const [birthDate, setBirthDate] = useState(user?.birthDate ?? "");
+  const initialBirth = user?.birthDate ? user.birthDate.slice(0, 10).split("-") : null;
+  const [month, setMonth] = useState(initialBirth ? Number(initialBirth[1]) : 0);
+  const [day, setDay] = useState(initialBirth ? Number(initialBirth[2]) : 0);
+  const [year, setYear] = useState(initialBirth ? Number(initialBirth[0]) : 0);
   const [birthdayConfirmed, setBirthdayConfirmed] = useState(Boolean(user?.birthDate));
   const [localStep, setLocalStep] = useState<"auth" | null>(null);
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
+
+  const currentYear = new Date().getFullYear();
+  const years = useMemo(() => {
+    const list: number[] = [];
+    for (let y = currentYear - 18; y >= currentYear - 100; y -= 1) list.push(y);
+    return list;
+  }, [currentYear]);
+
+  const dayCount = daysInMonth(year, month);
+  const days = useMemo(
+    () => Array.from({ length: dayCount }, (_, i) => i + 1),
+    [dayCount]
+  );
+
+  const birthDate =
+    month && day && year ? `${year}-${pad(month)}-${pad(Math.min(day, dayCount))}` : "";
 
   if (loading) {
     return (
@@ -86,18 +130,21 @@ export default function OnboardingGate({
     );
   }
 
-  if (user?.ageVerifiedAt && user.profileComplete) {
+  if (user?.ageVerifiedAt) {
     return <>{children}</>;
   }
 
   let step: Step = "birthday";
-  if (user?.ageVerifiedAt && !user.profileComplete) step = "profile";
-  else if (localStep === "auth") step = "auth";
+  if (localStep === "auth") step = "auth";
   else if (birthdayConfirmed && birthDate && isAdult(birthDate) && !user) step = "mode";
 
-  async function handleBirthdaySubmit(e: React.FormEvent) {
+  function handleBirthdaySubmit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
+    if (!birthDate) {
+      setError("Please select your full birthday.");
+      return;
+    }
     if (!isAdult(birthDate)) {
       setError("You must be 18 or older to use Into Now.");
       return;
@@ -130,23 +177,71 @@ export default function OnboardingGate({
               {step === "birthday" && "When is your birthday?"}
               {step === "mode" && "How do you want to join?"}
               {step === "auth" && "Create your free account"}
-              {step === "profile" && "Set up your profile"}
             </p>
 
             {step === "birthday" && (
               <form onSubmit={handleBirthdaySubmit} className="mt-6 space-y-4">
-                <input
-                  type="date"
-                  value={birthDate}
-                  onChange={(e) => setBirthDate(e.target.value)}
-                  className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white outline-none focus:border-[#22D3EE]/50"
-                  required
-                />
+                <p className="text-center text-xs text-white/40">
+                  You must be 18 or older to join.
+                </p>
+                <div className="grid grid-cols-[1.4fr_0.8fr_1fr] gap-2">
+                  <div className="relative">
+                    <select
+                      aria-label="Birth month"
+                      value={month}
+                      onChange={(e) => setMonth(Number(e.target.value))}
+                      className={selectClass}
+                    >
+                      <option value={0} disabled>
+                        Month
+                      </option>
+                      {MONTHS.map((name, i) => (
+                        <option key={name} value={i + 1} className="bg-[#0f0d18]">
+                          {name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="relative">
+                    <select
+                      aria-label="Birth day"
+                      value={day}
+                      onChange={(e) => setDay(Number(e.target.value))}
+                      className={selectClass}
+                    >
+                      <option value={0} disabled>
+                        Day
+                      </option>
+                      {days.map((d) => (
+                        <option key={d} value={d} className="bg-[#0f0d18]">
+                          {d}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="relative">
+                    <select
+                      aria-label="Birth year"
+                      value={year}
+                      onChange={(e) => setYear(Number(e.target.value))}
+                      className={selectClass}
+                    >
+                      <option value={0} disabled>
+                        Year
+                      </option>
+                      {years.map((y) => (
+                        <option key={y} value={y} className="bg-[#0f0d18]">
+                          {y}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
                 {error && <p className="text-sm text-[#FF4D6D]">{error}</p>}
                 <button
                   type="submit"
                   disabled={!birthDate}
-                  className="w-full rounded-lg bg-gradient-to-r from-[#22D3EE] to-[#38BDF8] py-2.5 text-sm font-semibold text-[#06040c] disabled:opacity-50"
+                  className="w-full rounded-xl bg-gradient-to-r from-[#22D3EE] to-[#38BDF8] py-3.5 text-base font-semibold text-[#06040c] transition active:scale-[0.99] disabled:opacity-50"
                 >
                   Continue
                 </button>
@@ -185,12 +280,6 @@ export default function OnboardingGate({
                   onVerifyPhoneCode={(phone, code) => onVerifyPhoneCode(phone, code, birthDate)}
                   onVerifyEmailCode={(email, code) => onVerifyEmailCode(email, code, birthDate)}
                 />
-              </div>
-            )}
-
-            {step === "profile" && user && (
-              <div className="mt-4">
-                <ProfileEditor user={user} onSave={onSaveProfile} />
               </div>
             )}
           </div>

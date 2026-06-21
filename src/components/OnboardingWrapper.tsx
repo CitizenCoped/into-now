@@ -16,7 +16,6 @@ export default function OnboardingWrapper({ children }: Props) {
     sendEmailCode,
     verifyPhoneCode,
     verifyEmailCode,
-    updateProfile,
   } = useAuth();
 
   return (
@@ -30,7 +29,6 @@ export default function OnboardingWrapper({ children }: Props) {
       onSendEmailCode={sendEmailCode}
       onVerifyPhoneCode={verifyPhoneCode}
       onVerifyEmailCode={verifyEmailCode}
-      onSaveProfile={updateProfile}
     >
       {children}
     </OnboardingGate>
