@@ -73,17 +73,7 @@ export function maskEmail(email: string): string {
   return `${visible}•••@${domain}`;
 }
 
-export function isAdult(birthDate: string): boolean {
-  const born = new Date(birthDate);
-  if (Number.isNaN(born.getTime())) return false;
-  const today = new Date();
-  let age = today.getFullYear() - born.getFullYear();
-  const monthDiff = today.getMonth() - born.getMonth();
-  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < born.getDate())) {
-    age -= 1;
-  }
-  return age >= 18;
-}
+export { isAdult } from "@/lib/geo";
 
 export function getDisplayLabel(user: {
   displayName?: string | null;

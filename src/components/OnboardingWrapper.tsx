@@ -22,9 +22,7 @@ export default function OnboardingWrapper({ children }: Props) {
     <OnboardingGate
       user={user}
       loading={loading}
-      onCreateAnonymous={async (birthDate) => {
-        await createAnonymous(birthDate);
-      }}
+      onCreateAnonymous={createAnonymous}
       onSendPhoneCode={sendPhoneCode}
       onSendEmailCode={sendEmailCode}
       onVerifyPhoneCode={verifyPhoneCode}

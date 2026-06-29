@@ -38,3 +38,9 @@ export function ageFromBirthDate(birthDate: string): number {
   }
   return age;
 }
+
+export function isAdult(birthDate: string): boolean {
+  const born = new Date(birthDate);
+  if (Number.isNaN(born.getTime())) return false;
+  return ageFromBirthDate(birthDate) >= 18;
+}

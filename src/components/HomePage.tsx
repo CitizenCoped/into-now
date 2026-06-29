@@ -101,7 +101,7 @@ export default function HomePage() {
     logout,
   } = useAuth();
 
-  const mapReady = Boolean(user?.ageVerifiedAt && user.profileComplete);
+  const mapReady = Boolean(user?.ageVerifiedAt);
   const { litUsers, unlitUsers, myLocation, connected, sharing } = useLivePresence(
     mapReady,
     user?.id ?? null

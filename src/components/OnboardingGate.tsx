@@ -1,14 +1,15 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import type { AuthUser } from "@/hooks/useAuth";
+import { isAdult } from "@/lib/geo";
 import AuthForm from "./AuthForm";
 import IntroVideo from "./IntroVideo";
 
 type Props = {
   user: AuthUser | null;
   loading: boolean;
-  onCreateAnonymous: (birthDate: string) => Promise<void>;
+  onCreateAnonymous: (birthDate: string) => Promise<unknown>;
   onSendPhoneCode: (phone: string) => Promise<string>;
   onSendEmailCode: (email: string) => Promise<string>;
   onVerifyPhoneCode: (phone: string, code: string, birthDate: string) => Promise<unknown>;
@@ -16,7 +17,7 @@ type Props = {
   children: React.ReactNode;
 };
 
-type Step = "birthday" | "mode" | "auth" | "ready";
+type Step = "birthday" | "mode" | "auth";
 
 const MONTHS = [
   "January",
@@ -32,16 +33,6 @@ const MONTHS = [
   "November",
   "December",
 ];
-
-function isAdult(birthDate: string) {
-  const born = new Date(birthDate);
-  if (Number.isNaN(born.getTime())) return false;
-  const today = new Date();
-  let age = today.getFullYear() - born.getFullYear();
-  const monthDiff = today.getMonth() - born.getMonth();
-  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < born.getDate())) age -= 1;
-  return age >= 18;
-}
 
 function daysInMonth(year: number, month: number) {
   if (!year || !month) return 31;
@@ -97,26 +88,28 @@ export default function OnboardingGate({
   const [month, setMonth] = useState(initialBirth ? Number(initialBirth[1]) : 0);
   const [day, setDay] = useState(initialBirth ? Number(initialBirth[2]) : 0);
   const [year, setYear] = useState(initialBirth ? Number(initialBirth[0]) : 0);
-  const [birthdayConfirmed, setBirthdayConfirmed] = useState(Boolean(user?.birthDate));
-  const [localStep, setLocalStep] = useState<"auth" | null>(null);
+  const [localStep, setLocalStep] = useState<Step>("birthday");
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
   const currentYear = new Date().getFullYear();
-  const years = useMemo(() => {
-    const list: number[] = [];
-    for (let y = currentYear - 18; y >= currentYear - 100; y -= 1) list.push(y);
-    return list;
-  }, [currentYear]);
+  const years: number[] = [];
+  for (let y = currentYear - 18; y >= currentYear - 100; y -= 1) years.push(y);
 
   const dayCount = daysInMonth(year, month);
-  const days = useMemo(
-    () => Array.from({ length: dayCount }, (_, i) => i + 1),
-    [dayCount]
-  );
+  const days = Array.from({ length: dayCount }, (_, i) => i + 1);
 
-  const birthDate =
-    month && day && year ? `${year}-${pad(month)}-${pad(Math.min(day, dayCount))}` : "";
+  const birthDate = month && day && year ? `${year}-${pad(month)}-${pad(day)}` : "";
+
+  function changeMonth(value: number) {
+    setMonth(value);
+    setDay((d) => Math.min(d, daysInMonth(year, value)));
+  }
+
+  function changeYear(value: number) {
+    setYear(value);
+    setDay((d) => Math.min(d, daysInMonth(value, month)));
+  }
 
   if (loading) {
     return (
@@ -134,9 +127,7 @@ export default function OnboardingGate({
     return <>{children}</>;
   }
 
-  let step: Step = "birthday";
-  if (localStep === "auth") step = "auth";
-  else if (birthdayConfirmed && birthDate && isAdult(birthDate) && !user) step = "mode";
+  const step = localStep;
 
   function handleBirthdaySubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -149,7 +140,7 @@ export default function OnboardingGate({
       setError("You must be 18 or older to use Into Now.");
       return;
     }
-    setBirthdayConfirmed(true);
+    setLocalStep("mode");
   }
 
   async function handleAnonymous() {
@@ -185,57 +176,51 @@ export default function OnboardingGate({
                   You must be 18 or older to join.
                 </p>
                 <div className="grid grid-cols-[1.4fr_0.8fr_1fr] gap-2">
-                  <div className="relative">
-                    <select
-                      aria-label="Birth month"
-                      value={month}
-                      onChange={(e) => setMonth(Number(e.target.value))}
-                      className={selectClass}
-                    >
-                      <option value={0} disabled>
-                        Month
+                  <select
+                    aria-label="Birth month"
+                    value={month}
+                    onChange={(e) => changeMonth(Number(e.target.value))}
+                    className={selectClass}
+                  >
+                    <option value={0} disabled>
+                      Month
+                    </option>
+                    {MONTHS.map((name, i) => (
+                      <option key={name} value={i + 1} className="bg-[#0f0d18]">
+                        {name}
                       </option>
-                      {MONTHS.map((name, i) => (
-                        <option key={name} value={i + 1} className="bg-[#0f0d18]">
-                          {name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <div className="relative">
-                    <select
-                      aria-label="Birth day"
-                      value={day}
-                      onChange={(e) => setDay(Number(e.target.value))}
-                      className={selectClass}
-                    >
-                      <option value={0} disabled>
-                        Day
+                    ))}
+                  </select>
+                  <select
+                    aria-label="Birth day"
+                    value={day}
+                    onChange={(e) => setDay(Number(e.target.value))}
+                    className={selectClass}
+                  >
+                    <option value={0} disabled>
+                      Day
+                    </option>
+                    {days.map((d) => (
+                      <option key={d} value={d} className="bg-[#0f0d18]">
+                        {d}
                       </option>
-                      {days.map((d) => (
-                        <option key={d} value={d} className="bg-[#0f0d18]">
-                          {d}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <div className="relative">
-                    <select
-                      aria-label="Birth year"
-                      value={year}
-                      onChange={(e) => setYear(Number(e.target.value))}
-                      className={selectClass}
-                    >
-                      <option value={0} disabled>
-                        Year
+                    ))}
+                  </select>
+                  <select
+                    aria-label="Birth year"
+                    value={year}
+                    onChange={(e) => changeYear(Number(e.target.value))}
+                    className={selectClass}
+                  >
+                    <option value={0} disabled>
+                      Year
+                    </option>
+                    {years.map((y) => (
+                      <option key={y} value={y} className="bg-[#0f0d18]">
+                        {y}
                       </option>
-                      {years.map((y) => (
-                        <option key={y} value={y} className="bg-[#0f0d18]">
-                          {y}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+                    ))}
+                  </select>
                 </div>
                 {error && <p className="text-sm text-[#FF4D6D]">{error}</p>}
                 <button
