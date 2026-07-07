@@ -101,11 +101,11 @@ export default function HomePage() {
     logout,
   } = useAuth();
 
-  const mapReady = Boolean(user?.ageVerifiedAt);
-  const { litUsers, unlitUsers, myLocation, connected, sharing } = useLivePresence(
-    mapReady,
-    user?.id ?? null
-  );
+  // Presence is on for every signed-in user — anonymous and verified alike —
+  // with identical location verbosity.
+  const presenceReady = Boolean(user);
+  const { litUsers, unlitUsers, myLocation, connected, sharing, locationDenied } =
+    useLivePresence(presenceReady, user?.id ?? null);
 
   const {
     conversations,
@@ -279,6 +279,12 @@ export default function HomePage() {
   return (
     <main className="relative h-screen w-full overflow-hidden bg-[#06040c]">
       <InstallPrompt />
+      {presenceReady && locationDenied && (
+        <div className="absolute left-1/2 top-4 z-30 w-[calc(100%-2rem)] max-w-md -translate-x-1/2 rounded-xl border border-[#FF4D6D]/40 bg-[#170a12]/90 px-4 py-2.5 text-center text-xs text-white/80 shadow-lg backdrop-blur">
+          <span className="font-semibold text-[#FF4D6D]">Your light is off.</span>{" "}
+          Allow location access in your browser settings to appear live on the map.
+        </div>
+      )}
       <MapView
         posts={filteredPosts}
         litUsers={filteredLitUsers}

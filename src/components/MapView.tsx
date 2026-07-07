@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Map, { Marker, Popup, NavigationControl } from "react-map-gl/maplibre";
 import type { MapUser, Post } from "@/lib/schema";
 import { getCategoryColor } from "@/lib/categories";
+import AnimatedMarker from "./AnimatedMarker";
 import LiveUserMarker from "./LiveUserMarker";
 import ProfileAvatar from "./ProfileAvatar";
 import { BASE_MAP_STYLE, applyIntoNowMapStyle } from "@/lib/mapStyle";
@@ -77,9 +78,9 @@ export default function MapView({
       >
         <NavigationControl position="bottom-right" showCompass={false} />
         {myLocation && (
-          <Marker latitude={myLocation.lat} longitude={myLocation.lng} anchor="center">
+          <AnimatedMarker latitude={myLocation.lat} longitude={myLocation.lng} anchor="center">
             <LiveUserMarker isSelf isLit />
-          </Marker>
+          </AnimatedMarker>
         )}
         {unlitUsers.map((user) => (
           <Marker
@@ -101,8 +102,8 @@ export default function MapView({
           </Marker>
         ))}
         {litUsers.map((user) => (
-          <Marker
-            key={`lit-${user.id}`}
+          <AnimatedMarker
+            key={`lit-${user.userId}`}
             latitude={user.lat}
             longitude={user.lng}
             anchor="center"
@@ -117,7 +118,7 @@ export default function MapView({
               photoUrl={user.photoUrl}
               displayName={user.displayName}
             />
-          </Marker>
+          </AnimatedMarker>
         ))}
         {posts.map((post) => {
           const color = getCategoryColor(post.category);

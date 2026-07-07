@@ -16,9 +16,7 @@ export function getPusherServer() {
   return pusherServer;
 }
 
-export const PRESENCE_CHANNEL = "presence-into-now";
-export const PRESENCE_EVENT = "presence-update";
-export const PRESENCE_TTL_MS = 45_000;
+export { PRESENCE_CHANNEL, PRESENCE_EVENT, PRESENCE_TTL_MS } from "./presenceConfig";
 
 export const MESSAGE_EVENT = "message-new";
 

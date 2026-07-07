@@ -8,9 +8,10 @@ const OG_IMAGE =
 const PWA_ICON =
   "https://res.cloudinary.com/dq2wjozdk/image/upload/w_192,h_192,c_fill/IMG_1255_eg2rnc.jpg";
 
-const APP_URL =
-  process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") ??
-  "https://into-now.vercel.app";
+const APP_URL = (process.env.NEXT_PUBLIC_APP_URL || "https://into-now.vercel.app").replace(
+  /\/$/,
+  ""
+);
 
 export const metadata: Metadata = {
   metadataBase: new URL(APP_URL),

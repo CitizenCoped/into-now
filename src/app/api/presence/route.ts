@@ -8,6 +8,7 @@ import {
   PRESENCE_EVENT,
   getPusherServer,
 } from "@/lib/pusher";
+import { SERVER_MIN_UPDATE_MS } from "@/lib/presenceConfig";
 import { liveSessions, users } from "@/lib/schema";
 import { eq, sql } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
@@ -59,12 +60,19 @@ export async function POST(request: NextRequest) {
     });
   } else {
     const [existing] = await db
-      .select({ id: liveSessions.id })
+      .select({ id: liveSessions.id, lastSeenAt: liveSessions.lastSeenAt })
       .from(liveSessions)
       .where(eq(liveSessions.id, sessionId))
       .limit(1);
 
     isNewSession = !existing;
+
+    if (
+      existing &&
+      now.getTime() - existing.lastSeenAt.getTime() < SERVER_MIN_UPDATE_MS
+    ) {
+      return NextResponse.json({ ok: true, coalesced: true });
+    }
 
     await db
       .insert(liveSessions)

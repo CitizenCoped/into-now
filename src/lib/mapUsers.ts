@@ -58,7 +58,7 @@ export async function fetchMapUsers(): Promise<{ lit: MapUser[]; unlit: MapUser[
   const lit: MapUser[] = litRows
     .filter((row) => row.userId)
     .map((row) => ({
-      id: row.sessionId,
+      id: row.userId!,
       userId: row.userId!,
       lat: row.lat,
       lng: row.lng,
