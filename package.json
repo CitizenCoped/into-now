@@ -13,6 +13,7 @@
   "dependencies": {
     "@neondatabase/serverless": "^1.1.0",
     "@serwist/next": "^9.5.11",
+    "@vercel/analytics": "^2.0.1",
     "@vercel/blob": "^2.4.0",
     "ai": "^6.0.205",
     "drizzle-orm": "^0.45.2",
