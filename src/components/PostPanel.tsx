@@ -2,6 +2,7 @@
 
 import type { Post } from "@/lib/schema";
 import { getCategoryColor } from "@/lib/categories";
+import CornerControl from "./CornerControl";
 import PostCreateForm from "./PostCreateForm";
 
 type PanelView = "list" | "create";
@@ -56,26 +57,45 @@ export default function PostPanel({
 
   if (!expanded) {
     return (
-      <button
-        type="button"
+      <CornerControl
+        position="bottom-right"
         onClick={() => onExpandedChange(true)}
-        className={`${panelPosition} flex items-center gap-2 rounded-full border border-white/10 bg-[#0f0d18]/90 px-4 py-2.5 shadow-2xl backdrop-blur-xl transition hover:border-[#FF4D6D]/40 sm:left-auto`}
-        aria-label="Open posts panel"
-      >
-        <img src="/logo.svg" alt="" className="h-5 w-auto" />
-        <span
-          className={`h-2 w-2 rounded-full ${connected ? "bg-[#22FF66]" : "bg-white/30"}`}
-          style={connected ? { boxShadow: "0 0 6px #22FF66" } : undefined}
-        />
-        {liveCount > 0 && (
-          <span className="rounded-full bg-[#FF4D6D]/20 px-2 py-0.5 text-xs font-medium text-[#FF4D6D]">
-            {liveCount}
-          </span>
-        )}
-        <span className="text-white/50" aria-hidden>
-          ▲
-        </span>
-      </button>
+        ariaLabel="Open posts panel"
+        accentColor="#FF4D6D"
+        icon={
+          <svg
+            width="22"
+            height="22"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={1.8}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden
+          >
+            <path d="M16.5 19v-1.2a3.3 3.3 0 0 0-3.3-3.3H6.8a3.3 3.3 0 0 0-3.3 3.3V19" />
+            <circle cx="9.7" cy="8.3" r="2.8" />
+            <path d="M20.5 19v-1.2a2.8 2.8 0 0 0-2-2.7" />
+            <path d="M14.9 5.2a2.8 2.8 0 0 1 0 5.5" />
+          </svg>
+        }
+        statusDot={
+          <span
+            className={`absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-[#0f0d18] ${
+              connected ? "bg-[#22FF66]" : "bg-white/30"
+            }`}
+            style={connected ? { boxShadow: "0 0 6px #22FF66" } : undefined}
+          />
+        }
+        badge={
+          liveCount > 0 ? (
+            <span className="absolute -top-1.5 -right-1.5 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-[#FF4D6D] px-1 text-[10px] font-bold text-white">
+              {liveCount > 99 ? "99+" : liveCount}
+            </span>
+          ) : undefined
+        }
+      />
     );
   }
 
@@ -90,7 +110,7 @@ export default function PostPanel({
     >
       <header className="flex shrink-0 items-center justify-between border-b border-white/5 px-4 py-3">
         <div className="min-w-0">
-          <img src="/logo.svg" alt="into.now" className="h-6 w-auto" />
+          <p className="text-sm font-semibold text-[#FF4D6D]">Posts</p>
           <p className="mt-0.5 text-[11px] text-white/40">
             what are you into? <span className="text-[#FF4D6D]">NOW?</span>
           </p>

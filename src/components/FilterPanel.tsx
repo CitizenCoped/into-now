@@ -2,6 +2,7 @@
 
 import { CATEGORIES } from "@/lib/categories";
 import type { AuthUser } from "@/hooks/useAuth";
+import CornerControl from "./CornerControl";
 
 export type UserFilters = {
   minAge: number;
@@ -35,17 +36,32 @@ export default function FilterPanel({
 
   if (!expanded) {
     return (
-      <button
-        type="button"
+      <CornerControl
+        position="top-left"
         onClick={() => onExpandedChange(true)}
-        className={`${panelPosition} flex items-center gap-2 rounded-full border border-white/10 bg-[#0f0d18]/90 px-4 py-2.5 shadow-2xl backdrop-blur-xl transition hover:border-[#FF4D6D]/40`}
-        aria-label="Open filters"
-      >
-        <span className="text-sm font-semibold text-[#FF4D6D]">Filters</span>
-        <span className="text-white/50" aria-hidden>
-          ▼
-        </span>
-      </button>
+        ariaLabel="Open filters"
+        accentColor="#FF4D6D"
+        icon={
+          <svg
+            width="22"
+            height="22"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={1.8}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden
+          >
+            <line x1="4" y1="6" x2="20" y2="6" />
+            <circle cx="9" cy="6" r="2" fill="#0f0d18" />
+            <line x1="4" y1="12" x2="20" y2="12" />
+            <circle cx="15" cy="12" r="2" fill="#0f0d18" />
+            <line x1="4" y1="18" x2="20" y2="18" />
+            <circle cx="11" cy="18" r="2" fill="#0f0d18" />
+          </svg>
+        }
+      />
     );
   }
 

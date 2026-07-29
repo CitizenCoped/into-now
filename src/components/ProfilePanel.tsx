@@ -4,6 +4,7 @@ import { useState } from "react";
 import type { AuthUser } from "@/hooks/useAuth";
 import type { PushPreferences } from "@/hooks/usePushNotifications";
 import AuthForm from "./AuthForm";
+import CornerControl from "./CornerControl";
 import ProfileAvatar from "./ProfileAvatar";
 import ProfileEditor from "./ProfileEditor";
 import PushSettings from "./PushSettings";
@@ -62,21 +63,37 @@ export default function ProfilePanel({
 
   if (!expanded) {
     return (
-      <button
-        type="button"
+      <CornerControl
+        position="top-right"
         onClick={() => onExpandedChange(true)}
-        className={`${panelPosition} flex items-center gap-2 rounded-full border border-white/10 bg-[#0f0d18]/90 px-3 py-2 shadow-2xl backdrop-blur-xl transition hover:border-[#22D3EE]/40`}
-        aria-label="Open profile"
-      >
-        {user ? (
-          <ProfileAvatar photoUrl={user.photoUrl} displayName={user.displayName} size="sm" />
-        ) : (
-          <span className="text-sm font-semibold text-[#22D3EE]">Profile</span>
-        )}
-        <span className="text-white/50" aria-hidden>
-          ▼
-        </span>
-      </button>
+        ariaLabel="Open profile"
+        accentColor="#22D3EE"
+        icon={
+          user ? (
+            <ProfileAvatar
+              photoUrl={user.photoUrl}
+              displayName={user.displayName}
+              userId={user.id}
+              size="md"
+            />
+          ) : (
+            <svg
+              width="22"
+              height="22"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={1.8}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden
+            >
+              <circle cx="12" cy="8" r="4" />
+              <path d="M4 20c0-4 3.5-7 8-7s8 3 8 7" />
+            </svg>
+          )
+        }
+      />
     );
   }
 
@@ -121,7 +138,12 @@ export default function ProfilePanel({
         ) : (
           <div className="space-y-4">
             <div className="flex items-center gap-3">
-              <ProfileAvatar photoUrl={user.photoUrl} displayName={user.displayName} size="lg" />
+              <ProfileAvatar
+                photoUrl={user.photoUrl}
+                displayName={user.displayName}
+                userId={user.id}
+                size="lg"
+              />
               <div className="min-w-0">
                 <p className="truncate font-semibold text-white">{user.displayName ?? user.displayLabel}</p>
                 <p className="text-xs text-white/40">

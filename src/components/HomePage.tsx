@@ -278,9 +278,27 @@ export default function HomePage() {
 
   return (
     <main className="relative h-screen w-full overflow-hidden bg-[#06040c]">
-      <InstallPrompt />
+      {/*
+        Fixed top-center wordmark. The wrapper below establishes a new
+        containing block (via `transform`) for InstallPrompt's own
+        `position: fixed` banners, with `paddingTop` pushing them down so
+        they stack under the logo instead of covering it.
+      */}
+      <div className="pointer-events-none fixed inset-0 z-20 flex justify-center">
+        <img
+          src="/logo.svg"
+          alt="into.now"
+          className="mt-[max(0.75rem,env(safe-area-inset-top))] h-7 w-auto drop-shadow-[0_2px_8px_rgba(0,0,0,0.6)] sm:h-8"
+        />
+      </div>
+      <div
+        className="intonow-install-anchor pointer-events-none relative z-30"
+        style={{ transform: "translateZ(0)", paddingTop: "3.25rem" }}
+      >
+        <InstallPrompt />
+      </div>
       {presenceReady && locationDenied && (
-        <div className="absolute left-1/2 top-4 z-30 w-[calc(100%-2rem)] max-w-md -translate-x-1/2 rounded-xl border border-[#FF4D6D]/40 bg-[#170a12]/90 px-4 py-2.5 text-center text-xs text-white/80 shadow-lg backdrop-blur">
+        <div className="absolute left-1/2 top-[calc(max(1rem,env(safe-area-inset-top))+3rem)] z-30 w-[calc(100%-2rem)] max-w-md -translate-x-1/2 rounded-xl border border-[#FF4D6D]/40 bg-[#170a12]/90 px-4 py-2.5 text-center text-xs text-white/80 shadow-lg backdrop-blur">
           <span className="font-semibold text-[#FF4D6D]">Your light is off.</span>{" "}
           Allow location access in your browser settings to appear live on the map.
         </div>
@@ -295,6 +313,8 @@ export default function HomePage() {
         selectedId={selectedId}
         onSelect={setSelectedId}
         currentUserId={user?.id ?? null}
+        currentUserPhotoUrl={user?.photoUrl ?? null}
+        currentUserDisplayName={user?.displayName ?? null}
         onMessageUser={startConversation}
       />
       <FilterPanel
@@ -361,7 +381,7 @@ export default function HomePage() {
         loadingInbox={loadingInbox}
         loadingThread={loadingThread}
         onSendMessage={handleSendMessage}
-        unreadCount={conversations.length}
+        unreadCount={conversations.reduce((sum, convo) => sum + convo.unreadCount, 0)}
         pushPermission={pushPermission}
         pushSubscribed={pushSubscribed}
         pushPreferences={pushPreferences}

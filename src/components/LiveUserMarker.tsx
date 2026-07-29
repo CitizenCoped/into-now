@@ -7,36 +7,46 @@ type Props = {
   isLit?: boolean;
   photoUrl?: string | null;
   displayName?: string | null;
+  userId?: string | null;
 };
+
+const GLOW_ORANGE = "#FF7A1A";
 
 export default function LiveUserMarker({
   isSelf,
   isLit = true,
   photoUrl,
   displayName,
+  userId,
 }: Props) {
-  if (photoUrl || displayName) {
-    return (
-      <div className={`relative ${isLit ? "" : "opacity-50 grayscale"}`}>
-        {isLit && (
-          <span className="absolute -inset-1 inline-flex animate-ping rounded-full bg-[#22FF66] opacity-40" />
-        )}
-        <ProfileAvatar photoUrl={photoUrl} displayName={displayName} size="sm" />
-      </div>
-    );
-  }
-
   return (
-    <div className={`relative flex h-6 w-6 items-center justify-center ${isLit ? "" : "opacity-40"}`}>
+    <div className={`relative flex items-center justify-center ${isLit ? "" : "opacity-50 grayscale"}`}>
       {isLit && (
-        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#22FF66] opacity-50" />
+        <>
+          <span
+            className="pointer-events-none absolute -inset-2.5 animate-pulse rounded-full opacity-70 blur-md"
+            style={{ backgroundColor: GLOW_ORANGE }}
+          />
+          <span
+            className="pointer-events-none absolute -inset-1 rounded-full"
+            style={{
+              boxShadow: `0 0 0 2px rgba(255,122,26,0.55), 0 0 14px 4px rgba(255,122,26,0.55), 0 0 26px 10px rgba(255,107,53,0.3)`,
+            }}
+          />
+        </>
       )}
-      <span
-        className={`relative h-4 w-4 rounded-full border-2 border-white ${
-          isSelf ? "bg-[#22FF66]" : isLit ? "bg-[#10B981]" : "bg-white/30"
-        }`}
-        style={isLit ? { boxShadow: "0 0 12px #22FF66" } : undefined}
+      <ProfileAvatar
+        photoUrl={photoUrl}
+        displayName={displayName}
+        userId={userId}
+        size="sm"
       />
+      {isSelf && (
+        <span
+          className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-[#0f0d18]"
+          style={{ backgroundColor: GLOW_ORANGE }}
+        />
+      )}
     </div>
   );
 }

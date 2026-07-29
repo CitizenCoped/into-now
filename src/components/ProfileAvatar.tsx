@@ -1,8 +1,11 @@
 "use client";
 
+import PunkFace, { getPunkFaceVariant } from "./PunkFace";
+
 type Props = {
   photoUrl?: string | null;
   displayName?: string | null;
+  userId?: string | null;
   size?: "sm" | "md" | "lg";
 };
 
@@ -12,9 +15,7 @@ const sizes = {
   lg: "h-16 w-16 text-lg",
 };
 
-export default function ProfileAvatar({ photoUrl, displayName, size = "md" }: Props) {
-  const initials = (displayName?.trim()?.[0] ?? "?").toUpperCase();
-
+export default function ProfileAvatar({ photoUrl, displayName, userId, size = "md" }: Props) {
   if (photoUrl) {
     return (
       <img
@@ -25,11 +26,12 @@ export default function ProfileAvatar({ photoUrl, displayName, size = "md" }: Pr
     );
   }
 
+  const variant = getPunkFaceVariant(userId ?? displayName);
+
   return (
-    <div
-      className={`${sizes[size]} flex shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/10 font-semibold text-white`}
-    >
-      {initials}
-    </div>
+    <PunkFace
+      variant={variant}
+      className={`${sizes[size]} shrink-0 rounded-full border border-white/10`}
+    />
   );
 }

@@ -12,6 +12,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 export type ConversationSummary = {
   id: string;
   updatedAt: string;
+  unreadCount: number;
   otherUser: {
     id: string;
     displayName: string | null;
@@ -59,20 +60,36 @@ export function useMessages(userId: string | null, activeConversationId: string 
     }
   }, [userId]);
 
-  const fetchThread = useCallback(async (conversationId: string) => {
-    setLoadingThread(true);
-    try {
-      const res = await fetch(`/api/conversations/${conversationId}/messages`);
-      if (!res.ok) {
-        setMessages([]);
-        return;
+  const markRead = useCallback(
+    async (conversationId: string) => {
+      try {
+        await fetch(`/api/conversations/${conversationId}/read`, { method: "POST" });
+      } catch {
+        // best-effort; inbox will just show stale unread count
       }
-      const data = await res.json();
-      setMessages(data.messages ?? []);
-    } finally {
-      setLoadingThread(false);
-    }
-  }, []);
+      fetchInbox();
+    },
+    [fetchInbox]
+  );
+
+  const fetchThread = useCallback(
+    async (conversationId: string) => {
+      setLoadingThread(true);
+      try {
+        const res = await fetch(`/api/conversations/${conversationId}/messages`);
+        if (!res.ok) {
+          setMessages([]);
+          return;
+        }
+        const data = await res.json();
+        setMessages(data.messages ?? []);
+        markRead(conversationId);
+      } finally {
+        setLoadingThread(false);
+      }
+    },
+    [markRead]
+  );
 
   const openConversationWith = useCallback(
     async (participantId: string) => {

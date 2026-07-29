@@ -100,6 +100,7 @@ export default function ConversationThread({
         <ProfileAvatar
           photoUrl={otherUser?.photoUrl}
           displayName={otherUser?.displayName}
+          userId={otherUser?.id}
           size="sm"
         />
         <span

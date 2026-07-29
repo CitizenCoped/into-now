@@ -6,6 +6,7 @@ import type { PushPreferences } from "@/hooks/usePushNotifications";
 import type { Message } from "@/lib/schema";
 import ConversationList from "./ConversationList";
 import ConversationThread from "./ConversationThread";
+import CornerControl from "./CornerControl";
 import PhoneAuthForm from "./PhoneAuthForm";
 import PushSettings from "./PushSettings";
 
@@ -83,22 +84,34 @@ export default function MessagePanel({
 
   if (!expanded) {
     return (
-      <button
-        type="button"
+      <CornerControl
+        position="bottom-left"
         onClick={() => onExpandedChange(true)}
-        className={`${panelPosition} flex items-center gap-2 rounded-full border border-white/10 bg-[#0f0d18]/90 px-4 py-2.5 shadow-2xl backdrop-blur-xl transition hover:border-[#22D3EE]/40`}
-        aria-label="Open messages panel"
-      >
-        <span className="text-sm font-semibold text-[#22D3EE]">Messages</span>
-        {unreadCount > 0 && (
-          <span className="rounded-full bg-[#22D3EE]/20 px-2 py-0.5 text-xs font-medium text-[#22D3EE]">
-            {unreadCount}
-          </span>
-        )}
-        <span className="text-white/50" aria-hidden>
-          ▲
-        </span>
-      </button>
+        ariaLabel="Open messages panel"
+        accentColor="#22D3EE"
+        icon={
+          <svg
+            width="22"
+            height="22"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={1.8}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden
+          >
+            <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
+          </svg>
+        }
+        badge={
+          unreadCount > 0 ? (
+            <span className="absolute -top-1.5 -right-1.5 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-[#22D3EE] px-1 text-[10px] font-bold text-[#06040c]">
+              {unreadCount > 99 ? "99+" : unreadCount}
+            </span>
+          ) : undefined
+        }
+      />
     );
   }
 
@@ -143,7 +156,11 @@ export default function MessagePanel({
         </div>
       </header>
 
-      <div className="flex min-h-0 flex-1 flex-col overflow-hidden p-4 pt-3">
+      <div
+        className={`flex min-h-0 flex-1 flex-col overflow-hidden ${
+          view === "inbox" ? "p-3 pt-2" : "p-4 pt-3"
+        }`}
+      >
         {authLoading ? (
           <p className="py-6 text-center text-sm text-white/30">Checking session...</p>
         ) : !user ? (
@@ -172,7 +189,7 @@ export default function MessagePanel({
           </>
         ) : (
           <>
-            <h3 className="mb-2 shrink-0 text-xs font-semibold uppercase tracking-wider text-white/40">
+            <h3 className="mb-1.5 shrink-0 text-xs font-semibold uppercase tracking-wider text-white/40">
               Conversations
             </h3>
             <ConversationList

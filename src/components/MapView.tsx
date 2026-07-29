@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Map, { Marker, Popup, NavigationControl } from "react-map-gl/maplibre";
 import type { MapUser, Post } from "@/lib/schema";
 import { getCategoryColor } from "@/lib/categories";
+import { getMapChromePadding } from "@/lib/mapChrome";
 import AnimatedMarker from "./AnimatedMarker";
 import LiveUserMarker from "./LiveUserMarker";
 import ProfileAvatar from "./ProfileAvatar";
@@ -20,6 +21,8 @@ type Props = {
   selectedId: string | null;
   onSelect: (id: string | null) => void;
   currentUserId: string | null;
+  currentUserPhotoUrl?: string | null;
+  currentUserDisplayName?: string | null;
   onMessageUser: (userId: string) => void;
 };
 
@@ -33,6 +36,8 @@ export default function MapView({
   selectedId,
   onSelect,
   currentUserId,
+  currentUserPhotoUrl,
+  currentUserDisplayName,
   onMessageUser,
 }: Props) {
   const mapRef = useRef<import("maplibre-gl").Map | null>(null);
@@ -50,10 +55,30 @@ export default function MapView({
     [allUsers, selectedUserId]
   );
 
-  const onLoad = useCallback((evt: { target: import("maplibre-gl").Map }) => {
-    mapRef.current = evt.target;
-    applyIntoNowMapStyle(evt.target);
+  // --- Map chrome padding (confine map) -------------------------------
+  // Keeps pan/zoom/center inside the rectangle bounded by the four corner
+  // controls + centered logo, so the camera never settles somewhere hidden
+  // under a FAB. Applied on load and on resize only; does not touch marker
+  // rendering or props (owned by Agent 1).
+  const applyChromePadding = useCallback(() => {
+    mapRef.current?.setPadding(getMapChromePadding());
   }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    window.addEventListener("resize", applyChromePadding);
+    return () => window.removeEventListener("resize", applyChromePadding);
+  }, [applyChromePadding]);
+  // ----------------------------------------------------------------------
+
+  const onLoad = useCallback(
+    (evt: { target: import("maplibre-gl").Map }) => {
+      mapRef.current = evt.target;
+      applyIntoNowMapStyle(evt.target);
+      applyChromePadding();
+    },
+    [applyChromePadding]
+  );
 
   useEffect(() => {
     mapRef.current?.flyTo({
@@ -79,7 +104,13 @@ export default function MapView({
         <NavigationControl position="bottom-right" showCompass={false} />
         {myLocation && (
           <AnimatedMarker latitude={myLocation.lat} longitude={myLocation.lng} anchor="center">
-            <LiveUserMarker isSelf isLit />
+            <LiveUserMarker
+              isSelf
+              isLit
+              photoUrl={currentUserPhotoUrl}
+              displayName={currentUserDisplayName}
+              userId={currentUserId}
+            />
           </AnimatedMarker>
         )}
         {unlitUsers.map((user) => (
@@ -98,6 +129,7 @@ export default function MapView({
               isLit={false}
               photoUrl={user.photoUrl}
               displayName={user.displayName}
+              userId={user.userId}
             />
           </Marker>
         ))}
@@ -117,6 +149,7 @@ export default function MapView({
               isLit
               photoUrl={user.photoUrl}
               displayName={user.displayName}
+              userId={user.userId}
             />
           </AnimatedMarker>
         ))}
@@ -193,6 +226,7 @@ export default function MapView({
                 <ProfileAvatar
                   photoUrl={selectedUser.photoUrl}
                   displayName={selectedUser.displayName}
+                  userId={selectedUser.userId}
                   size="sm"
                 />
                 <div>

@@ -54,6 +54,18 @@ export async function isConversationParticipant(conversationId: string, userId: 
   return Boolean(row);
 }
 
+export async function markConversationRead(conversationId: string, userId: string) {
+  await getDb()
+    .update(conversationParticipants)
+    .set({ lastReadAt: new Date() })
+    .where(
+      and(
+        eq(conversationParticipants.conversationId, conversationId),
+        eq(conversationParticipants.userId, userId)
+      )
+    );
+}
+
 export async function getOtherParticipant(conversationId: string, userId: string) {
   const [row] = await getDb()
     .select({

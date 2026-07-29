@@ -66,7 +66,7 @@ export default function ProfileEditor({ user, onSave }: Props) {
           className="mx-auto block"
           disabled={uploading}
         >
-          <ProfileAvatar photoUrl={photoUrl} displayName={displayName} size="lg" />
+          <ProfileAvatar photoUrl={photoUrl} displayName={displayName} userId={user.id} size="lg" />
           <p className="mt-2 text-xs text-[#22D3EE]">
             {uploading ? "Uploading..." : "Tap to add your photo"}
           </p>
