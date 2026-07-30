@@ -184,7 +184,7 @@ export default function AdminPage() {
                   <td className="whitespace-nowrap px-4 py-3 font-medium text-white">
                     {formatAction(row.action)}
                   </td>
-                  <td className="whitespace-nowrap px-4 py-3 text-[#22d3ee]">
+                  <td className="whitespace-nowrap px-4 py-3 text-[#ff8a1e]">
                     {row.phone ?? "—"}
                   </td>
                   <td className="px-4 py-3 text-white/50">{formatMetadata(row.metadata)}</td>

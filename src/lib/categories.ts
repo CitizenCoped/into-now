@@ -18,10 +18,10 @@ export const CATEGORY_COLORS: Record<Category, string> = {
   Services: "#8B5CF6",
   "Food & Drink": "#EF4444",
   Events: "#EC4899",
-  Hobbies: "#22D3EE",
+  Hobbies: "#FF8A1E",
   Wellness: "#A78BFA",
 };
 
 export function getCategoryColor(category: string): string {
-  return CATEGORY_COLORS[category as Category] ?? "#FF4D6D";
+  return CATEGORY_COLORS[category as Category] ?? "#FF8A1E";
 }

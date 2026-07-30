@@ -10,13 +10,13 @@ type Props = {
 export default function IntroVideo({ className = "" }: Props) {
   return (
     <div
-      className={`group relative overflow-hidden rounded-2xl border border-white/10 bg-[#0a0814] shadow-[0_0_80px_-20px_rgba(34,211,238,0.35)] ${className}`}
+      className={`group relative overflow-hidden rounded-2xl border border-white/10 bg-[#0a0814] shadow-[0_0_80px_-20px_rgba(255,138,30,0.35)] ${className}`}
     >
       <div
         className="pointer-events-none absolute -inset-px rounded-2xl opacity-60 transition-opacity duration-500 group-hover:opacity-100"
         style={{
           background:
-            "linear-gradient(135deg, rgba(34,211,238,0.25) 0%, transparent 45%, rgba(56,189,248,0.15) 100%)",
+            "linear-gradient(135deg, rgba(255,138,30,0.25) 0%, transparent 45%, rgba(255,176,58,0.15) 100%)",
         }}
         aria-hidden
       />

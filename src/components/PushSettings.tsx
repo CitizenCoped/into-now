@@ -40,7 +40,7 @@ export default function PushSettings({
           type="button"
           onClick={() => onEnable()}
           disabled={loading || permission === "denied"}
-          className="w-full rounded-lg border border-[#22D3EE]/30 bg-[#22D3EE]/10 py-2 text-sm font-semibold text-[#22D3EE] transition hover:bg-[#22D3EE]/20 disabled:opacity-50"
+          className="w-full rounded-lg border border-[#FF8A1E]/30 bg-[#FF8A1E]/10 py-2 text-sm font-semibold text-[#FF8A1E] transition hover:bg-[#FF8A1E]/20 disabled:opacity-50"
         >
           {loading ? "Enabling..." : "Enable push notifications"}
         </button>
@@ -69,7 +69,7 @@ export default function PushSettings({
               type="checkbox"
               checked={preferences.notifyMessages}
               onChange={(e) => onPreferencesChange({ notifyMessages: e.target.checked })}
-              className="h-4 w-4 accent-[#22D3EE]"
+              className="h-4 w-4 accent-[#FF8A1E]"
             />
           </label>
           <label className="flex items-center justify-between gap-3 text-sm text-white/70">
@@ -78,7 +78,7 @@ export default function PushSettings({
               type="checkbox"
               checked={preferences.notifyPresence}
               onChange={(e) => onPreferencesChange({ notifyPresence: e.target.checked })}
-              className="h-4 w-4 accent-[#22D3EE]"
+              className="h-4 w-4 accent-[#FF8A1E]"
             />
           </label>
         </div>

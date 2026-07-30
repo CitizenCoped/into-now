@@ -67,7 +67,7 @@ export default function ProfileEditor({ user, onSave }: Props) {
           disabled={uploading}
         >
           <ProfileAvatar photoUrl={photoUrl} displayName={displayName} userId={user.id} size="lg" />
-          <p className="mt-2 text-xs text-[#22D3EE]">
+          <p className="mt-2 text-xs text-[#FF8A1E]">
             {uploading ? "Uploading..." : "Tap to add your photo"}
           </p>
         </button>
@@ -90,7 +90,7 @@ export default function ProfileEditor({ user, onSave }: Props) {
           onChange={(e) => setDisplayName(e.target.value)}
           maxLength={40}
           placeholder="How you want to appear"
-          className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white outline-none focus:border-[#22D3EE]/50"
+          className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white outline-none focus:border-[#FF8A1E]/50"
         />
       </div>
 
@@ -102,7 +102,7 @@ export default function ProfileEditor({ user, onSave }: Props) {
           maxLength={280}
           rows={3}
           placeholder="Who you are and what you're looking for"
-          className="w-full resize-none rounded-lg border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white outline-none focus:border-[#22D3EE]/50"
+          className="w-full resize-none rounded-lg border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white outline-none focus:border-[#FF8A1E]/50"
         />
       </div>
 
@@ -111,7 +111,7 @@ export default function ProfileEditor({ user, onSave }: Props) {
       <button
         type="submit"
         disabled={loading || uploading}
-        className="rounded-lg bg-gradient-to-r from-[#22D3EE] to-[#38BDF8] py-2.5 text-sm font-semibold text-[#06040c] transition hover:brightness-110 disabled:opacity-50"
+        className="rounded-lg bg-gradient-to-r from-[#FFB03A] to-[#F56A00] py-2.5 text-sm font-semibold text-[#06040c] transition hover:brightness-110 disabled:opacity-50"
       >
         {loading ? "Saving..." : "Continue to map"}
       </button>

@@ -46,8 +46,8 @@ function pad(value: number) {
 function OnboardingBackdrop() {
   return (
     <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden>
-      <div className="absolute -left-1/3 top-0 h-[55vh] w-[70vw] rounded-full bg-[#22D3EE]/10 blur-[120px]" />
-      <div className="absolute -right-1/4 bottom-0 h-[45vh] w-[55vw] rounded-full bg-[#38BDF8]/8 blur-[100px]" />
+      <div className="absolute -left-1/3 top-0 h-[55vh] w-[70vw] rounded-full bg-[#FF8A1E]/10 blur-[120px]" />
+      <div className="absolute -right-1/4 bottom-0 h-[45vh] w-[55vw] rounded-full bg-[#FFB03A]/8 blur-[100px]" />
       <div className="absolute left-1/2 top-1/2 h-px w-full -translate-y-1/2 bg-gradient-to-r from-transparent via-white/5 to-transparent" />
     </div>
   );
@@ -56,12 +56,12 @@ function OnboardingBackdrop() {
 function OnboardingHero() {
   return (
     <section className="w-full flex-1 lg:max-w-xl">
-      <p className="mb-3 text-center text-[11px] font-semibold uppercase tracking-[0.28em] text-[#22D3EE]/90 lg:text-left">
+      <p className="mb-3 text-center text-[11px] font-semibold uppercase tracking-[0.28em] text-[#FF8A1E]/90 lg:text-left">
         into.now
       </p>
       <h1 className="mb-4 text-center text-2xl font-semibold leading-tight text-white sm:text-3xl lg:text-left">
         What are you into?
-        <span className="block text-[#22D3EE]">Right now.</span>
+        <span className="block text-[#FF8A1E]">Right now.</span>
       </h1>
       <IntroVideo />
       <p className="mt-4 text-center text-sm leading-relaxed text-white/45 lg:text-left">
@@ -72,7 +72,7 @@ function OnboardingHero() {
 }
 
 const selectClass =
-  "w-full appearance-none rounded-xl border border-white/10 bg-white/5 px-3 py-3.5 text-base text-white outline-none transition focus:border-[#22D3EE]/60 focus:bg-white/10";
+  "w-full appearance-none rounded-xl border border-white/10 bg-white/5 px-3 py-3.5 text-base text-white outline-none transition focus:border-[#FF8A1E]/60 focus:bg-white/10";
 
 export default function OnboardingGate({
   user,
@@ -116,7 +116,7 @@ export default function OnboardingGate({
       <main className="relative flex min-h-screen items-center justify-center bg-[#06040c] px-4">
         <OnboardingBackdrop />
         <div className="relative flex flex-col items-center gap-6">
-          <div className="h-2 w-2 animate-pulse rounded-full bg-[#22D3EE]" />
+          <div className="h-2 w-2 animate-pulse rounded-full bg-[#FF8A1E]" />
           <p className="text-sm text-white/40">Loading...</p>
         </div>
       </main>
@@ -226,7 +226,7 @@ export default function OnboardingGate({
                 <button
                   type="submit"
                   disabled={!birthDate}
-                  className="w-full rounded-xl bg-gradient-to-r from-[#22D3EE] to-[#38BDF8] py-3.5 text-base font-semibold text-[#06040c] transition active:scale-[0.99] disabled:opacity-50"
+                  className="w-full rounded-xl bg-gradient-to-r from-[#FFB03A] to-[#F56A00] py-3.5 text-base font-semibold text-[#06040c] transition active:scale-[0.99] disabled:opacity-50"
                 >
                   Continue
                 </button>
@@ -238,9 +238,9 @@ export default function OnboardingGate({
                 <button
                   type="button"
                   onClick={() => setLocalStep("auth")}
-                  className="w-full rounded-lg border border-[#22D3EE]/30 bg-[#22D3EE]/10 px-4 py-3 text-left transition hover:bg-[#22D3EE]/20"
+                  className="w-full rounded-lg border border-[#FF8A1E]/30 bg-[#FF8A1E]/10 px-4 py-3 text-left transition hover:bg-[#FF8A1E]/20"
                 >
-                  <p className="font-semibold text-[#22D3EE]">Sign up free</p>
+                  <p className="font-semibold text-[#FF8A1E]">Sign up free</p>
                   <p className="mt-1 text-xs text-white/50">Verify with phone or email</p>
                 </button>
                 <button

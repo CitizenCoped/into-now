@@ -104,11 +104,11 @@ export default function ConversationThread({
           size="sm"
         />
         <span
-          className={`h-2 w-2 rounded-full ${otherUser?.isOnline ? "bg-[#22FF66]" : "bg-white/20"}`}
-          style={otherUser?.isOnline ? { boxShadow: "0 0 6px #22FF66" } : undefined}
+          className={`h-2 w-2 rounded-full ${otherUser?.isOnline ? "bg-[#FF9E2C]" : "bg-white/20"}`}
+          style={otherUser?.isOnline ? { boxShadow: "0 0 6px #FF9E2C" } : undefined}
         />
         <span className="font-semibold text-white">{otherUser?.displayLabel ?? "Chat"}</span>
-        {otherUser?.isOnline && <span className="text-[10px] text-[#22FF66]">Online</span>}
+        {otherUser?.isOnline && <span className="text-[10px] text-[#FF9E2C]">Online</span>}
         {expired && <span className="text-[10px] text-[#FF4D6D]">Expired</span>}
       </div>
 
@@ -138,10 +138,10 @@ export default function ConversationThread({
               onClick={() => isTruncated && toggleExpanded(message.id)}
               className={`block w-full rounded-xl border px-3 py-2.5 text-left transition ${
                 isMine
-                  ? "ml-6 border-[#22D3EE]/20 bg-[#22D3EE]/10"
+                  ? "ml-6 border-[#FF8A1E]/20 bg-[#FF8A1E]/10"
                   : "mr-6 border-white/5 bg-white/5"
               } ${isTruncated ? "cursor-pointer hover:border-white/15" : "cursor-default"} ${
-                isHighlighted ? "ring-2 ring-[#22D3EE]/60 border-[#22D3EE]/40" : ""
+                isHighlighted ? "ring-2 ring-[#FF8A1E]/60 border-[#FF8A1E]/40" : ""
               }`}
             >
               <p className="text-sm text-white whitespace-pre-wrap">
@@ -169,13 +169,13 @@ export default function ConversationThread({
             onChange={(e) => setDraft(e.target.value)}
             placeholder="Reply..."
             rows={2}
-            className="mb-2 w-full resize-none rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/30 outline-none focus:border-[#22D3EE]/50"
+            className="mb-2 w-full resize-none rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/30 outline-none focus:border-[#FF8A1E]/50"
           />
           {error && <p className="mb-2 text-xs text-[#FF4D6D]">{error}</p>}
           <button
             type="submit"
             disabled={sending || !draft.trim()}
-            className="w-full rounded-lg bg-gradient-to-r from-[#22D3EE] to-[#38BDF8] py-2.5 text-sm font-semibold text-[#06040c] transition hover:brightness-110 disabled:opacity-50"
+            className="w-full rounded-lg bg-gradient-to-r from-[#FFB03A] to-[#F56A00] py-2.5 text-sm font-semibold text-[#06040c] transition hover:brightness-110 disabled:opacity-50"
           >
             {sending ? "Sending..." : "Send"}
           </button>

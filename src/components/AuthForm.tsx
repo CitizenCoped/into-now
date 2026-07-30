@@ -79,7 +79,7 @@ export default function AuthForm({
           }}
           className={`flex-1 rounded-lg border px-3 py-2 text-xs font-semibold transition ${
             channel === "phone"
-              ? "border-[#22D3EE]/40 bg-[#22D3EE]/10 text-[#22D3EE]"
+              ? "border-[#FF8A1E]/40 bg-[#FF8A1E]/10 text-[#FF8A1E]"
               : "border-white/10 text-white/50"
           }`}
         >
@@ -95,7 +95,7 @@ export default function AuthForm({
           }}
           className={`flex-1 rounded-lg border px-3 py-2 text-xs font-semibold transition ${
             channel === "email"
-              ? "border-[#22D3EE]/40 bg-[#22D3EE]/10 text-[#22D3EE]"
+              ? "border-[#FF8A1E]/40 bg-[#FF8A1E]/10 text-[#FF8A1E]"
               : "border-white/10 text-white/50"
           }`}
         >
@@ -111,7 +111,7 @@ export default function AuthForm({
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
               placeholder="(555) 123-4567"
-              className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white placeholder:text-white/30 outline-none focus:border-[#22D3EE]/50"
+              className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white placeholder:text-white/30 outline-none focus:border-[#FF8A1E]/50"
               autoComplete="tel"
             />
           ) : (
@@ -120,14 +120,14 @@ export default function AuthForm({
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="you@example.com"
-              className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white placeholder:text-white/30 outline-none focus:border-[#22D3EE]/50"
+              className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white placeholder:text-white/30 outline-none focus:border-[#FF8A1E]/50"
               autoComplete="email"
             />
           )}
           <button
             type="submit"
             disabled={loading || (channel === "phone" ? !phone.trim() : !email.trim())}
-            className="w-full rounded-lg bg-gradient-to-r from-[#22D3EE] to-[#38BDF8] py-2.5 text-sm font-semibold text-[#06040c] transition hover:brightness-110 disabled:opacity-50"
+            className="w-full rounded-lg bg-gradient-to-r from-[#FFB03A] to-[#F56A00] py-2.5 text-sm font-semibold text-[#06040c] transition hover:brightness-110 disabled:opacity-50"
           >
             {loading ? "Sending..." : "Send code"}
           </button>
@@ -142,13 +142,13 @@ export default function AuthForm({
             value={code}
             onChange={(e) => setCode(e.target.value)}
             placeholder="6-digit code"
-            className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white placeholder:text-white/30 outline-none focus:border-[#22D3EE]/50"
+            className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white placeholder:text-white/30 outline-none focus:border-[#FF8A1E]/50"
             autoComplete="one-time-code"
           />
           <button
             type="submit"
             disabled={loading || code.trim().length < 4}
-            className="w-full rounded-lg bg-gradient-to-r from-[#22D3EE] to-[#38BDF8] py-2.5 text-sm font-semibold text-[#06040c] transition hover:brightness-110 disabled:opacity-50"
+            className="w-full rounded-lg bg-gradient-to-r from-[#FFB03A] to-[#F56A00] py-2.5 text-sm font-semibold text-[#06040c] transition hover:brightness-110 disabled:opacity-50"
           >
             {loading ? "Verifying..." : "Verify & sign in"}
           </button>

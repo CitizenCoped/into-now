@@ -40,9 +40,9 @@ export default function ConversationList({ conversations, loading, onSelect }: P
               />
           <span
             className={`h-1.5 w-1.5 shrink-0 rounded-full ${
-              convo.otherUser?.isOnline ? "bg-[#22FF66]" : "bg-white/20"
+              convo.otherUser?.isOnline ? "bg-[#FF9E2C]" : "bg-white/20"
             }`}
-            style={convo.otherUser?.isOnline ? { boxShadow: "0 0 6px #22FF66" } : undefined}
+            style={convo.otherUser?.isOnline ? { boxShadow: "0 0 6px #FF9E2C" } : undefined}
           />
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-1.5">

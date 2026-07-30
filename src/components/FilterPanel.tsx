@@ -92,7 +92,7 @@ export default function FilterPanel({
             <button
               type="button"
               onClick={onUpgradeClick}
-              className="w-full rounded-lg bg-gradient-to-r from-[#22D3EE] to-[#38BDF8] py-2.5 text-sm font-semibold text-[#06040c]"
+              className="w-full rounded-lg bg-gradient-to-r from-[#FFB03A] to-[#F56A00] py-2.5 text-sm font-semibold text-[#06040c]"
             >
               Sign up free
             </button>

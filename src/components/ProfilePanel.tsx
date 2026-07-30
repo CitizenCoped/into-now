@@ -67,7 +67,7 @@ export default function ProfilePanel({
         position="top-right"
         onClick={() => onExpandedChange(true)}
         ariaLabel="Open profile"
-        accentColor="#22D3EE"
+        accentColor="#FF8A1E"
         icon={
           user ? (
             <ProfileAvatar
@@ -102,7 +102,7 @@ export default function ProfilePanel({
       className={`${panelPosition} flex max-h-[min(70vh,560px)] w-[min(380px,calc(100vw-2rem))] flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#0f0d18]/90 shadow-2xl backdrop-blur-xl`}
     >
       <header className="flex shrink-0 items-center justify-between border-b border-white/5 px-4 py-3">
-        <p className="text-sm font-semibold text-[#22D3EE]">Profile</p>
+        <p className="text-sm font-semibold text-[#FF8A1E]">Profile</p>
         <button
           type="button"
           onClick={() => {

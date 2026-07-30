@@ -90,7 +90,7 @@ export default function MapView({
 
   return (
     <div className="absolute inset-0">
-      <div className="pointer-events-none absolute inset-0 z-10 bg-[radial-gradient(ellipse_at_top,rgba(255,77,109,0.08),transparent_50%),radial-gradient(ellipse_at_bottom_right,rgba(34,211,238,0.06),transparent_40%)]" />
+      <div className="pointer-events-none absolute inset-0 z-10 bg-[radial-gradient(ellipse_at_top,rgba(255,77,109,0.08),transparent_50%),radial-gradient(ellipse_at_bottom_right,rgba(255,138,30,0.06),transparent_40%)]" />
       <Map
         initialViewState={{ latitude: center.lat, longitude: center.lng, zoom }}
         mapStyle={BASE_MAP_STYLE}
@@ -203,7 +203,7 @@ export default function MapView({
                 <button
                   type="button"
                   onClick={() => onMessageUser(selected.authorId!)}
-                  className="mt-3 w-full rounded-lg border border-[#22D3EE]/30 bg-[#22D3EE]/10 px-3 py-1.5 text-xs font-semibold text-[#22D3EE] transition hover:bg-[#22D3EE]/20"
+                  className="mt-3 w-full rounded-lg border border-[#FF8A1E]/30 bg-[#FF8A1E]/10 px-3 py-1.5 text-xs font-semibold text-[#FF8A1E] transition hover:bg-[#FF8A1E]/20"
                 >
                   Message author
                 </button>
@@ -245,7 +245,7 @@ export default function MapView({
                 <button
                   type="button"
                   onClick={() => onMessageUser(selectedUser.userId)}
-                  className="mt-3 w-full rounded-lg border border-[#22D3EE]/30 bg-[#22D3EE]/10 px-3 py-1.5 text-xs font-semibold text-[#22D3EE] transition hover:bg-[#22D3EE]/20"
+                  className="mt-3 w-full rounded-lg border border-[#FF8A1E]/30 bg-[#FF8A1E]/10 px-3 py-1.5 text-xs font-semibold text-[#FF8A1E] transition hover:bg-[#FF8A1E]/20"
                 >
                   Message
                 </button>

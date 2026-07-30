@@ -88,7 +88,7 @@ export default function MessagePanel({
         position="bottom-left"
         onClick={() => onExpandedChange(true)}
         ariaLabel="Open messages panel"
-        accentColor="#22D3EE"
+        accentColor="#FF8A1E"
         icon={
           <svg
             width="22"
@@ -106,7 +106,7 @@ export default function MessagePanel({
         }
         badge={
           unreadCount > 0 ? (
-            <span className="absolute -top-1.5 -right-1.5 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-[#22D3EE] px-1 text-[10px] font-bold text-[#06040c]">
+            <span className="absolute -top-1.5 -right-1.5 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-[#FF8A1E] px-1 text-[10px] font-bold text-[#06040c]">
               {unreadCount > 99 ? "99+" : unreadCount}
             </span>
           ) : undefined
@@ -126,7 +126,7 @@ export default function MessagePanel({
     >
       <header className="flex shrink-0 items-center justify-between border-b border-white/5 px-4 py-3">
         <div className="min-w-0">
-          <p className="text-sm font-semibold text-[#22D3EE]">Messages</p>
+          <p className="text-sm font-semibold text-[#FF8A1E]">Messages</p>
           <p className="mt-0.5 truncate text-[11px] text-white/40">
             {user ? sessionLabel(user) : "Sign in to chat"}
           </p>

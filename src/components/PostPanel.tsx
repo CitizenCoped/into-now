@@ -83,9 +83,9 @@ export default function PostPanel({
         statusDot={
           <span
             className={`absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-[#0f0d18] ${
-              connected ? "bg-[#22FF66]" : "bg-white/30"
+              connected ? "bg-[#FF9E2C]" : "bg-white/30"
             }`}
-            style={connected ? { boxShadow: "0 0 6px #22FF66" } : undefined}
+            style={connected ? { boxShadow: "0 0 6px #FF9E2C" } : undefined}
           />
         }
         badge={
@@ -131,8 +131,8 @@ export default function PostPanel({
       <div className="flex shrink-0 items-center gap-3 border-b border-white/5 px-4 py-2 text-xs text-white/50">
         <span className="flex items-center gap-1.5">
           <span
-            className={`h-2 w-2 rounded-full ${connected ? "bg-[#22FF66]" : "bg-white/20"}`}
-            style={connected ? { boxShadow: "0 0 6px #22FF66" } : undefined}
+            className={`h-2 w-2 rounded-full ${connected ? "bg-[#FF9E2C]" : "bg-white/20"}`}
+            style={connected ? { boxShadow: "0 0 6px #FF9E2C" } : undefined}
           />
           {connected ? "Live" : "Connecting..."}
         </span>
@@ -198,7 +198,7 @@ export default function PostPanel({
                       <button
                         type="button"
                         onClick={() => onMessageAuthor(post.authorId!)}
-                        className="mt-2 w-full rounded-lg border border-[#22D3EE]/30 bg-[#22D3EE]/10 px-3 py-1.5 text-xs font-semibold text-[#22D3EE] transition hover:bg-[#22D3EE]/20"
+                        className="mt-2 w-full rounded-lg border border-[#FF8A1E]/30 bg-[#FF8A1E]/10 px-3 py-1.5 text-xs font-semibold text-[#FF8A1E] transition hover:bg-[#FF8A1E]/20"
                       >
                         Message author
                       </button>

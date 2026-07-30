@@ -65,7 +65,7 @@ export default function InstallPrompt() {
           <button
             type="button"
             onClick={handleInstall}
-            className="flex-1 rounded-lg bg-gradient-to-r from-[#22D3EE] to-[#38BDF8] py-2 text-xs font-semibold text-[#06040c]"
+            className="flex-1 rounded-lg bg-gradient-to-r from-[#FFB03A] to-[#F56A00] py-2 text-xs font-semibold text-[#06040c]"
           >
             Install
           </button>
