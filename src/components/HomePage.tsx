@@ -7,6 +7,7 @@ import { useLivePresence } from "@/hooks/useLivePresence";
 import { useMessages } from "@/hooks/useMessages";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { ageFromBirthDate, haversineMiles } from "@/lib/geo";
+import type { IdentityToken, LookingForToken } from "@/lib/codes";
 import type { MapUser, Post } from "@/lib/schema";
 import FilterPanel, { type UserFilters } from "./FilterPanel";
 import InstallPrompt from "./InstallPrompt";
@@ -130,7 +131,9 @@ export default function HomePage() {
 
   const filteredPosts = useMemo(() => {
     if (!isRegistered || categoryFilters.length === 0) return posts;
-    return posts.filter((post) => categoryFilters.includes(post.category));
+    // Interim Phase-1 filtering by poster token ("M4…"); Phase 2 adds
+    // "for me" matching on the lookingFor side.
+    return posts.filter((post) => categoryFilters.includes(post.posterIs));
   }, [posts, categoryFilters, isRegistered]);
 
   const filteredLitUsers = useMemo(() => {
@@ -204,10 +207,9 @@ export default function HomePage() {
     return () => navigator.serviceWorker.removeEventListener("message", onMessage);
   }, [user]);
 
-  const fetchPosts = useCallback(async (term?: string, category?: string) => {
+  const fetchPosts = useCallback(async (term?: string) => {
     const params = new URLSearchParams();
     if (term) params.set("search", term);
-    if (category) params.set("category", category);
     const res = await fetch(`/api/posts?${params}`);
     const data = await res.json();
     setPosts(data.posts ?? []);
@@ -233,7 +235,8 @@ export default function HomePage() {
   async function handleCreatePost(data: {
     title: string;
     description: string;
-    category: string;
+    posterIs: IdentityToken;
+    lookingFor: LookingForToken;
     lat: number;
     lng: number;
   }) {

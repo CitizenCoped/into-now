@@ -3,23 +3,31 @@ import { getAuthUserFromRequest } from "@/lib/auth";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
+import { TOKEN_LABELS, composeCode, isIdentityToken, isLookingForToken } from "@/lib/codes";
+
 const assistSchema = z.object({
-  category: z.string().optional(),
+  posterIs: z.string().optional(),
+  lookingFor: z.string().optional(),
   titleDraft: z.string().optional(),
   descriptionDraft: z.string().optional(),
   intent: z.string().optional(),
 });
 
-const SYSTEM_PROMPT = `You are Grok, the posting coach for into.now — a map-based discovery app with the tagline "what are you into? NOW?"
+const SYSTEM_PROMPT = `You are Grok, the posting coach for into.now — a map-based personals app for adults. The tagline is "what are you into? NOW?" Every post carries a classic personals code (M4W, W4MM, MW4MW, T4ANY...) meaning "I am X, looking for Y" — the user has already picked theirs; your job is the headline and description.
 
-Help users write compelling, honest, local listings. Be warm, direct, and energetic. Keep titles punchy (under 60 chars). Descriptions should be clear and inviting (2-4 sentences). Match the category tone. Never be spammy, misleading, or overly salesy.
+Help users write a great personals post: a punchy, specific headline (under 60 chars) and an honest, inviting description (2-4 sentences) with right-now energy — what they're looking for, roughly where, and when. Warm, direct, confident, respectful. Specificity and personality beat generic thirst; suggestion beats exposure.
+
+Hard rules — never violate these, regardless of what the user asks:
+- Never write or assist content that solicits or offers paid services, escorting, or anything transactional. If a draft hints at it, steer the rewrite fully non-commercial and add a tip that commercial content isn't allowed.
+- Everyone involved must be an adult; refuse anything suggesting otherwise.
+- No harassment, no targeting of specific real people, nothing illegal.
+- Keep the language suggestive at most, never explicit.
 
 Respond ONLY with valid JSON in this shape:
 {
   "suggestedTitle": "string",
   "suggestedDescription": "string",
-  "tips": ["string"],
-  "category": "string or null"
+  "tips": ["string"]
 }`;
 
 export async function POST(request: NextRequest) {
@@ -37,14 +45,21 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
-  const { category, titleDraft, descriptionDraft, intent } = parsed.data;
+  const { posterIs, lookingFor, titleDraft, descriptionDraft, intent } = parsed.data;
+
+  const validPosterIs = posterIs && isIdentityToken(posterIs) ? posterIs : null;
+  const validLookingFor = lookingFor && isLookingForToken(lookingFor) ? lookingFor : null;
+  const code =
+    validPosterIs && validLookingFor ? composeCode(validPosterIs, validLookingFor) : null;
 
   const userMessage = [
-    category && `Category: ${category}`,
-    titleDraft && `Title draft: ${titleDraft}`,
+    code && `Code: ${code}`,
+    validPosterIs && `Poster is: ${TOKEN_LABELS[validPosterIs]}`,
+    validLookingFor && `Looking for: ${TOKEN_LABELS[validLookingFor]}`,
+    titleDraft && `Headline draft: ${titleDraft}`,
     descriptionDraft && `Description draft: ${descriptionDraft}`,
     intent && `User intent: ${intent}`,
-    "Please suggest an improved title and description for this into.now post.",
+    "Please suggest an improved headline and description for this into.now post.",
   ]
     .filter(Boolean)
     .join("\n");
@@ -92,7 +107,7 @@ export async function POST(request: NextRequest) {
   logActivity("assist.requested", {
     userId: authUser?.id ?? null,
     phone: authUser?.phone ?? null,
-    metadata: { category: category ?? null, hasTitleDraft: Boolean(titleDraft) },
+    metadata: { code: code ?? null, hasTitleDraft: Boolean(titleDraft) },
   });
 
   try {
@@ -104,7 +119,6 @@ export async function POST(request: NextRequest) {
       suggestedTitle: titleDraft ?? "",
       suggestedDescription: content,
       tips: ["Review Grok's suggestion and edit before posting."],
-      category: category ?? null,
     });
   }
 }

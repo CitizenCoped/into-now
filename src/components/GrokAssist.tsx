@@ -2,21 +2,23 @@
 
 import { useState } from "react";
 
+import type { IdentityToken, LookingForToken } from "@/lib/codes";
+
 type Suggestion = {
   suggestedTitle: string;
   suggestedDescription: string;
   tips: string[];
-  category?: string | null;
 };
 
 type Props = {
-  category: string;
+  posterIs: IdentityToken;
+  lookingFor: LookingForToken;
   title: string;
   description: string;
   onApply: (title: string, description: string) => void;
 };
 
-export default function GrokAssist({ category, title, description, onApply }: Props) {
+export default function GrokAssist({ posterIs, lookingFor, title, description, onApply }: Props) {
   const [loading, setLoading] = useState(false);
   const [suggestion, setSuggestion] = useState<Suggestion | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -28,7 +30,12 @@ export default function GrokAssist({ category, title, description, onApply }: Pr
       const res = await fetch("/api/assist", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ category, titleDraft: title, descriptionDraft: description }),
+        body: JSON.stringify({
+          posterIs,
+          lookingFor,
+          titleDraft: title,
+          descriptionDraft: description,
+        }),
       });
       const data = await res.json();
       if (!res.ok) {

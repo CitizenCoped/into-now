@@ -1,7 +1,7 @@
 "use client";
 
 import type { Post } from "@/lib/schema";
-import { getCategoryColor } from "@/lib/categories";
+import { getCodeColor, type IdentityToken, type LookingForToken } from "@/lib/codes";
 import CornerControl from "./CornerControl";
 import PostCreateForm from "./PostCreateForm";
 
@@ -23,7 +23,8 @@ type Props = {
   onSubmitPost: (data: {
     title: string;
     description: string;
-    category: string;
+    posterIs: IdentityToken;
+    lookingFor: LookingForToken;
     lat: number;
     lng: number;
   }) => Promise<void>;
@@ -159,7 +160,7 @@ export default function PostPanel({
             />
 
             <h3 className="mb-2 shrink-0 text-xs font-semibold uppercase tracking-wider text-white/40">
-              Nearby Posts
+              Who&apos;s looking, near you
             </h3>
 
             <div className="min-h-0 flex-1 space-y-2 overflow-y-auto pr-1">
@@ -167,7 +168,7 @@ export default function PostPanel({
                 <p className="py-4 text-center text-sm text-white/30">No posts yet — be the first!</p>
               )}
               {posts.map((post) => {
-                const color = getCategoryColor(post.category);
+                const color = getCodeColor(post.category);
                 const active = post.id === selectedId;
                 const canMessage =
                   post.authorId && post.authorId !== currentUserId;
@@ -182,8 +183,8 @@ export default function PostPanel({
                   >
                     <button type="button" onClick={() => onPostClick(post)} className="w-full text-left">
                       <span
-                        className="inline-block rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white"
-                        style={{ backgroundColor: color }}
+                        className="inline-block rounded-full px-2 py-0.5 text-[10px] font-black uppercase tracking-widest text-[#06040c]"
+                        style={{ backgroundColor: color, boxShadow: `0 0 8px ${color}55` }}
                       >
                         {post.category}
                       </span>

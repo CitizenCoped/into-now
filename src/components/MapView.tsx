@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Map, { Marker, Popup, NavigationControl } from "react-map-gl/maplibre";
 import type { MapUser, Post } from "@/lib/schema";
-import { getCategoryColor } from "@/lib/categories";
+import { getCodeColor } from "@/lib/codes";
 import { getMapChromePadding } from "@/lib/mapChrome";
 import AnimatedMarker from "./AnimatedMarker";
 import LiveUserMarker from "./LiveUserMarker";
@@ -154,7 +154,7 @@ export default function MapView({
           </AnimatedMarker>
         ))}
         {posts.map((post) => {
-          const color = getCategoryColor(post.category);
+          const color = getCodeColor(post.category);
           const isSelected = post.id === selectedId;
           return (
             <Marker
@@ -194,7 +194,10 @@ export default function MapView({
             className="intonow-popup"
           >
             <div className="min-w-[180px]">
-              <p className="text-xs font-medium uppercase tracking-wide text-[#FF4D6D]">
+              <p
+                className="text-xs font-bold uppercase tracking-widest"
+                style={{ color: getCodeColor(selected.category) }}
+              >
                 {selected.category}
               </p>
               <p className="mt-1 font-semibold text-white">{selected.title}</p>

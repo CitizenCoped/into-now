@@ -15,6 +15,13 @@
       "when": 1753772400000,
       "tag": "0001_unread_tracking",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1785484800000,
+      "tag": "0002_personals_codes",
+      "breakpoints": true
     }
   ]
 }

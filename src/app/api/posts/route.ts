@@ -1,6 +1,13 @@
 import { logActivity } from "@/lib/activity";
 import { notifyAdminNewPost } from "@/lib/adminNotify";
 import { getAuthUserFromRequest } from "@/lib/auth";
+import {
+  IDENTITY_TOKENS,
+  LOOKING_FOR_TOKENS,
+  composeCode,
+  isIdentityToken,
+  isLookingForToken,
+} from "@/lib/codes";
 import { getDb } from "@/lib/db";
 import { posts } from "@/lib/schema";
 import { and, desc, eq, ilike, or } from "drizzle-orm";
@@ -10,14 +17,16 @@ import { z } from "zod";
 const createPostSchema = z.object({
   title: z.string().min(1).max(200),
   description: z.string().min(1).max(2000),
-  category: z.string().min(1),
+  posterIs: z.enum(IDENTITY_TOKENS),
+  lookingFor: z.enum(LOOKING_FOR_TOKENS),
   lat: z.number(),
   lng: z.number(),
 });
 
 export async function GET(request: NextRequest) {
   const search = request.nextUrl.searchParams.get("search")?.trim();
-  const category = request.nextUrl.searchParams.get("category")?.trim();
+  const posterIs = request.nextUrl.searchParams.get("posterIs")?.trim();
+  const lookingFor = request.nextUrl.searchParams.get("lookingFor")?.trim();
 
   const conditions = [];
 
@@ -26,8 +35,12 @@ export async function GET(request: NextRequest) {
     conditions.push(or(ilike(posts.title, pattern), ilike(posts.description, pattern)));
   }
 
-  if (category) {
-    conditions.push(eq(posts.category, category));
+  if (posterIs && isIdentityToken(posterIs)) {
+    conditions.push(eq(posts.posterIs, posterIs));
+  }
+
+  if (lookingFor && isLookingForToken(lookingFor)) {
+    conditions.push(eq(posts.lookingFor, lookingFor));
   }
 
   const results = await getDb().select()
@@ -45,11 +58,17 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
+  const { posterIs, lookingFor } = parsed.data;
+  // The derived code lives in the legacy `category` column so admin
+  // notifications, activity logs, and existing queries keep working.
+  const code = composeCode(posterIs, lookingFor);
+
   const authUser = await getAuthUserFromRequest(request);
   const [created] = await getDb()
     .insert(posts)
     .values({
       ...parsed.data,
+      category: code,
       authorId: authUser?.id ?? null,
     })
     .returning();
@@ -67,7 +86,9 @@ export async function POST(request: NextRequest) {
     metadata: {
       postId: created.id,
       title: created.title,
-      category: created.category,
+      code: created.category,
+      posterIs: created.posterIs,
+      lookingFor: created.lookingFor,
       anonymous: !authUser,
     },
   });

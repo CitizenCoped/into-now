@@ -45,7 +45,13 @@ export const posts = pgTable("posts", {
   id: uuid("id").primaryKey().defaultRandom(),
   title: text("title").notNull(),
   description: text("description").notNull(),
+  /** Derived personals code, e.g. "M4W" (kept in the legacy column name so
+   *  admin notify / activity log / existing queries keep working). */
   category: text("category").notNull(),
+  /** Who is posting: M | W | T | MW | MM | WW */
+  posterIs: text("poster_is").notNull(),
+  /** Who they seek: M | W | T | MW | MM | WW | ANY */
+  lookingFor: text("looking_for").notNull(),
   lat: doublePrecision("lat").notNull(),
   lng: doublePrecision("lng").notNull(),
   authorId: uuid("author_id").references(() => users.id, { onDelete: "set null" }),

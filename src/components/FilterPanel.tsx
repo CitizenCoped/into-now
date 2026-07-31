@@ -1,6 +1,6 @@
 "use client";
 
-import { CATEGORIES } from "@/lib/categories";
+import { IDENTITY_TOKENS, TOKEN_LABELS, CODE_COLORS } from "@/lib/codes";
 import type { AuthUser } from "@/hooks/useAuth";
 import CornerControl from "./CornerControl";
 
@@ -101,29 +101,37 @@ export default function FilterPanel({
           <div className="space-y-5">
             <div>
               <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-white/40">
-                Post categories
+                Posted by
               </p>
+              {/* Interim Phase-1 filter: by who's posting (M4…, W4…, …).
+                  Phase 2 replaces this with "for me" matching + full codes. */}
               <div className="flex flex-wrap gap-2">
-                {CATEGORIES.map((cat) => {
-                  const active = categories.includes(cat);
+                {IDENTITY_TOKENS.map((token) => {
+                  const active = categories.includes(token);
+                  const color = CODE_COLORS[token];
                   return (
                     <button
-                      key={cat}
+                      key={token}
                       type="button"
                       onClick={() => {
                         onCategoriesChange(
                           active
-                            ? categories.filter((c) => c !== cat)
-                            : [...categories, cat]
+                            ? categories.filter((c) => c !== token)
+                            : [...categories, token]
                         );
                       }}
-                      className={`rounded-full border px-2.5 py-1 text-[11px] transition ${
+                      className="rounded-full border px-2.5 py-1 text-[11px] font-semibold transition"
+                      style={
                         active
-                          ? "border-[#FF4D6D]/40 bg-[#FF4D6D]/15 text-[#FF4D6D]"
-                          : "border-white/10 text-white/50 hover:text-white"
-                      }`}
+                          ? {
+                              borderColor: `${color}66`,
+                              backgroundColor: `${color}26`,
+                              color,
+                            }
+                          : { borderColor: "rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.5)" }
+                      }
                     >
-                      {cat}
+                      {token}4… · {TOKEN_LABELS[token]}
                     </button>
                   );
                 })}
