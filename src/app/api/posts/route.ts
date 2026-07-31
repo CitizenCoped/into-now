@@ -64,14 +64,24 @@ export async function POST(request: NextRequest) {
   const code = composeCode(posterIs, lookingFor);
 
   const authUser = await getAuthUserFromRequest(request);
-  const [created] = await getDb()
-    .insert(posts)
-    .values({
-      ...parsed.data,
-      category: code,
-      authorId: authUser?.id ?? null,
-    })
-    .returning();
+
+  let created;
+  try {
+    [created] = await getDb()
+      .insert(posts)
+      .values({
+        ...parsed.data,
+        category: code,
+        authorId: authUser?.id ?? null,
+      })
+      .returning();
+  } catch (err) {
+    console.error("post.create failed:", err);
+    return NextResponse.json(
+      { error: "Couldn't save your post — the server hit a database error." },
+      { status: 500 }
+    );
+  }
 
   void notifyAdminNewPost({
     authorId: created.authorId,

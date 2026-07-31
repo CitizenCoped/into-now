@@ -245,7 +245,14 @@ export default function HomePage() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
     });
-    if (!res.ok) throw new Error("Failed to create post");
+    if (!res.ok) {
+      const detail = await res.json().catch(() => null);
+      const message =
+        typeof detail?.error === "string"
+          ? detail.error
+          : `Couldn't post (server said ${res.status}). Try again in a moment.`;
+      throw new Error(message);
+    }
     await fetchPosts(search);
     setSelectedId((await res.json()).post?.id ?? null);
     setPanelView("list");

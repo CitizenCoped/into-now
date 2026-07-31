@@ -105,7 +105,7 @@ export default function PostPanel({
   return (
     <aside
       className={`${panelPosition} left-[max(1rem,env(safe-area-inset-left))] flex max-h-[min(55vh,480px)] w-auto flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#0f0d18]/90 shadow-2xl backdrop-blur-xl sm:left-auto sm:w-[min(380px,calc(100vw-2rem))] ${
-        isCreate ? "max-h-[min(70vh,560px)]" : ""
+        isCreate ? "max-h-[min(85dvh,640px)]" : ""
       }`}
       data-panel-expanded="true"
     >
