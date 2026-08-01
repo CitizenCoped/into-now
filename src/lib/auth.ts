@@ -22,6 +22,7 @@ export type AuthUser = {
   displayName: string | null;
   photoUrl: string | null;
   statement: string | null;
+  identity: string | null;
   expiresAt: Date | null;
 };
 
@@ -100,6 +101,7 @@ export function userToAuthUser(row: User): AuthUser {
     displayName: row.displayName,
     photoUrl: row.photoUrl,
     statement: row.statement,
+    identity: row.identity,
     expiresAt: row.expiresAt,
   };
 }
@@ -227,6 +229,7 @@ export function serializeAuthUser(user: AuthUser) {
     displayName: user.displayName,
     photoUrl: user.photoUrl,
     statement: user.statement,
+    identity: user.identity,
     expiresAt: user.expiresAt?.toISOString() ?? null,
     displayLabel: getDisplayLabel(user),
     maskedPhone: user.phone ? maskPhone(user.phone) : null,

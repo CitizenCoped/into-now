@@ -22,6 +22,9 @@ export const users = pgTable("users", {
   displayName: text("display_name"),
   photoUrl: text("photo_url"),
   statement: text("statement"),
+  /** Identity token (M | W | T | MW | MM | WW) — powers "for me" matching
+   *  and pre-fills the "You are" picker when posting. */
+  identity: text("identity"),
   lastLat: doublePrecision("last_lat"),
   lastLng: doublePrecision("last_lng"),
   lastLocationAt: timestamp("last_location_at", { withTimezone: true }),

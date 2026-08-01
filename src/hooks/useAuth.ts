@@ -13,6 +13,7 @@ export type AuthUser = {
   displayName: string | null;
   photoUrl: string | null;
   statement: string | null;
+  identity: string | null;
   expiresAt: string | null;
   displayLabel: string;
   maskedPhone: string | null;
@@ -145,7 +146,12 @@ export function useAuth() {
   );
 
   const updateProfile = useCallback(
-    async (updates: { displayName?: string; statement?: string; photoUrl?: string }) => {
+    async (updates: {
+      displayName?: string;
+      statement?: string;
+      photoUrl?: string;
+      identity?: string;
+    }) => {
       const res = await fetch("/api/profile", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },

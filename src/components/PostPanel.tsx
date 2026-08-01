@@ -30,6 +30,7 @@ type Props = {
   }) => Promise<void>;
   defaultLat: number;
   defaultLng: number;
+  defaultPosterIs?: IdentityToken | null;
   currentUserId: string | null;
   onMessageAuthor: (authorId: string) => void;
 };
@@ -50,6 +51,7 @@ export default function PostPanel({
   onSubmitPost,
   defaultLat,
   defaultLng,
+  defaultPosterIs,
   currentUserId,
   onMessageAuthor,
 }: Props) {
@@ -148,6 +150,7 @@ export default function PostPanel({
             onBack={() => onViewChange("list")}
             defaultLat={defaultLat}
             defaultLng={defaultLng}
+            defaultPosterIs={defaultPosterIs}
           />
         ) : (
           <>

@@ -3,17 +3,32 @@
 import { upload } from "@vercel/blob/client";
 import { useRef, useState } from "react";
 import type { AuthUser } from "@/hooks/useAuth";
+import {
+  IDENTITY_TOKENS,
+  TOKEN_LABELS,
+  CODE_COLORS,
+  isIdentityToken,
+  type IdentityToken,
+} from "@/lib/codes";
 import ProfileAvatar from "./ProfileAvatar";
 
 type Props = {
   user: AuthUser;
-  onSave: (updates: { displayName: string; statement: string; photoUrl: string }) => Promise<unknown>;
+  onSave: (updates: {
+    displayName: string;
+    statement: string;
+    photoUrl: string;
+    identity?: IdentityToken;
+  }) => Promise<unknown>;
 };
 
 export default function ProfileEditor({ user, onSave }: Props) {
   const [displayName, setDisplayName] = useState(user.displayName ?? "");
   const [statement, setStatement] = useState(user.statement ?? "");
   const [photoUrl, setPhotoUrl] = useState(user.photoUrl ?? "");
+  const [identity, setIdentity] = useState<IdentityToken | null>(
+    user.identity && isIdentityToken(user.identity) ? user.identity : null
+  );
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
@@ -49,6 +64,7 @@ export default function ProfileEditor({ user, onSave }: Props) {
         displayName: displayName.trim(),
         statement: statement.trim(),
         photoUrl: photoUrl.trim(),
+        ...(identity ? { identity } : {}),
       });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not save profile");
@@ -82,6 +98,38 @@ export default function ProfileEditor({ user, onSave }: Props) {
           }}
         />
       </div>
+
+      <fieldset>
+        <legend className="mb-1 block text-xs text-white/50">I am</legend>
+        <div className="flex flex-wrap gap-1.5">
+          {IDENTITY_TOKENS.map((token) => {
+            const active = token === identity;
+            const color = CODE_COLORS[token];
+            return (
+              <button
+                key={token}
+                type="button"
+                onClick={() => setIdentity(active ? null : token)}
+                aria-pressed={active}
+                className="rounded-full border px-2.5 py-1.5 text-[11px] font-semibold transition"
+                style={
+                  active
+                    ? { borderColor: `${color}66`, backgroundColor: `${color}26`, color }
+                    : {
+                        borderColor: "rgba(255,255,255,0.1)",
+                        color: "rgba(255,255,255,0.5)",
+                      }
+                }
+              >
+                {token} · {TOKEN_LABELS[token]}
+              </button>
+            );
+          })}
+        </div>
+        <p className="mt-1 text-[10px] text-white/30">
+          Powers &quot;for me&quot; filtering and pre-fills your posts. Optional.
+        </p>
+      </fieldset>
 
       <div>
         <label className="mb-1 block text-xs text-white/50">Display name</label>

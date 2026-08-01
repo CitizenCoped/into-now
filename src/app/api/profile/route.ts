@@ -1,4 +1,5 @@
 import { getAuthUserFromRequest, serializeAuthUser, userToAuthUser } from "@/lib/auth";
+import { IDENTITY_TOKENS } from "@/lib/codes";
 import { getDb } from "@/lib/db";
 import { users } from "@/lib/schema";
 import { eq } from "drizzle-orm";
@@ -9,6 +10,7 @@ const patchSchema = z.object({
   displayName: z.string().min(1).max(40).optional(),
   statement: z.string().min(1).max(280).optional(),
   photoUrl: z.string().url().optional(),
+  identity: z.enum(IDENTITY_TOKENS).optional(),
 });
 
 export async function GET(request: NextRequest) {
@@ -35,6 +37,7 @@ export async function PATCH(request: NextRequest) {
   if (parsed.data.displayName !== undefined) updates.displayName = parsed.data.displayName;
   if (parsed.data.statement !== undefined) updates.statement = parsed.data.statement;
   if (parsed.data.photoUrl !== undefined) updates.photoUrl = parsed.data.photoUrl;
+  if (parsed.data.identity !== undefined) updates.identity = parsed.data.identity;
 
   if (Object.keys(updates).length === 0) {
     return NextResponse.json({ error: "No updates provided" }, { status: 400 });

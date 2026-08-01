@@ -7,7 +7,7 @@ import { useLivePresence } from "@/hooks/useLivePresence";
 import { useMessages } from "@/hooks/useMessages";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { ageFromBirthDate, haversineMiles } from "@/lib/geo";
-import type { IdentityToken, LookingForToken } from "@/lib/codes";
+import { isIdentityToken, type IdentityToken, type LookingForToken } from "@/lib/codes";
 import type { MapUser, Post } from "@/lib/schema";
 import FilterPanel, { type UserFilters } from "./FilterPanel";
 import InstallPrompt from "./InstallPrompt";
@@ -86,7 +86,8 @@ export default function HomePage() {
   const [filterExpanded, setFilterExpanded] = useState(false);
   const [profileExpanded, setProfileExpanded] = useState(false);
   const [showSignup, setShowSignup] = useState(false);
-  const [categoryFilters, setCategoryFilters] = useState<string[]>([]);
+  const [posterFilters, setPosterFilters] = useState<string[]>([]);
+  const [forMe, setForMe] = useState(false);
   const [userFilters, setUserFilters] = useState<UserFilters>(DEFAULT_USER_FILTERS);
 
   const {
@@ -129,12 +130,19 @@ export default function HomePage() {
 
   const isRegistered = user && !user.isAnonymous;
 
+  const myIdentity = user?.identity && isIdentityToken(user.identity) ? user.identity : null;
+
   const filteredPosts = useMemo(() => {
-    if (!isRegistered || categoryFilters.length === 0) return posts;
-    // Interim Phase-1 filtering by poster token ("M4…"); Phase 2 adds
-    // "for me" matching on the lookingFor side.
-    return posts.filter((post) => categoryFilters.includes(post.posterIs));
-  }, [posts, categoryFilters, isRegistered]);
+    if (!isRegistered) return posts;
+    // "For me" wins while on: posts seeking my identity, or anyone.
+    if (forMe && myIdentity) {
+      return posts.filter(
+        (post) => post.lookingFor === myIdentity || post.lookingFor === "ANY"
+      );
+    }
+    if (posterFilters.length === 0) return posts;
+    return posts.filter((post) => posterFilters.includes(post.posterIs));
+  }, [posts, posterFilters, forMe, myIdentity, isRegistered]);
 
   const filteredLitUsers = useMemo(() => {
     if (!isRegistered) return litUsers;
@@ -331,8 +339,11 @@ export default function HomePage() {
         expanded={filterExpanded}
         onExpandedChange={setFilterExpanded}
         user={user}
-        categories={categoryFilters}
-        onCategoriesChange={setCategoryFilters}
+        forMe={forMe}
+        onForMeChange={setForMe}
+        posterFilters={posterFilters}
+        onPosterFiltersChange={setPosterFilters}
+        onSaveIdentity={(identity) => updateProfile({ identity })}
         userFilters={userFilters}
         onUserFiltersChange={setUserFilters}
         onUpgradeClick={() => {
@@ -417,6 +428,7 @@ export default function HomePage() {
         onSubmitPost={handleCreatePost}
         defaultLat={postLat}
         defaultLng={postLng}
+        defaultPosterIs={myIdentity}
         currentUserId={user?.id ?? null}
         onMessageAuthor={startConversation}
       />

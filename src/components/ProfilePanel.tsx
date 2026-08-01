@@ -19,7 +19,12 @@ type Props = {
   onSendEmailCode: (email: string) => Promise<string>;
   onVerifyPhoneCode: (phone: string, code: string, birthDate: string) => Promise<unknown>;
   onVerifyEmailCode: (email: string, code: string, birthDate: string) => Promise<unknown>;
-  onSaveProfile: (updates: { displayName: string; statement: string; photoUrl: string }) => Promise<unknown>;
+  onSaveProfile: (updates: {
+    displayName: string;
+    statement: string;
+    photoUrl: string;
+    identity?: string;
+  }) => Promise<unknown>;
   onLogout: () => Promise<void>;
   pushPermission: NotificationPermission;
   pushSubscribed: boolean;

@@ -1,6 +1,12 @@
 "use client";
 
-import { IDENTITY_TOKENS, TOKEN_LABELS, CODE_COLORS } from "@/lib/codes";
+import { useState } from "react";
+import {
+  IDENTITY_TOKENS,
+  TOKEN_LABELS,
+  CODE_COLORS,
+  type IdentityToken,
+} from "@/lib/codes";
 import type { AuthUser } from "@/hooks/useAuth";
 import CornerControl from "./CornerControl";
 
@@ -14,8 +20,11 @@ type Props = {
   expanded: boolean;
   onExpandedChange: (expanded: boolean) => void;
   user: AuthUser | null;
-  categories: string[];
-  onCategoriesChange: (categories: string[]) => void;
+  forMe: boolean;
+  onForMeChange: (forMe: boolean) => void;
+  posterFilters: string[];
+  onPosterFiltersChange: (posterFilters: string[]) => void;
+  onSaveIdentity: (identity: IdentityToken) => Promise<unknown>;
   userFilters: UserFilters;
   onUserFiltersChange: (filters: UserFilters) => void;
   onUpgradeClick: () => void;
@@ -25,12 +34,17 @@ export default function FilterPanel({
   expanded,
   onExpandedChange,
   user,
-  categories,
-  onCategoriesChange,
+  forMe,
+  onForMeChange,
+  posterFilters,
+  onPosterFiltersChange,
+  onSaveIdentity,
   userFilters,
   onUserFiltersChange,
   onUpgradeClick,
 }: Props) {
+  const [pickingIdentity, setPickingIdentity] = useState(false);
+  const [savingIdentity, setSavingIdentity] = useState(false);
   const panelPosition =
     "intonow-filter-panel fixed z-20 top-[max(1rem,env(safe-area-inset-top))] left-[max(1rem,env(safe-area-inset-left))]";
 
@@ -99,25 +113,102 @@ export default function FilterPanel({
           </div>
         ) : (
           <div className="space-y-5">
+            {/* "For me" — show only posts looking for my identity (or Anyone). */}
             <div>
+              <div className="flex items-center justify-between">
+                <p className="text-xs font-semibold uppercase tracking-wider text-white/40">
+                  For me
+                </p>
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={forMe}
+                  onClick={() => {
+                    if (forMe) {
+                      onForMeChange(false);
+                      setPickingIdentity(false);
+                      return;
+                    }
+                    if (user?.identity) {
+                      onForMeChange(true);
+                    } else {
+                      setPickingIdentity(true);
+                    }
+                  }}
+                  className={`relative h-6 w-11 shrink-0 rounded-full transition ${
+                    forMe ? "bg-[#FF8A1E]" : "bg-white/10"
+                  }`}
+                  aria-label="Show posts looking for me"
+                >
+                  <span
+                    className={`absolute top-0.5 h-5 w-5 rounded-full bg-white transition-all ${
+                      forMe ? "left-[1.375rem]" : "left-0.5"
+                    }`}
+                  />
+                </button>
+              </div>
+              <p className="mt-1 text-[11px] text-white/40">
+                {forMe && user?.identity
+                  ? `Showing posts looking for ${TOKEN_LABELS[user.identity as IdentityToken] ?? user.identity} — or anyone.`
+                  : "Only show posts looking for you (or anyone)."}
+              </p>
+
+              {pickingIdentity && !user?.identity && (
+                <div className="mt-2 rounded-xl border border-[#FF8A1E]/20 bg-[#FF8A1E]/5 p-3">
+                  <p className="mb-2 text-[11px] font-semibold text-[#FF8A1E]">
+                    First — you are:
+                  </p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {IDENTITY_TOKENS.map((token) => {
+                      const color = CODE_COLORS[token];
+                      return (
+                        <button
+                          key={token}
+                          type="button"
+                          disabled={savingIdentity}
+                          onClick={async () => {
+                            setSavingIdentity(true);
+                            try {
+                              await onSaveIdentity(token);
+                              setPickingIdentity(false);
+                              onForMeChange(true);
+                            } finally {
+                              setSavingIdentity(false);
+                            }
+                          }}
+                          className="rounded-full border px-2.5 py-1.5 text-[11px] font-semibold transition disabled:opacity-50"
+                          style={{ borderColor: `${color}66`, color }}
+                        >
+                          {token} · {TOKEN_LABELS[token]}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <p className="mt-1.5 text-[10px] text-white/30">
+                    Saved to your profile — change it anytime there.
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {/* Manual filter by who's posting. "For me" wins while it's on. */}
+            <div className={forMe ? "pointer-events-none opacity-40" : ""}>
               <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-white/40">
                 Posted by
               </p>
-              {/* Interim Phase-1 filter: by who's posting (M4…, W4…, …).
-                  Phase 2 replaces this with "for me" matching + full codes. */}
               <div className="flex flex-wrap gap-2">
                 {IDENTITY_TOKENS.map((token) => {
-                  const active = categories.includes(token);
+                  const active = posterFilters.includes(token);
                   const color = CODE_COLORS[token];
                   return (
                     <button
                       key={token}
                       type="button"
                       onClick={() => {
-                        onCategoriesChange(
+                        onPosterFiltersChange(
                           active
-                            ? categories.filter((c) => c !== token)
-                            : [...categories, token]
+                            ? posterFilters.filter((c) => c !== token)
+                            : [...posterFilters, token]
                         );
                       }}
                       className="rounded-full border px-2.5 py-1 text-[11px] font-semibold transition"
