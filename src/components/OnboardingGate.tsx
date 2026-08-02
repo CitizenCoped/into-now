@@ -4,7 +4,7 @@ import { useState } from "react";
 import type { AuthUser } from "@/hooks/useAuth";
 import { isAdult } from "@/lib/geo";
 import AuthForm from "./AuthForm";
-import IntroVideo from "./IntroVideo";
+import LandingVideoBackdrop from "./LandingVideoBackdrop";
 
 type Props = {
   user: AuthUser | null;
@@ -48,23 +48,21 @@ function OnboardingBackdrop() {
     <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden>
       <div className="absolute -left-1/3 top-0 h-[55vh] w-[70vw] rounded-full bg-[#FF8A1E]/10 blur-[120px]" />
       <div className="absolute -right-1/4 bottom-0 h-[45vh] w-[55vw] rounded-full bg-[#FFB03A]/8 blur-[100px]" />
-      <div className="absolute left-1/2 top-1/2 h-px w-full -translate-y-1/2 bg-gradient-to-r from-transparent via-white/5 to-transparent" />
     </div>
   );
 }
 
 function OnboardingHero() {
   return (
-    <section className="w-full flex-1 lg:max-w-xl">
-      <p className="mb-3 text-center text-[11px] font-semibold uppercase tracking-[0.28em] text-[#FF8A1E]/90 lg:text-left">
+    <section className="w-full text-center">
+      <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.28em] text-[#FF8A1E]/90">
         into.now
       </p>
-      <h1 className="mb-4 text-center text-2xl font-semibold leading-tight text-white sm:text-3xl lg:text-left">
+      <h1 className="mb-3 text-3xl font-semibold leading-tight text-white sm:text-4xl">
         What are you into?
         <span className="block text-[#FF8A1E]">Right now.</span>
       </h1>
-      <IntroVideo />
-      <p className="mt-4 text-center text-sm leading-relaxed text-white/45 lg:text-left">
+      <p className="text-sm leading-relaxed text-white/60">
         See who&apos;s nearby, share what you&apos;re into, and connect in the moment.
       </p>
     </section>
@@ -114,6 +112,7 @@ export default function OnboardingGate({
   if (loading) {
     return (
       <main className="relative flex min-h-screen items-center justify-center bg-[#06040c] px-4">
+        <LandingVideoBackdrop />
         <OnboardingBackdrop />
         <div className="relative flex flex-col items-center gap-6">
           <div className="h-2 w-2 animate-pulse rounded-full bg-[#FF8A1E]" />
@@ -157,13 +156,14 @@ export default function OnboardingGate({
 
   return (
     <main className="relative min-h-screen overflow-x-hidden bg-[#06040c]">
+      <LandingVideoBackdrop />
       <OnboardingBackdrop />
 
-      <div className="relative mx-auto flex min-h-screen w-full max-w-6xl flex-col items-center justify-center gap-8 px-4 py-8 sm:px-6 lg:flex-row lg:items-center lg:gap-14 lg:px-8 lg:py-12">
+      <div className="relative mx-auto flex min-h-screen w-full max-w-md flex-col items-center justify-center gap-8 px-4 py-8 sm:px-6">
         <OnboardingHero />
 
-        <section className="w-full max-w-md shrink-0">
-          <div className="rounded-2xl border border-white/10 bg-[#0f0d18]/90 p-6 shadow-2xl backdrop-blur-xl">
+        <section className="w-full shrink-0">
+          <div className="rounded-2xl border border-white/10 bg-[#0f0d18]/60 p-6 shadow-2xl backdrop-blur-xl">
             <p className="text-center text-sm font-medium text-white/70">
               {step === "birthday" && "When is your birthday?"}
               {step === "mode" && "How do you want to join?"}
