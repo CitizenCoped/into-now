@@ -1,5 +1,6 @@
 "use client";
 
+import { containsPhoneNumber, CONTACT_WARNING_MESSAGE } from "@/lib/contentScreens";
 import { previewMessage } from "@/lib/messagePreview";
 import type { ConversationSummary } from "@/hooks/useMessages";
 import type { Message } from "@/lib/schema";
@@ -30,6 +31,9 @@ export default function ConversationThread({
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   const [highlightedId, setHighlightedId] = useState<string | null>(null);
   const [error, setError] = useState("");
+  const [showContactWarning, setShowContactWarning] = useState(false);
+  const [blocked, setBlocked] = useState(false);
+  const [blocking, setBlocking] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const handledHighlight = useRef<string | null>(null);
 
@@ -76,9 +80,7 @@ export default function ConversationThread({
     });
   }, [highlightMessageId, loading, messages, onHighlightComplete]);
 
-  async function handleSend(e: React.FormEvent) {
-    e.preventDefault();
-    if (expired) return;
+  async function sendDraft() {
     const body = draft.trim();
     if (!body) return;
 
@@ -91,6 +93,46 @@ export default function ConversationThread({
       setError(err instanceof Error ? err.message : "Failed to send");
     } finally {
       setSending(false);
+    }
+  }
+
+  async function handleSend(e: React.FormEvent) {
+    e.preventDefault();
+    if (expired || blocked) return;
+    const body = draft.trim();
+    if (!body) return;
+
+    // Contact-info warning: advise, never block. "Send Anyway" sends as typed.
+    if (containsPhoneNumber(body)) {
+      setShowContactWarning(true);
+      return;
+    }
+
+    await sendDraft();
+  }
+
+  async function handleBlock() {
+    if (!otherUser?.id || blocking) return;
+    if (
+      !window.confirm(
+        `Block ${otherUser.displayLabel ?? "this user"}? They won't be able to message you, and you won't see each other's posts.`
+      )
+    ) {
+      return;
+    }
+    setBlocking(true);
+    try {
+      const res = await fetch("/api/blocks", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: otherUser.id }),
+      });
+      if (!res.ok) throw new Error();
+      setBlocked(true);
+    } catch {
+      setError("Couldn't block right now. Try again.");
+    } finally {
+      setBlocking(false);
     }
   }
 
@@ -110,6 +152,17 @@ export default function ConversationThread({
         <span className="font-semibold text-white">{otherUser?.displayLabel ?? "Chat"}</span>
         {otherUser?.isOnline && <span className="text-[10px] text-[#FF9E2C]">Online</span>}
         {expired && <span className="text-[10px] text-[#FF4D6D]">Expired</span>}
+        {otherUser?.id && !blocked && (
+          <button
+            type="button"
+            onClick={handleBlock}
+            disabled={blocking}
+            className="ml-auto shrink-0 text-[10px] text-white/25 transition hover:text-[#FF4D6D]"
+          >
+            {blocking ? "Blocking..." : "Block"}
+          </button>
+        )}
+        {blocked && <span className="ml-auto text-[10px] text-[#FF4D6D]">Blocked</span>}
       </div>
 
       {otherUser?.statement && (
@@ -158,7 +211,38 @@ export default function ConversationThread({
         })}
       </div>
 
-      {expired ? (
+      {showContactWarning && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+          <div className="w-full max-w-sm rounded-2xl border border-white/10 bg-[#0f0d18] p-5 shadow-2xl">
+            <p className="text-sm text-white/90">{CONTACT_WARNING_MESSAGE}</p>
+            <div className="mt-4 flex gap-2">
+              <button
+                type="button"
+                onClick={() => setShowContactWarning(false)}
+                className="flex-1 rounded-lg bg-gradient-to-r from-[#FFB03A] to-[#F56A00] py-2 text-sm font-semibold text-[#06040c] transition hover:brightness-110"
+              >
+                Edit
+              </button>
+              <button
+                type="button"
+                onClick={async () => {
+                  setShowContactWarning(false);
+                  await sendDraft();
+                }}
+                className="flex-1 rounded-lg border border-white/10 py-2 text-sm text-white/60 transition hover:text-white"
+              >
+                Send Anyway
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {blocked ? (
+        <p className="mt-3 shrink-0 text-center text-xs text-[#FF4D6D]">
+          You blocked this user. They can no longer message you.
+        </p>
+      ) : expired ? (
         <p className="mt-3 shrink-0 text-center text-xs text-[#FF4D6D]">
           This user&apos;s anonymous session has ended.
         </p>

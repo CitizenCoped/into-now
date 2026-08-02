@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import type { Post } from "@/lib/schema";
 import { getCodeColor, type IdentityToken, type LookingForToken } from "@/lib/codes";
 import CornerControl from "./CornerControl";
@@ -55,6 +56,23 @@ export default function PostPanel({
   currentUserId,
   onMessageAuthor,
 }: Props) {
+  const [reportedIds, setReportedIds] = useState<Set<string>>(new Set());
+
+  async function handleReport(postId: string) {
+    if (reportedIds.has(postId)) return;
+    if (!window.confirm("Report this post to the moderators?")) return;
+    try {
+      const res = await fetch(`/api/posts/${postId}/report`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({}),
+      });
+      if (!res.ok) throw new Error();
+      setReportedIds((prev) => new Set(prev).add(postId));
+    } catch {
+      // best-effort; silent failure is acceptable for reporting UI
+    }
+  }
   const panelPosition =
     "intonow-panel fixed z-20 bottom-[max(1rem,env(safe-area-inset-bottom))] right-[max(1rem,env(safe-area-inset-right))]";
 
@@ -205,6 +223,16 @@ export default function PostPanel({
                         className="mt-2 w-full rounded-lg border border-[#FF8A1E]/30 bg-[#FF8A1E]/10 px-3 py-1.5 text-xs font-semibold text-[#FF8A1E] transition hover:bg-[#FF8A1E]/20"
                       >
                         Message author
+                      </button>
+                    )}
+                    {post.authorId !== currentUserId && (
+                      <button
+                        type="button"
+                        onClick={() => handleReport(post.id)}
+                        disabled={reportedIds.has(post.id)}
+                        className="mt-1.5 w-full text-center text-[10px] text-white/25 transition hover:text-[#FF4D6D] disabled:text-white/40"
+                      >
+                        {reportedIds.has(post.id) ? "Reported — thank you" : "Report post"}
                       </button>
                     )}
                   </div>

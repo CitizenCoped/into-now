@@ -29,6 +29,13 @@
       "when": 1785571200000,
       "tag": "0003_user_identity",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1785657600000,
+      "tag": "0004_user_blocks",
+      "breakpoints": true
     }
   ]
 }

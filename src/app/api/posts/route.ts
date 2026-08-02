@@ -1,6 +1,7 @@
 import { logActivity } from "@/lib/activity";
 import { notifyAdminNewPost } from "@/lib/adminNotify";
 import { getAuthUserFromRequest } from "@/lib/auth";
+import { getHiddenUserIds } from "@/lib/blocks";
 import {
   IDENTITY_TOKENS,
   LOOKING_FOR_TOKENS,
@@ -8,9 +9,14 @@ import {
   isIdentityToken,
   isLookingForToken,
 } from "@/lib/codes";
+import {
+  findSolicitationSignal,
+  SOLICITATION_REJECTION_MESSAGE,
+} from "@/lib/contentScreens";
 import { getDb } from "@/lib/db";
+import { POST_TTL_MS } from "@/lib/postConfig";
 import { posts } from "@/lib/schema";
-import { and, desc, eq, ilike, or } from "drizzle-orm";
+import { and, desc, eq, gt, ilike, isNull, notInArray, or } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
@@ -30,6 +36,10 @@ export async function GET(request: NextRequest) {
 
   const conditions = [];
 
+  // Posts are ephemeral: only the last 24h surface, even before the
+  // expiry cron physically deletes older rows.
+  conditions.push(gt(posts.createdAt, new Date(Date.now() - POST_TTL_MS)));
+
   if (search) {
     const pattern = `%${search}%`;
     conditions.push(or(ilike(posts.title, pattern), ilike(posts.description, pattern)));
@@ -43,9 +53,19 @@ export async function GET(request: NextRequest) {
     conditions.push(eq(posts.lookingFor, lookingFor));
   }
 
+  // Mutual invisibility: hide posts from anyone in a block relationship
+  // with the viewer (either direction). Anonymous-author posts stay visible.
+  const viewer = await getAuthUserFromRequest(request);
+  if (viewer) {
+    const hidden = await getHiddenUserIds(viewer.id);
+    if (hidden.length > 0) {
+      conditions.push(or(isNull(posts.authorId), notInArray(posts.authorId, hidden)));
+    }
+  }
+
   const results = await getDb().select()
     .from(posts)
-    .where(conditions.length ? and(...conditions) : undefined)
+    .where(and(...conditions))
     .orderBy(desc(posts.createdAt));
   return NextResponse.json({ posts: results });
 }
@@ -59,6 +79,18 @@ export async function POST(request: NextRequest) {
   }
 
   const { posterIs, lookingFor } = parsed.data;
+
+  // FOSTA line: no commercial solicitation. Adult expression stays free.
+  const signal = findSolicitationSignal(`${parsed.data.title}\n${parsed.data.description}`);
+  if (signal) {
+    logActivity("post.rejected_solicitation", {
+      userId: null,
+      phone: null,
+      metadata: { signal, titlePreview: parsed.data.title.slice(0, 80) },
+    });
+    return NextResponse.json({ error: SOLICITATION_REJECTION_MESSAGE }, { status: 400 });
+  }
+
   // The derived code lives in the legacy `category` column so admin
   // notifications, activity logs, and existing queries keep working.
   const code = composeCode(posterIs, lookingFor);

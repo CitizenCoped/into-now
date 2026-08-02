@@ -7,6 +7,10 @@
     {
       "path": "/api/cron/reap-sessions",
       "schedule": "30 * * * *"
+    },
+    {
+      "path": "/api/cron/expire-posts",
+      "schedule": "15 * * * *"
     }
   ]
 }
