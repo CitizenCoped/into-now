@@ -2,9 +2,12 @@ import {
   boolean,
   date,
   doublePrecision,
+  foreignKey,
+  index,
   jsonb,
   pgTable,
   primaryKey,
+  smallint,
   text,
   timestamp,
   uuid,
@@ -175,6 +178,101 @@ export const presencePushLog = pgTable(
   },
   (table) => ({
     pk: primaryKey({ columns: [table.recipientId, table.senderId] }),
+  })
+);
+
+/** Reusable per-user photo library (max 10 ready photos, enforced in API).
+ *  `objectKey` is the private DO Spaces key — never a public URL; viewers
+ *  only ever receive short-lived presigned GET URLs minted per request. */
+export const userPhotos = pgTable(
+  "user_photos",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    objectKey: text("object_key").notNull(),
+    /** ~300B placeholder from src/lib/blur.ts — the only image unrevealed
+     *  viewers ever get. */
+    blurDataUrl: text("blur_data_url").notNull(),
+    aspectRatio: doublePrecision("aspect_ratio").notNull().default(1),
+    /** Camera-only capture — shows the LIVE badge. */
+    isLive: boolean("is_live").notNull().default(false),
+    /** scanning | ready | rejected */
+    status: text("status").notNull().default("scanning"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => ({
+    userIdx: index("user_photos_user_idx").on(table.userId),
+  })
+);
+
+export type UserPhoto = typeof userPhotos.$inferSelect;
+
+/** Photos attached to a message (max 5, ordered by position). */
+export const messagePhotos = pgTable(
+  "message_photos",
+  {
+    messageId: uuid("message_id")
+      .notNull()
+      .references(() => messages.id, { onDelete: "cascade" }),
+    photoId: uuid("photo_id")
+      .notNull()
+      .references(() => userPhotos.id, { onDelete: "cascade" }),
+    position: smallint("position").notNull().default(0),
+    /** Closed-eye toggle — while true the server stops issuing presigned
+     *  URLs for this photo to anyone, sender included. Reversible. */
+    hiddenBySender: boolean("hidden_by_sender").notNull().default(false),
+  },
+  (table) => ({
+    pk: primaryKey({ columns: [table.messageId, table.photoId] }),
+  })
+);
+
+export type MessagePhoto = typeof messagePhotos.$inferSelect;
+
+/** Reveal grants (supports tap-to-reveal AND sender-grant models).
+ *  v3 ships tap-to-reveal with persist ephemerality: `grantedAt` set means
+ *  the viewer keeps access; `viewedAt` is reserved for future view-once. */
+export const photoReveals = pgTable(
+  "photo_reveals",
+  {
+    messageId: uuid("message_id").notNull(),
+    photoId: uuid("photo_id").notNull(),
+    viewerId: uuid("viewer_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    requestedAt: timestamp("requested_at", { withTimezone: true }),
+    grantedAt: timestamp("granted_at", { withTimezone: true }),
+    viewedAt: timestamp("viewed_at", { withTimezone: true }),
+  },
+  (table) => ({
+    pk: primaryKey({ columns: [table.messageId, table.photoId, table.viewerId] }),
+    messagePhotoFk: foreignKey({
+      columns: [table.messageId, table.photoId],
+      foreignColumns: [messagePhotos.messageId, messagePhotos.photoId],
+      name: "photo_reveals_message_photo_fk",
+    }).onDelete("cascade"),
+  })
+);
+
+export type PhotoReveal = typeof photoReveals.$inferSelect;
+
+/** Photos attached to a post (Phase 4 surface — table ships now so the
+ *  library is the single source for both DMs and posts). */
+export const postPhotos = pgTable(
+  "post_photos",
+  {
+    postId: uuid("post_id")
+      .notNull()
+      .references(() => posts.id, { onDelete: "cascade" }),
+    photoId: uuid("photo_id")
+      .notNull()
+      .references(() => userPhotos.id, { onDelete: "cascade" }),
+    position: smallint("position").notNull().default(0),
+  },
+  (table) => ({
+    pk: primaryKey({ columns: [table.postId, table.photoId] }),
   })
 );
 

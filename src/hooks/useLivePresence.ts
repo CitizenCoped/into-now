@@ -187,7 +187,10 @@ export function useLivePresence(enabled: boolean, currentUserId: string | null) 
 
     let pusher: PusherClient | null = null;
     if (key) {
-      pusher = new PusherClient(key, { cluster });
+      pusher = new PusherClient(key, {
+        cluster,
+        authEndpoint: "/api/pusher/auth",
+      });
       const channel = pusher.subscribe(PRESENCE_CHANNEL);
       channel.bind(PRESENCE_EVENT, applyUpdate);
       pusher.connection.bind("connected", () => {

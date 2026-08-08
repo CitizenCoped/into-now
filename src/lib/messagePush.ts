@@ -9,6 +9,9 @@ export async function notifyNewMessage(params: {
   conversationId: string;
   senderId: string;
   body: string;
+  /** When true the push body is masked as "Sent a photo" — notification
+   *  payloads must never carry photo content or hint at it. */
+  hasPhotos?: boolean;
 }) {
   const db = getDb();
 
@@ -44,7 +47,7 @@ export async function notifyNewMessage(params: {
 
       await sendPushToUser(recipient.userId, {
         title,
-        body: params.body,
+        body: params.hasPhotos ? "Sent a photo" : params.body,
         url: `/?conversation=${params.conversationId}&message=${params.messageId}`,
         tag: `msg-${params.messageId}`,
       });

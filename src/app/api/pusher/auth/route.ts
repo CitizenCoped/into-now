@@ -1,6 +1,6 @@
 import { getAuthUserFromRequest } from "@/lib/auth";
 import { isConversationParticipant } from "@/lib/conversations";
-import { getPusherServer, userChannel } from "@/lib/pusher";
+import { getPusherServer, PRESENCE_CHANNEL, userChannel } from "@/lib/pusher";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(request: NextRequest) {
@@ -25,6 +25,12 @@ export async function POST(request: NextRequest) {
     authorized = await isConversationParticipant(conversationId, user.id);
   }
 
+  // The shared live-map channel: any signed-in user may listen.
+  const isPresenceChannel = channelName === PRESENCE_CHANNEL;
+  if (!authorized && isPresenceChannel) {
+    authorized = true;
+  }
+
   if (!authorized) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
@@ -34,6 +40,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Pusher not configured" }, { status: 503 });
   }
 
-  const auth = pusher.authorizeChannel(socketId, channelName);
+  // presence-* channels require member data in the signature.
+  const auth = isPresenceChannel
+    ? pusher.authorizeChannel(socketId, channelName, { user_id: user.id })
+    : pusher.authorizeChannel(socketId, channelName);
   return NextResponse.json(auth);
 }

@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<style>
+body{margin:0;background:#06040c;font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;}
+a{color:#FF8A1E;text-decoration:none;} a:hover{color:#FFB03A;}
+@keyframes scanSweep{0%{top:-40%}100%{top:110%}}
+textarea::placeholder{color:rgba(255,255,255,.3);}
+</style>
+</helmet>
+<section style="padding:28px; display:flex; flex-direction:column; gap:18px;">
+  <div style="display:flex; align-items:baseline; gap:14px; flex-wrap:wrap;">
+    <h1 style="margin:0; font-size:18px; font-weight:700; color:#ffffff;">into.now — DM photo messaging (v3)</h1>
+    <p style="margin:0; font-size:12px; color:rgba(255,255,255,.4);">Two live viewers of the same conversation. Use Tweaks to switch reveal model, ephemerality, and scan duration.</p>
+  </div>
+  <div style="display:flex; gap:24px; align-items:flex-start; flex-wrap:wrap;">
+    <div id="1a" style="position:relative; padding:44px 20px 20px; border-radius:20px; border:1px solid rgba(255,255,255,.07); background:rgba(255,255,255,.02);">
+      <span style="position:absolute; left:14px; top:12px; font-size:10px; font-weight:700; letter-spacing:.08em; color:#06040c; background:#FF8A1E; border-radius:6px; padding:3px 7px;">1a</span>
+      <p style="position:absolute; left:52px; top:14px; margin:0; font-size:11px; color:rgba(255,255,255,.45);">Interactive prototype — send from either side; the other panel receives it</p>
+      <div style="display:flex; gap:20px;">
+        <sc-for list="{{ panels }}" as="panel" hint-placeholder-count="2">
+          <div style="width:360px; display:flex; flex-direction:column; border-radius:16px; border:1px solid rgba(255,255,255,.1); background:rgba(15,13,24,.95); box-shadow:0 25px 50px -12px rgba(0,0,0,.7); overflow:hidden; height:620px;">
+            <header style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid rgba(255,255,255,.05); padding:12px 16px;">
+              <div>
+                <p style="margin:0; font-size:13px; font-weight:600; color:#FF8A1E;">Messages</p>
+                <p style="margin:2px 0 0; font-size:11px; color:rgba(255,255,255,.4);">Signed in as {{ panel.me }}</p>
+              </div>
+              <span style="font-size:10px; color:rgba(255,255,255,.35); border:1px solid rgba(255,255,255,.1); border-radius:8px; padding:3px 8px;">{{ panel.viewerTag }}</span>
+            </header>
+            <div style="display:flex; align-items:center; gap:8px; padding:10px 16px 8px;">
+              <div style="width:26px; height:26px; border-radius:50%; background:{{ panel.avatarBg }}; border:1px solid rgba(255,255,255,.15);"></div>
+              <span style="width:8px; height:8px; border-radius:50%; background:#FF9E2C; box-shadow:0 0 6px #FF9E2C;"></span>
+              <span style="font-size:13px; font-weight:600; color:#ffffff;">{{ panel.other }}</span>
+              <span style="font-size:10px; color:#FF9E2C;">Online</span>
+            </div>
+            <div data-thread="true" style="flex:1; min-height:0; overflow-y:auto; padding:4px 16px 8px; display:flex; flex-direction:column; gap:8px;">
+              <sc-for list="{{ panel.msgs }}" as="m" hint-placeholder-count="3">
+                <div style="border-radius:12px; border:1px solid {{ m.borderC }}; background:{{ m.bg }}; padding:10px 12px; margin-left:{{ m.ml }}; margin-right:{{ m.mr }};">
+                  <sc-if value="{{ m.hasText }}" hint-placeholder-val="{{ true }}">
+                    <p style="margin:0; font-size:13px; color:#ffffff; white-space:pre-wrap;">{{ m.text }}</p>
+                  </sc-if>
+                  <sc-if value="{{ m.hasPhotos }}" hint-placeholder-val="{{ false }}">
+                    <div style="display:grid; grid-template-columns:{{ m.gridCols }}; gap:6px; margin-top:{{ m.photosMt }};">
+                      <sc-for list="{{ m.photos }}" as="ph" hint-placeholder-count="1">
+                        <div onClick="{{ ph.onTap }}" style="position:relative; aspect-ratio:1; border-radius:10px; overflow:hidden; border:1px solid rgba(255,255,255,.1); background:#0b0914; cursor:{{ ph.cursor }};">
+                          <div style="position:absolute; inset:-8%; background:{{ ph.bg }}; filter:{{ ph.filter }}; transition:filter .5s ease;"></div>
+                          <sc-if value="{{ ph.showLock }}" hint-placeholder-val="{{ false }}">
+                            <div style="position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; background:rgba(0,0,0,.3);">
+                              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FF8A1E" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"></rect><path d="M8 11V8a4 4 0 0 1 8 0v3"></path></svg>
+                              <span style="font-size:10px; font-weight:600; color:#FF8A1E; background:rgba(255,138,30,.15); border:1px solid rgba(255,138,30,.4); border-radius:99px; padding:3px 9px;">{{ ph.lockLabel }}</span>
+                            </div>
+                          </sc-if>
+                          <sc-if value="{{ ph.showHidden }}" hint-placeholder-val="{{ false }}">
+                            <div style="position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:5px; background:rgba(6,4,12,.45);">
+                              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.6)" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"></path><line x1="4" y1="20" x2="20" y2="4"></line></svg>
+                              <span style="font-size:9px; color:rgba(255,255,255,.55);">{{ ph.hiddenLabel }}</span>
+                            </div>
+                          </sc-if>
+                          <sc-if value="{{ ph.showViewed }}" hint-placeholder-val="{{ false }}">
+                            <div style="position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:5px; background:#0b0914;">
+                              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.4)" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"></path><line x1="4" y1="20" x2="20" y2="4"></line></svg>
+                              <span style="font-size:9px; color:rgba(255,255,255,.45);">Viewed</span>
+                            </div>
+                          </sc-if>
+                          <sc-if value="{{ ph.showLive }}" hint-placeholder-val="{{ false }}">
+                            <span style="position:absolute; left:6px; top:6px; display:flex; align-items:center; gap:4px; border-radius:99px; background:rgba(0,0,0,.6); padding:2px 7px; font-size:8px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:#FF9E2C; text-shadow:0 0 6px #FF9E2C;"><span style="width:5px; height:5px; border-radius:50%; background:#FF9E2C; box-shadow:0 0 6px #FF9E2C;"></span>Live</span>
+                          </sc-if>
+                          <sc-if value="{{ ph.showEye }}" hint-placeholder-val="{{ false }}">
+                            <button type="button" onClick="{{ ph.onEye }}" title="{{ ph.eyeTitle }}" style="position:absolute; right:6px; top:6px; width:26px; height:26px; display:flex; align-items:center; justify-content:center; border-radius:99px; background:rgba(0,0,0,.55); border:1px solid rgba(255,255,255,.15); color:rgba(255,255,255,.75); cursor:pointer; padding:0;">
+                              <sc-if value="{{ ph.hidden }}" hint-placeholder-val="{{ false }}"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"></path><line x1="4" y1="20" x2="20" y2="4"></line></svg></sc-if>
+                              <sc-if value="{{ ph.notHidden }}" hint-placeholder-val="{{ true }}"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"></path><circle cx="12" cy="12" r="3"></circle></svg></sc-if>
+                            </button>
+                          </sc-if>
+                          <sc-if value="{{ ph.showAllow }}" hint-placeholder-val="{{ false }}">
+                            <button type="button" onClick="{{ ph.onAllow }}" style="position:absolute; left:50%; bottom:8px; transform:translateX(-50%); border-radius:99px; background:linear-gradient(90deg,#FFB03A,#F56A00); border:none; color:#06040c; font-size:10px; font-weight:700; padding:4px 10px; cursor:pointer;">Allow reveal</button>
+                          </sc-if>
+                        </div>
+                      </sc-for>
+                    </div>
+                    <sc-if value="{{ m.ephChip }}" hint-placeholder-val="{{ false }}">
+                      <span style="display:inline-block; margin-top:6px; font-size:9px; letter-spacing:.06em; text-transform:uppercase; color:rgba(255,255,255,.35); border:1px solid rgba(255,255,255,.1); border-radius:99px; padding:2px 7px;">{{ m.ephChip }}</span>
+                    </sc-if>
+                  </sc-if>
+                </div>
+              </sc-for>
+            </div>
+            <sc-if value="{{ panel.sheetOpen }}" hint-placeholder-val="{{ false }}">
+              <div style="border-top:1px solid rgba(255,255,255,.06); background:rgba(255,255,255,.02); padding:10px 16px 12px;">
+                <div style="display:flex; align-items:baseline; justify-content:space-between; margin-bottom:8px;">
+                  <span style="font-size:10px; font-weight:600; letter-spacing:.08em; text-transform:uppercase; color:rgba(255,255,255,.4);">My photos</span>
+                  <span style="font-size:10px; color:rgba(255,255,255,.35);">{{ panel.libCount }}/10 · {{ panel.selectedCount }}/5 selected</span>
+                </div>
+                <div style="display:grid; grid-template-columns:repeat(5,1fr); gap:6px;">
+                  <sc-for list="{{ panel.library }}" as="lp" hint-placeholder-count="4">
+                    <div onClick="{{ lp.onSelect }}" style="position:relative; aspect-ratio:1; border-radius:9px; overflow:hidden; border:2px solid {{ lp.borderC }}; cursor:pointer; background:#0b0914;">
+                      <div style="position:absolute; inset:0; background:{{ lp.bg }};"></div>
+                      <sc-if value="{{ lp.scanning }}" hint-placeholder-val="{{ false }}">
+                        <div style="position:absolute; inset:0; background:rgba(6,4,12,.55); overflow:hidden;">
+                          <div style="position:absolute; left:0; right:0; height:36%; top:-40%; background:linear-gradient(180deg,transparent,rgba(255,138,30,.5),transparent); animation:scanSweep .45s linear infinite;"></div>
+                        </div>
+                      </sc-if>
+                      <sc-if value="{{ lp.live }}" hint-placeholder-val="{{ false }}">
+                        <span style="position:absolute; left:4px; top:4px; width:6px; height:6px; border-radius:50%; background:#FF9E2C; box-shadow:0 0 6px #FF9E2C;"></span>
+                      </sc-if>
+                      <sc-if value="{{ lp.selBadge }}" hint-placeholder-val="{{ false }}">
+                        <span style="position:absolute; right:4px; top:4px; width:16px; height:16px; display:flex; align-items:center; justify-content:center; border-radius:50%; background:#FF8A1E; color:#06040c; font-size:9px; font-weight:800;">{{ lp.selBadge }}</span>
+                      </sc-if>
+                    </div>
+                  </sc-for>
+                  <sc-if value="{{ panel.canAdd }}" hint-placeholder-val="{{ true }}">
+                    <button type="button" onClick="{{ panel.onAdd }}" title="Upload from library" style="aspect-ratio:1; border-radius:9px; border:1px dashed rgba(255,255,255,.2); background:transparent; color:rgba(255,255,255,.5); display:flex; align-items:center; justify-content:center; cursor:pointer;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg></button>
+                    <button type="button" onClick="{{ panel.onCamera }}" title="Live camera capture" style="aspect-ratio:1; border-radius:9px; border:1px dashed rgba(255,158,44,.35); background:transparent; color:#FF9E2C; display:flex; align-items:center; justify-content:center; cursor:pointer;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg></button>
+                  </sc-if>
+                </div>
+              </div>
+            </sc-if>
+            <div style="border-top:1px solid rgba(255,255,255,.06); padding:10px 16px 14px;">
+              <div style="display:flex; gap:8px; align-items:flex-end;">
+                <button type="button" onClick="{{ panel.onToggleSheet }}" title="Attach photos" style="width:36px; height:36px; flex-shrink:0; display:flex; align-items:center; justify-content:center; border-radius:10px; background:rgba(255,255,255,.04); border:1px solid {{ panel.attachBorder }}; color:{{ panel.attachC }}; cursor:pointer;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><path d="M21 15l-5-5L5 21"></path></svg></button>
+                <textarea value="{{ panel.draft }}" onChange="{{ panel.onDraft }}" placeholder="Reply..." rows="1" style="flex:1; resize:none; border-radius:10px; border:1px solid rgba(255,255,255,.1); background:rgba(255,255,255,.05); padding:9px 12px; font-size:13px; color:#ffffff; outline:none; font-family:inherit;"></textarea>
+                <button type="button" onClick="{{ panel.onSend }}" disabled="{{ panel.sendDisabled }}" style="border-radius:10px; background:linear-gradient(90deg,#FFB03A,#F56A00); border:none; color:#06040c; font-size:13px; font-weight:700; padding:9px 16px; cursor:pointer; opacity:{{ panel.sendOpacity }};">Send</button>
+              </div>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+    <div id="1b" style="position:relative; padding:44px 20px 20px; border-radius:20px; border:1px solid rgba(255,255,255,.07); background:rgba(255,255,255,.02); max-width:640px;">
+      <span style="position:absolute; left:14px; top:12px; font-size:10px; font-weight:700; letter-spacing:.08em; color:#06040c; background:#FF8A1E; border-radius:6px; padding:3px 7px;">1b</span>
+      <p style="position:absolute; left:52px; top:14px; margin:0; font-size:11px; color:rgba(255,255,255,.45);">Every photo state — hi-fi reference</p>
+      <div style="display:grid; grid-template-columns:repeat(4,132px); gap:16px;">
+        <div style="display:flex; flex-direction:column; gap:6px;">
+          <div style="position:relative; width:132px; aspect-ratio:1; border-radius:10px; overflow:hidden; border:1px solid rgba(255,255,255,.1); background:#0b0914;">
+            <div style="position:absolute; inset:0; background:radial-gradient(circle at 30% 25%, rgba(255,255,255,.28), transparent 55%), linear-gradient(140deg,#6e3a5e,#d96a4b);"></div>
+            <div style="position:absolute; inset:0; background:rgba(6,4,12,.55); overflow:hidden;"><div style="position:absolute; left:0; right:0; height:36%; top:-40%; background:linear-gradient(180deg,transparent,rgba(255,138,30,.5),transparent); animation:scanSweep .45s linear infinite;"></div></div>
+          </div>
+          <p style="margin:0; font-size:9px; font-family:ui-monospace,monospace; color:rgba(255,255,255,.4); line-height:1.4;">uploading — silent scan sweep, .1–.5s, no words</p>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:6px;">
+          <div style="position:relative; width:132px; aspect-ratio:1; border-radius:10px; overflow:hidden; border:1px solid rgba(255,158,44,.35); background:#0b0914;">
+            <div style="position:absolute; inset:0; background:radial-gradient(circle at 70% 30%, rgba(255,255,255,.22), transparent 55%), linear-gradient(160deg,#1d3a5f,#4bbcd9);"></div>
+            <span style="position:absolute; right:6px; bottom:6px; width:18px; height:18px; display:flex; align-items:center; justify-content:center; border-radius:50%; background:#FF8A1E; color:#06040c; font-size:11px; font-weight:800;">✓</span>
+          </div>
+          <p style="margin:0; font-size:9px; font-family:ui-monospace,monospace; color:rgba(255,255,255,.4); line-height:1.4;">approved — joins My photos, reusable anytime</p>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:6px;">
+          <div style="position:relative; width:132px; aspect-ratio:1; border-radius:10px; overflow:hidden; border:1px solid rgba(255,77,109,.35); background:#0b0914;">
+            <div style="position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; background:rgba(255,77,109,.06);">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FF4D6D" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+              <span style="font-size:9px; color:#FF4D6D;">Can't be shared</span>
+            </div>
+          </div>
+          <p style="margin:0; font-size:9px; font-family:ui-monospace,monospace; color:rgba(255,255,255,.4); line-height:1.4;">rejected — never enters library, no image kept</p>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:6px;">
+          <div style="position:relative; width:132px; aspect-ratio:1; border-radius:10px; overflow:hidden; border:1px solid rgba(255,255,255,.1); background:#0b0914;">
+            <div style="position:absolute; inset:-8%; background:radial-gradient(circle at 40% 70%, rgba(255,255,255,.2), transparent 50%), linear-gradient(145deg,#5e4a2a,#d9b84b); filter:blur(16px) saturate(.85);"></div>
+            <div style="position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; background:rgba(0,0,0,.3);">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FF8A1E" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"></rect><path d="M8 11V8a4 4 0 0 1 8 0v3"></path></svg>
+              <span style="font-size:10px; font-weight:600; color:#FF8A1E; background:rgba(255,138,30,.15); border:1px solid rgba(255,138,30,.4); border-radius:99px; padding:3px 9px;">Tap to reveal</span>
+            </div>
+          </div>
+          <p style="margin:0; font-size:9px; font-family:ui-monospace,monospace; color:rgba(255,255,255,.4); line-height:1.4;">received — blur placeholder only; full URL never sent pre-reveal</p>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:6px;">
+          <div style="position:relative; width:132px; aspect-ratio:1; border-radius:10px; overflow:hidden; border:1px solid rgba(255,255,255,.1); background:#0b0914;">
+            <div style="position:absolute; inset:-8%; background:radial-gradient(circle at 25% 40%, rgba(255,255,255,.25), transparent 55%), linear-gradient(150deg,#2a4a3f,#7ad9a0); filter:blur(16px) saturate(.85);"></div>
+            <div style="position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; background:rgba(0,0,0,.3);">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FF8A1E" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"></rect><path d="M8 11V8a4 4 0 0 1 8 0v3"></path></svg>
+              <span style="font-size:10px; font-weight:600; color:#FF8A1E; background:rgba(255,138,30,.15); border:1px solid rgba(255,138,30,.4); border-radius:99px; padding:3px 9px;">Ask to reveal</span>
+            </div>
+          </div>
+          <p style="margin:0; font-size:9px; font-family:ui-monospace,monospace; color:rgba(255,255,255,.4); line-height:1.4;">sender-grant model — recipient requests, sender allows</p>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:6px;">
+          <div style="position:relative; width:132px; aspect-ratio:1; border-radius:10px; overflow:hidden; border:1px solid rgba(255,255,255,.1); background:#0b0914;">
+            <div style="position:absolute; inset:0; background:radial-gradient(circle at 60% 60%, rgba(255,255,255,.2), transparent 55%), linear-gradient(135deg,#3a2a6e,#b44bd9);"></div>
+          </div>
+          <p style="margin:0; font-size:9px; font-family:ui-monospace,monospace; color:rgba(255,255,255,.4); line-height:1.4;">revealed — 500ms crossfade from blur</p>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:6px;">
+          <div style="position:relative; width:132px; aspect-ratio:1; border-radius:10px; overflow:hidden; border:1px solid rgba(255,255,255,.1); background:#0b0914;">
+            <div style="position:absolute; inset:-8%; background:radial-gradient(circle at 50% 20%, rgba(255,255,255,.25), transparent 50%), linear-gradient(155deg,#6e2a2a,#d97a4b); filter:blur(16px) saturate(.85);"></div>
+            <div style="position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:5px; background:rgba(6,4,12,.45);">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.6)" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"></path><line x1="4" y1="20" x2="20" y2="4"></line></svg>
+              <span style="font-size:9px; color:rgba(255,255,255,.55);">Hidden by sender</span>
+            </div>
+          </div>
+          <p style="margin:0; font-size:9px; font-family:ui-monospace,monospace; color:rgba(255,255,255,.4); line-height:1.4;">closed-eye — sender obfuscates any sent photo, reversible anytime</p>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:6px;">
+          <div style="position:relative; width:132px; aspect-ratio:1; border-radius:10px; overflow:hidden; border:1px solid rgba(255,255,255,.1); background:#0b0914;">
+            <div style="position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:5px;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.4)" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"></path><line x1="4" y1="20" x2="20" y2="4"></line></svg>
+              <span style="font-size:9px; color:rgba(255,255,255,.45);">Viewed</span>
+            </div>
+          </div>
+          <p style="margin:0; font-size:9px; font-family:ui-monospace,monospace; color:rgba(255,255,255,.4); line-height:1.4;">view-once model — consumed after reveal</p>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:6px;">
+          <div style="position:relative; width:132px; aspect-ratio:1; border-radius:10px; overflow:hidden; border:1px solid rgba(255,255,255,.1); background:#0b0914;">
+            <div style="position:absolute; inset:0; background:radial-gradient(circle at 35% 35%, rgba(255,255,255,.22), transparent 55%), linear-gradient(140deg,#24455e,#8a6ad9);"></div>
+            <span style="position:absolute; left:6px; bottom:6px; font-size:8px; letter-spacing:.06em; text-transform:uppercase; color:rgba(255,255,255,.6); background:rgba(0,0,0,.55); border-radius:99px; padding:2px 7px;">Expires with session</span>
+          </div>
+          <p style="margin:0; font-size:9px; font-family:ui-monospace,monospace; color:rgba(255,255,255,.4); line-height:1.4;">session model — gone when anonymous session ends</p>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:6px;">
+          <div style="position:relative; width:132px; aspect-ratio:1; border-radius:10px; overflow:hidden; border:1px solid rgba(255,255,255,.1); background:#0b0914;">
+            <div style="position:absolute; inset:0; background:radial-gradient(circle at 65% 45%, rgba(255,255,255,.2), transparent 55%), linear-gradient(150deg,#4a3a2a,#4bd987);"></div>
+            <span style="position:absolute; left:6px; top:6px; display:flex; align-items:center; gap:4px; border-radius:99px; background:rgba(0,0,0,.6); padding:2px 7px; font-size:8px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:#FF9E2C; text-shadow:0 0 6px #FF9E2C;"><span style="width:5px; height:5px; border-radius:50%; background:#FF9E2C; box-shadow:0 0 6px #FF9E2C;"></span>Live</span>
+          </div>
+          <p style="margin:0; font-size:9px; font-family:ui-monospace,monospace; color:rgba(255,255,255,.4); line-height:1.4;">camera-only capture — unfakeable LIVE badge</p>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:6px;">
+          <div style="position:relative; width:132px; aspect-ratio:1; border-radius:10px; overflow:hidden; border:2px solid #FF8A1E; background:#0b0914;">
+            <div style="position:absolute; inset:0; background:radial-gradient(circle at 30% 25%, rgba(255,255,255,.28), transparent 55%), linear-gradient(140deg,#6e3a5e,#d96a4b);"></div>
+            <span style="position:absolute; right:6px; top:6px; width:18px; height:18px; display:flex; align-items:center; justify-content:center; border-radius:50%; background:#FF8A1E; color:#06040c; font-size:10px; font-weight:800;">3</span>
+          </div>
+          <p style="margin:0; font-size:9px; font-family:ui-monospace,monospace; color:rgba(255,255,255,.4); line-height:1.4;">picker selection — ordered badge, max 5 per message</p>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:6px;">
+          <div style="position:relative; width:132px; aspect-ratio:1; border-radius:10px; overflow:hidden; border:1px dashed rgba(255,255,255,.15); background:transparent;">
+            <div style="position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:5px; color:rgba(255,255,255,.25);">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+              <span style="font-size:9px;">10/10</span>
+            </div>
+          </div>
+          <p style="margin:0; font-size:9px; font-family:ui-monospace,monospace; color:rgba(255,255,255,.4); line-height:1.4;">library full — add disabled until one is removed</p>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:6px;">
+          <div style="position:relative; width:132px; aspect-ratio:1; border-radius:10px; overflow:hidden; border:1px solid rgba(255,255,255,.1); background:#0b0914;">
+            <div style="position:absolute; inset:-8%; background:radial-gradient(circle at 70% 30%, rgba(255,255,255,.22), transparent 55%), linear-gradient(160deg,#1d3a5f,#4bbcd9); filter:blur(16px) saturate(.85);"></div>
+            <span style="position:absolute; left:50%; bottom:8px; transform:translateX(-50%); font-size:9px; color:rgba(255,255,255,.6); background:rgba(0,0,0,.55); border-radius:99px; padding:3px 8px; white-space:nowrap;">Reveal requested</span>
+          </div>
+          <p style="margin:0; font-size:9px; font-family:ui-monospace,monospace; color:rgba(255,255,255,.4); line-height:1.4;">post photos — same surface reused on post cards (Phase 4)</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1760,&quot;height&quot;:1020},&quot;revealModel&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;tap-to-reveal&quot;,&quot;sender-grant&quot;,&quot;immediate&quot;],&quot;default&quot;:&quot;tap-to-reveal&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Behavior&quot;},&quot;ephemerality&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;persist&quot;,&quot;view-once&quot;,&quot;session&quot;],&quot;default&quot;:&quot;persist&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Behavior&quot;},&quot;scanMs&quot;:{&quot;editor&quot;:&quot;range&quot;,&quot;min&quot;:100,&quot;max&quot;:500,&quot;step&quot;:50,&quot;default&quot;:400,&quot;unit&quot;:&quot;ms&quot;,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;Behavior&quot;}}">
+class Component extends DCLogic {
+  grads = [
+    "radial-gradient(circle at 30% 25%, rgba(255,255,255,.28), transparent 55%), linear-gradient(140deg,#6e3a5e,#d96a4b)",
+    "radial-gradient(circle at 70% 30%, rgba(255,255,255,.22), transparent 55%), linear-gradient(160deg,#1d3a5f,#4bbcd9)",
+    "radial-gradient(circle at 40% 70%, rgba(255,255,255,.2), transparent 50%), linear-gradient(145deg,#5e4a2a,#d9b84b)",
+    "radial-gradient(circle at 25% 40%, rgba(255,255,255,.25), transparent 55%), linear-gradient(150deg,#2a4a3f,#7ad9a0)",
+    "radial-gradient(circle at 60% 60%, rgba(255,255,255,.2), transparent 55%), linear-gradient(135deg,#3a2a6e,#b44bd9)",
+    "radial-gradient(circle at 50% 20%, rgba(255,255,255,.25), transparent 50%), linear-gradient(155deg,#6e2a2a,#d97a4b)",
+    "radial-gradient(circle at 35% 35%, rgba(255,255,255,.22), transparent 55%), linear-gradient(140deg,#24455e,#8a6ad9)",
+    "radial-gradient(circle at 65% 45%, rgba(255,255,255,.2), transparent 55%), linear-gradient(150deg,#4a3a2a,#4bd987)"
+  ];
+  state = {
+    libs: {
+      a: [{id:"a1",bg:0,live:false,status:"ready"},{id:"a2",bg:1,live:false,status:"ready"},{id:"a3",bg:2,live:true,status:"ready"},{id:"a4",bg:3,live:false,status:"ready"}],
+      b: [{id:"b1",bg:4,live:false,status:"ready"},{id:"b2",bg:5,live:false,status:"ready"}]
+    },
+    sel: {a:[], b:[]},
+    open: {a:false, b:false},
+    drafts: {a:"", b:""},
+    n: 6,
+    msgs: [
+      {id:"m1", from:"b", text:"hey :) saw you're close by", photos:[]},
+      {id:"m2", from:"a", text:"hi — yeah, downtown. you?", photos:[]},
+      {id:"m3", from:"b", text:"", photos:[{pid:"b1",revealed:false,requested:false,hidden:false,consumed:false}]}
+    ]
+  };
+  lastLen = 0;
+  componentDidMount() { this.lastLen = this.state.msgs.length; }
+  componentDidUpdate() {
+    if (this.state.msgs.length !== this.lastLen) {
+      this.lastLen = this.state.msgs.length;
+      document.querySelectorAll("[data-thread]").forEach((el) => { el.scrollTop = el.scrollHeight; });
+    }
+  }
+  renderVals() {
+    const model = this.props.revealModel ?? "tap-to-reveal";
+    const eph = this.props.ephemerality ?? "persist";
+    const scanMs = this.props.scanMs ?? 400;
+    const names = {a:"Alex", b:"Jordan"};
+    const upd = (mid, pid, patch) => this.setState((s) => ({
+      msgs: s.msgs.map((m) => m.id !== mid ? m : {...m, photos: m.photos.map((p) => p.pid !== pid ? p : {...p, ...patch})})
+    }));
+    const scheduleConsume = (mid, pid) => {
+      if (eph === "view-once") setTimeout(() => upd(mid, pid, {consumed:true}), 3000);
+    };
+    const panels = ["a","b"].map((k) => {
+      const other = k === "a" ? "b" : "a";
+      const lib = this.state.libs[k];
+      const sel = this.state.sel[k];
+      const msgs = this.state.msgs.map((m) => {
+        const mine = m.from === k;
+        const photos = m.photos.map((ph) => {
+          const src = this.state.libs[m.from].find((p) => p.id === ph.pid) || {bg:0, live:false};
+          const visible = mine ? !ph.hidden : (!ph.hidden && !ph.consumed && (ph.revealed || model === "immediate"));
+          const canTap = !mine && !visible && !ph.hidden && !ph.consumed && model !== "immediate" && !(model === "sender-grant" && ph.requested);
+          const onTap = canTap ? () => {
+            if (model === "tap-to-reveal") { upd(m.id, ph.pid, {revealed:true}); scheduleConsume(m.id, ph.pid); }
+            else if (model === "sender-grant") { upd(m.id, ph.pid, {requested:true}); }
+          } : undefined;
+          return {
+            bg: this.grads[src.bg],
+            filter: visible ? "none" : "blur(16px) saturate(.85)",
+            cursor: canTap ? "pointer" : "default",
+            onTap,
+            showLock: !mine && !visible && !ph.hidden && !ph.consumed && model !== "immediate",
+            lockLabel: model === "sender-grant" ? (ph.requested ? "Reveal requested" : "Ask to reveal") : "Tap to reveal",
+            showHidden: ph.hidden,
+            hiddenLabel: mine ? "Hidden" : "Hidden by sender",
+            showViewed: !mine && ph.consumed && !ph.hidden,
+            showLive: Boolean(src.live) && (visible || mine),
+            showEye: mine && !ph.consumed,
+            hidden: ph.hidden,
+            notHidden: !ph.hidden,
+            eyeTitle: ph.hidden ? "Show photo again" : "Hide this photo for everyone",
+            onEye: (e) => { e.stopPropagation(); upd(m.id, ph.pid, {hidden: !ph.hidden}); },
+            showAllow: mine && model === "sender-grant" && ph.requested && !ph.revealed && !ph.hidden,
+            onAllow: (e) => { e.stopPropagation(); upd(m.id, ph.pid, {revealed:true, requested:false}); scheduleConsume(m.id, ph.pid); }
+          };
+        });
+        return {
+          hasText: Boolean(m.text),
+          text: m.text,
+          hasPhotos: photos.length > 0,
+          photos,
+          gridCols: photos.length > 1 ? "1fr 1fr" : "1fr",
+          photosMt: m.text ? "8px" : "0",
+          ephChip: photos.length ? (eph === "view-once" ? "View once" : eph === "session" ? "Expires with session" : "") : "",
+          borderC: mine ? "rgba(255,138,30,.2)" : "rgba(255,255,255,.05)",
+          bg: mine ? "rgba(255,138,30,.1)" : "rgba(255,255,255,.05)",
+          ml: mine ? "24px" : "0",
+          mr: mine ? "0" : "24px"
+        };
+      });
+      const library = lib.map((p) => {
+        const selIdx = sel.indexOf(p.id);
+        return {
+          bg: this.grads[p.bg],
+          scanning: p.status === "scanning",
+          live: p.live,
+          selBadge: selIdx >= 0 ? String(selIdx + 1) : null,
+          borderC: selIdx >= 0 ? "#FF8A1E" : "rgba(255,255,255,.12)",
+          onSelect: () => {
+            if (p.status !== "ready") return;
+            this.setState((s) => {
+              const cur = s.sel[k];
+              const next = cur.includes(p.id) ? cur.filter((id) => id !== p.id) : (cur.length < 5 ? [...cur, p.id] : cur);
+              return {sel: {...s.sel, [k]: next}};
+            });
+          }
+        };
+      });
+      const add = (live) => {
+        if (lib.length >= 10) return;
+        this.setState((s) => {
+          const id = "p" + (s.n + 1);
+          return {libs: {...s.libs, [k]: [...s.libs[k], {id, bg: s.n % this.grads.length, live, status:"scanning"}]}, n: s.n + 1};
+        });
+        const dur = 100 + Math.random() * Math.max(0, scanMs - 100);
+        setTimeout(() => {
+          this.setState((s) => ({libs: {...s.libs, [k]: s.libs[k].map((p) => p.status === "scanning" ? {...p, status:"ready"} : p)}}));
+        }, dur);
+      };
+      const sendDisabled = !this.state.drafts[k].trim() && sel.length === 0;
+      return {
+        key: k,
+        me: names[k],
+        other: names[other],
+        viewerTag: "Demo · " + names[k] + "'s screen",
+        avatarBg: this.grads[k === "a" ? 7 : 6],
+        msgs,
+        library,
+        libCount: lib.length,
+        selectedCount: sel.length,
+        canAdd: lib.length < 10,
+        sheetOpen: this.state.open[k],
+        draft: this.state.drafts[k],
+        attachBorder: (this.state.open[k] || sel.length) ? "rgba(255,138,30,.5)" : "rgba(255,255,255,.1)",
+        attachC: (this.state.open[k] || sel.length) ? "#FF8A1E" : "rgba(255,255,255,.5)",
+        onDraft: (e) => { const v = e.target.value; this.setState((s) => ({drafts: {...s.drafts, [k]: v}})); },
+        onToggleSheet: () => this.setState((s) => ({open: {...s.open, [k]: !s.open[k]}})),
+        onAdd: () => add(false),
+        onCamera: () => add(true),
+        sendDisabled,
+        sendOpacity: sendDisabled ? ".45" : "1",
+        onSend: () => {
+          this.setState((s) => {
+            const text = s.drafts[k].trim();
+            const pids = s.sel[k];
+            if (!text && !pids.length) return null;
+            const msg = {id: "m" + Date.now(), from: k, text, photos: pids.map((pid) => ({pid, revealed:false, requested:false, hidden:false, consumed:false}))};
+            return {msgs: [...s.msgs, msg], drafts: {...s.drafts, [k]: ""}, sel: {...s.sel, [k]: []}, open: {...s.open, [k]: false}};
+          });
+        }
+      };
+    });
+    return { panels };
+  }
+}
+</script>
+</body>
+</html>

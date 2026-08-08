@@ -116,6 +116,8 @@ export default function HomePage() {
     loadingThread,
     openConversationWith,
     sendMessage,
+    revealPhoto,
+    toggleHidePhoto,
   } = useMessages(user?.id ?? null, activeConversationId);
   const {
     permission: pushPermission,
@@ -286,9 +288,9 @@ export default function HomePage() {
     [user, openConversationWith]
   );
 
-  async function handleSendMessage(body: string) {
+  async function handleSendMessage(body: string, photoIds: string[]) {
     if (!activeConversationId) return;
-    await sendMessage(activeConversationId, body);
+    await sendMessage(activeConversationId, body, photoIds);
   }
 
   const postLat = myLocation?.lat ?? center.lat;
@@ -402,6 +404,8 @@ export default function HomePage() {
         loadingInbox={loadingInbox}
         loadingThread={loadingThread}
         onSendMessage={handleSendMessage}
+        onRevealPhoto={revealPhoto}
+        onToggleHidePhoto={toggleHidePhoto}
         unreadCount={conversations.reduce((sum, convo) => sum + convo.unreadCount, 0)}
         pushPermission={pushPermission}
         pushSubscribed={pushSubscribed}

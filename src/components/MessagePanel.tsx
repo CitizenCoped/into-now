@@ -3,7 +3,7 @@
 import type { AuthUser } from "@/hooks/useAuth";
 import type { ConversationSummary } from "@/hooks/useMessages";
 import type { PushPreferences } from "@/hooks/usePushNotifications";
-import type { Message } from "@/lib/schema";
+import type { MessageView } from "@/lib/photoTypes";
 import ConversationList from "./ConversationList";
 import ConversationThread from "./ConversationThread";
 import CornerControl from "./CornerControl";
@@ -28,10 +28,12 @@ type Props = {
   onVerifyCode: (phone: string, code: string) => Promise<void>;
   onLogout: () => Promise<void>;
   conversations: ConversationSummary[];
-  messages: Message[];
+  messages: MessageView[];
   loadingInbox: boolean;
   loadingThread: boolean;
-  onSendMessage: (body: string) => Promise<void>;
+  onSendMessage: (body: string, photoIds: string[]) => Promise<void>;
+  onRevealPhoto: (messageId: string, photoId: string) => void;
+  onToggleHidePhoto: (messageId: string, photoId: string, current: boolean) => void;
   unreadCount: number;
   pushPermission: NotificationPermission;
   pushSubscribed: boolean;
@@ -69,6 +71,8 @@ export default function MessagePanel({
   loadingInbox,
   loadingThread,
   onSendMessage,
+  onRevealPhoto,
+  onToggleHidePhoto,
   unreadCount,
   pushPermission,
   pushSubscribed,
@@ -185,6 +189,8 @@ export default function MessagePanel({
               highlightMessageId={highlightMessageId}
               onHighlightComplete={onHighlightComplete}
               onSend={onSendMessage}
+              onRevealPhoto={onRevealPhoto}
+              onToggleHidePhoto={onToggleHidePhoto}
             />
           </>
         ) : (

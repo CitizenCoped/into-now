@@ -3,18 +3,25 @@
 import { containsPhoneNumber, CONTACT_WARNING_MESSAGE } from "@/lib/contentScreens";
 import { previewMessage } from "@/lib/messagePreview";
 import type { ConversationSummary } from "@/hooks/useMessages";
-import type { Message } from "@/lib/schema";
+import { usePhotoLibrary } from "@/hooks/usePhotoLibrary";
+import { FEATURES } from "@/lib/flags";
+import type { MessageView } from "@/lib/photoTypes";
+import { MAX_PHOTOS_PER_MESSAGE } from "@/lib/photoTypes";
 import { useEffect, useRef, useState } from "react";
+import MessagePhotos from "./MessagePhotos";
+import PhotoSheet from "./PhotoSheet";
 import ProfileAvatar from "./ProfileAvatar";
 
 type Props = {
-  messages: Message[];
+  messages: MessageView[];
   currentUserId: string;
   otherUser: ConversationSummary["otherUser"];
   loading: boolean;
   highlightMessageId?: string | null;
   onHighlightComplete?: () => void;
-  onSend: (body: string) => Promise<void>;
+  onSend: (body: string, photoIds: string[]) => Promise<void>;
+  onRevealPhoto: (messageId: string, photoId: string) => void;
+  onToggleHidePhoto: (messageId: string, photoId: string, current: boolean) => void;
 };
 
 export default function ConversationThread({
@@ -25,6 +32,8 @@ export default function ConversationThread({
   highlightMessageId,
   onHighlightComplete,
   onSend,
+  onRevealPhoto,
+  onToggleHidePhoto,
 }: Props) {
   const [draft, setDraft] = useState("");
   const [sending, setSending] = useState(false);
@@ -34,10 +43,24 @@ export default function ConversationThread({
   const [showContactWarning, setShowContactWarning] = useState(false);
   const [blocked, setBlocked] = useState(false);
   const [blocking, setBlocking] = useState(false);
+  const [sheetOpen, setSheetOpen] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
   const handledHighlight = useRef<string | null>(null);
 
+  const photosEnabled = FEATURES.photoBlur;
+  const library = usePhotoLibrary(photosEnabled);
+
   const expired = otherUser?.isExpired;
+
+  // Prune selections whose photo left the library (deleted / rejected).
+  useEffect(() => {
+    setSelectedIds((prev) =>
+      prev.filter((id) =>
+        library.photos.some((p) => p.id === id && p.status === "ready")
+      )
+    );
+  }, [library.photos]);
 
   function toggleExpanded(id: string) {
     setExpandedIds((prev) => {
@@ -45,6 +68,14 @@ export default function ConversationThread({
       if (next.has(id)) next.delete(id);
       else next.add(id);
       return next;
+    });
+  }
+
+  function toggleSelect(photoId: string) {
+    setSelectedIds((prev) => {
+      if (prev.includes(photoId)) return prev.filter((id) => id !== photoId);
+      if (prev.length >= MAX_PHOTOS_PER_MESSAGE) return prev;
+      return [...prev, photoId];
     });
   }
 
@@ -82,13 +113,16 @@ export default function ConversationThread({
 
   async function sendDraft() {
     const body = draft.trim();
-    if (!body) return;
+    const photoIds = selectedIds;
+    if (!body && photoIds.length === 0) return;
 
     setSending(true);
     setError("");
     try {
-      await onSend(body);
+      await onSend(body, photoIds);
       setDraft("");
+      setSelectedIds([]);
+      setSheetOpen(false);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to send");
     } finally {
@@ -100,7 +134,7 @@ export default function ConversationThread({
     e.preventDefault();
     if (expired || blocked) return;
     const body = draft.trim();
-    if (!body) return;
+    if (!body && selectedIds.length === 0) return;
 
     // Contact-info warning: advise, never block. "Send Anyway" sends as typed.
     if (containsPhoneNumber(body)) {
@@ -135,6 +169,9 @@ export default function ConversationThread({
       setBlocking(false);
     }
   }
+
+  const attachActive = sheetOpen || selectedIds.length > 0;
+  const sendDisabled = sending || (!draft.trim() && selectedIds.length === 0);
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
@@ -182,14 +219,17 @@ export default function ConversationThread({
           const { preview, isTruncated } = previewMessage(message.body);
           const showPreview = isTruncated && !expanded;
           const isHighlighted = highlightedId === message.id;
+          const photos = message.photos ?? [];
+          const hasText = message.body.trim().length > 0;
 
           return (
-            <button
+            // A div (not a button) — photo tiles and the eye toggle are
+            // interactive children, and buttons can't nest.
+            <div
               key={message.id}
               id={`message-${message.id}`}
-              type="button"
               onClick={() => isTruncated && toggleExpanded(message.id)}
-              className={`block w-full rounded-xl border px-3 py-2.5 text-left transition ${
+              className={`block w-[calc(100%-1.5rem)] rounded-xl border px-3 py-2.5 text-left transition ${
                 isMine
                   ? "ml-6 border-[#FF8A1E]/20 bg-[#FF8A1E]/10"
                   : "mr-6 border-white/5 bg-white/5"
@@ -197,16 +237,27 @@ export default function ConversationThread({
                 isHighlighted ? "ring-2 ring-[#FF8A1E]/60 border-[#FF8A1E]/40" : ""
               }`}
             >
-              <p className="text-sm text-white whitespace-pre-wrap">
-                {showPreview ? preview : message.body}
-                {showPreview && "…"}
-              </p>
+              {hasText && (
+                <p className="text-sm text-white whitespace-pre-wrap">
+                  {showPreview ? preview : message.body}
+                  {showPreview && "…"}
+                </p>
+              )}
+              <MessagePhotos
+                photos={photos}
+                isMine={isMine}
+                hasText={hasText}
+                onReveal={(photoId) => onRevealPhoto(message.id, photoId)}
+                onToggleHide={(photoId, current) =>
+                  onToggleHidePhoto(message.id, photoId, current)
+                }
+              />
               {isTruncated && (
                 <span className="mt-1 block text-[10px] text-white/30">
                   {expanded ? "Tap to collapse" : "Tap to read more"}
                 </span>
               )}
-            </button>
+            </div>
           );
         })}
       </div>
@@ -247,23 +298,77 @@ export default function ConversationThread({
           This user&apos;s anonymous session has ended.
         </p>
       ) : (
-        <form onSubmit={handleSend} className="mt-3 shrink-0 border-t border-white/5 pt-3">
-          <textarea
-            value={draft}
-            onChange={(e) => setDraft(e.target.value)}
-            placeholder="Reply..."
-            rows={2}
-            className="mb-2 w-full resize-none rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/30 outline-none focus:border-[#FF8A1E]/50"
-          />
-          {error && <p className="mb-2 text-xs text-[#FF4D6D]">{error}</p>}
-          <button
-            type="submit"
-            disabled={sending || !draft.trim()}
-            className="w-full rounded-lg bg-gradient-to-r from-[#FFB03A] to-[#F56A00] py-2.5 text-sm font-semibold text-[#06040c] transition hover:brightness-110 disabled:opacity-50"
-          >
-            {sending ? "Sending..." : "Send"}
-          </button>
-        </form>
+        <div className="mt-3 shrink-0">
+          {/* PhotoSheet bleeds to the panel edges (parent pads 1rem). */}
+          {photosEnabled && sheetOpen && (
+            <div className="-mx-4">
+              <PhotoSheet
+                photos={library.photos}
+                previewUrls={library.previewUrls}
+                selectedIds={selectedIds}
+                error={library.error}
+                onToggleSelect={toggleSelect}
+                onUpload={library.uploadPhoto}
+                onDelete={library.deletePhoto}
+              />
+            </div>
+          )}
+          <form onSubmit={handleSend} className="border-t border-white/5 pt-3">
+            {error && <p className="mb-2 text-xs text-[#FF4D6D]">{error}</p>}
+            <div className="flex items-end gap-2">
+              {photosEnabled && (
+                <button
+                  type="button"
+                  title="Attach photos"
+                  aria-expanded={sheetOpen}
+                  onClick={() => setSheetOpen((open) => !open)}
+                  className="flex shrink-0 items-center justify-center transition"
+                  style={{
+                    width: 36,
+                    height: 36,
+                    borderRadius: 10,
+                    background: "rgba(255,255,255,.04)",
+                    border: `1px solid ${
+                      attachActive ? "rgba(255,138,30,.5)" : "rgba(255,255,255,.1)"
+                    }`,
+                    color: attachActive ? "#FF8A1E" : "rgba(255,255,255,.5)",
+                  }}
+                >
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth={1.8}
+                    strokeLinecap="round"
+                    aria-hidden
+                  >
+                    <rect x="3" y="3" width="18" height="18" rx="3" />
+                    <circle cx="8.5" cy="8.5" r="1.5" />
+                    <path d="M21 15l-5-5L5 21" />
+                  </svg>
+                </button>
+              )}
+              <textarea
+                value={draft}
+                onChange={(e) => setDraft(e.target.value)}
+                placeholder="Reply..."
+                rows={1}
+                className="min-w-0 flex-1 resize-none rounded-[10px] border border-white/10 bg-white/5 px-3 text-sm text-white placeholder:text-white/30 outline-none focus:border-[#FF8A1E]/50"
+                style={{ paddingTop: 9, paddingBottom: 9 }}
+              />
+              <button
+                type="submit"
+                disabled={sendDisabled}
+                className="shrink-0 rounded-[10px] bg-gradient-to-r from-[#FFB03A] to-[#F56A00] text-sm font-bold text-[#06040c] transition hover:brightness-110 disabled:opacity-[.45]"
+                style={{ padding: "9px 16px" }}
+              >
+                {sending ? "Sending..." : "Send"}
+              </button>
+            </div>
+          </form>
+        </div>
       )}
     </div>
   );

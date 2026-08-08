@@ -15,6 +15,17 @@ body {
   color: #ededed;
 }
 
+/* Photo moderation scan sweep (PhotoSheet scanning tile) — silent orange
+   bar loop, .45s per design_handoff_photo_messaging. */
+@keyframes scanSweep {
+  0% {
+    top: -40%;
+  }
+  100% {
+    top: 110%;
+  }
+}
+
 .maplibregl-popup-content {
   background: rgba(15, 13, 24, 0.95) !important;
   border: 1px solid rgba(255, 255, 255, 0.1) !important;
