@@ -23,10 +23,12 @@ type Props = {
 };
 
 /**
- * Shared symmetric circular icon button used for the four collapsed corner
- * FABs (Filters / Profile / Messages / Posts) so they read as one cohesive
- * "frame" around the map. Icon content and badges are supplied by callers;
- * this component only owns size, position, and shared chrome styling.
+ * Shared symmetric circular icon button used for the four always-visible
+ * corner FABs (Filters / Profile / Messages / Posts) so they read as one
+ * cohesive "frame" around the map. FABs stack above expanded panels (z-40 >
+ * panel z-30) so the launching corner also closes its feature. Icon content
+ * and badges are supplied by callers; this component only owns size,
+ * position, and shared chrome styling.
  */
 export default function CornerControl({
   position,
@@ -49,7 +51,7 @@ export default function CornerControl({
       onClick={onClick}
       aria-label={ariaLabel}
       style={style}
-      className={`intonow-corner-btn fixed z-20 ${CORNER_POSITION_CLASSES[position]} flex items-center justify-center rounded-full border border-white/10 bg-[#0f0d18]/90 text-white/80 shadow-2xl backdrop-blur-xl transition hover:border-[var(--intonow-corner-accent)]/50 hover:text-white`}
+      className={`intonow-corner-btn fixed z-40 ${CORNER_POSITION_CLASSES[position]} flex items-center justify-center rounded-full border border-white/10 bg-[#0f0d18]/90 text-white/80 shadow-2xl backdrop-blur-xl transition hover:border-[var(--intonow-corner-accent)]/50 hover:text-white`}
     >
       <span className="relative flex items-center justify-center">
         {icon}

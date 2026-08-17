@@ -83,15 +83,17 @@ export default function MessagePanel({
   onDisablePush,
   onPushPreferencesChange,
 }: Props) {
-  const panelPosition =
-    "intonow-messages-panel fixed z-20 bottom-[max(1rem,env(safe-area-inset-bottom))] left-[max(1rem,env(safe-area-inset-left))]";
+  const closePanel = () => {
+    onViewChange("inbox");
+    onBackToInbox();
+    onExpandedChange(false);
+  };
 
-  if (!expanded) {
-    return (
-      <CornerControl
-        position="bottom-left"
-        onClick={() => onExpandedChange(true)}
-        ariaLabel="Open messages panel"
+  const fab = (
+    <CornerControl
+      position="bottom-left"
+      onClick={() => (expanded ? closePanel() : onExpandedChange(true))}
+      ariaLabel={expanded ? "Close messages panel" : "Open messages panel"}
         accentColor="#FF8A1E"
         icon={
           <svg
@@ -116,53 +118,50 @@ export default function MessagePanel({
           ) : undefined
         }
       />
-    );
-  }
+  );
+
+  if (!expanded) return fab;
 
   const activeConversation = conversations.find((c) => c.id === activeConversationId) ?? null;
 
   return (
+    <>
+    {fab}
     <aside
-      className={`${panelPosition} flex max-h-[min(55vh,480px)] w-[min(380px,calc(100vw-2rem))] flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#0f0d18]/90 shadow-2xl backdrop-blur-xl ${
-        view === "thread" ? "max-h-[min(70vh,560px)]" : ""
-      }`}
+      className="intonow-messages-panel fixed inset-0 z-30 flex flex-col overflow-hidden bg-[#0f0d18]/95 backdrop-blur-xl"
       data-messages-panel-expanded="true"
     >
-      <header className="flex shrink-0 items-center justify-between border-b border-white/5 px-4 py-3">
-        <div className="min-w-0">
-          <p className="text-sm font-semibold text-[#FF8A1E]">Messages</p>
-          <p className="mt-0.5 truncate text-[11px] text-white/40">
-            {user ? sessionLabel(user) : "Sign in to chat"}
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
+      <header
+        onClick={closePanel}
+        className="flex shrink-0 cursor-pointer flex-col border-b border-white/5 bg-white/[0.02] px-[88px] pb-3 pt-[max(3.5rem,env(safe-area-inset-top))]"
+      >
+        <span className="mx-auto mb-2.5 h-[5px] w-11 rounded-full bg-white/20" />
+        <div className="flex items-center justify-between gap-2">
+          <div className="min-w-0">
+            <p className="text-sm font-semibold text-[#FF8A1E]">Messages</p>
+            <p className="mt-0.5 truncate text-[11px] text-white/40">
+              {user ? sessionLabel(user) : "Sign in to chat"}
+            </p>
+          </div>
           {user && (
             <button
               type="button"
-              onClick={() => onLogout()}
+              onClick={(e) => {
+                e.stopPropagation();
+                onLogout();
+              }}
               className="rounded-lg border border-white/10 px-2 py-1 text-[10px] text-white/50 transition hover:text-white"
             >
               Log out
             </button>
           )}
-          <button
-            type="button"
-            onClick={() => {
-              onViewChange("inbox");
-              onBackToInbox();
-              onExpandedChange(false);
-            }}
-            className="shrink-0 rounded-lg border border-white/10 px-2.5 py-1.5 text-sm text-white/60 transition hover:text-white"
-            aria-label="Minimize panel"
-          >
-            ▼
-          </button>
         </div>
+        <span className="text-[11px] text-white/45">▼ tap to close</span>
       </header>
 
       <div
         className={`flex min-h-0 flex-1 flex-col overflow-hidden ${
-          view === "inbox" ? "p-3 pt-2" : "p-4 pt-3"
+          view === "inbox" ? "p-3 pt-2 pb-28" : "p-4 pt-3 pb-28"
         }`}
       >
         {authLoading ? (
@@ -220,5 +219,6 @@ export default function MessagePanel({
         )}
       </div>
     </aside>
+    </>
   );
 }

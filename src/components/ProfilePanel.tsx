@@ -66,12 +66,18 @@ export default function ProfilePanel({
   const panelPosition =
     "intonow-profile-panel fixed z-20 top-[max(1rem,env(safe-area-inset-top))] right-[max(1rem,env(safe-area-inset-right))]";
 
-  if (!expanded) {
-    return (
+  const fab = (
       <CornerControl
         position="top-right"
-        onClick={() => onExpandedChange(true)}
-        ariaLabel="Open profile"
+        onClick={() => {
+          if (expanded) {
+            onSignupClose?.();
+            onExpandedChange(false);
+          } else {
+            onExpandedChange(true);
+          }
+        }}
+        ariaLabel={expanded ? "Close profile" : "Open profile"}
         accentColor="#FF8A1E"
         icon={
           user ? (
@@ -99,10 +105,13 @@ export default function ProfilePanel({
           )
         }
       />
-    );
-  }
+  );
+
+  if (!expanded) return fab;
 
   return (
+    <>
+    {fab}
     <aside
       className={`${panelPosition} flex max-h-[min(70vh,560px)] w-[min(380px,calc(100vw-2rem))] flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#0f0d18]/90 shadow-2xl backdrop-blur-xl`}
     >
@@ -191,5 +200,6 @@ export default function ProfilePanel({
         )}
       </div>
     </aside>
+    </>
   );
 }

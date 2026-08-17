@@ -1,7 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useLivePresence } from "@/hooks/useLivePresence";
 import { useMessages } from "@/hooks/useMessages";
@@ -18,11 +18,17 @@ import ProfilePanel from "./ProfilePanel";
 const MapView = dynamic(() => import("./MapView"), { ssr: false });
 
 const DEFAULT_CENTER = { lat: 37.7749, lng: -122.4194 };
-const PANEL_STORAGE_KEY = "intonow_panel_expanded";
-const MESSAGES_PANEL_STORAGE_KEY = "intonow_messages_panel_expanded";
 
 type PostPanelView = "list" | "create";
 type MessagePanelView = "inbox" | "thread";
+
+/**
+ * Exactly one corner feature may be open at a time; the four corner FABs stay
+ * visible above whichever panel is open (open ↔ close on the same corner,
+ * swap on a different one). `null` on cold load keeps the user on the map,
+ * focused on their location.
+ */
+type OpenPanel = "filters" | "profile" | "messages" | "posts" | null;
 
 const DEFAULT_USER_FILTERS: UserFilters = {
   minAge: 18,
@@ -33,12 +39,12 @@ const DEFAULT_USER_FILTERS: UserFilters = {
 function openConversationFromUrl(
   conversationId: string,
   messageId: string | null,
-  setMessagesExpanded: (v: boolean) => void,
+  openMessagesPanel: () => void,
   setActiveConversationId: (v: string) => void,
   setHighlightMessageId: (v: string | null) => void,
   setMessagesView: (v: MessagePanelView) => void
 ) {
-  setMessagesExpanded(true);
+  openMessagesPanel();
   setActiveConversationId(conversationId);
   setHighlightMessageId(messageId);
   setMessagesView("thread");
@@ -75,16 +81,13 @@ export default function HomePage() {
   const [posts, setPosts] = useState<Post[]>([]);
   const [search, setSearch] = useState("");
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [panelExpanded, setPanelExpanded] = useState(false);
+  const [openPanel, setOpenPanel] = useState<OpenPanel>(null);
   const [panelView, setPanelView] = useState<PostPanelView>("list");
-  const [messagesExpanded, setMessagesExpanded] = useState(false);
   const [messagesView, setMessagesView] = useState<MessagePanelView>("inbox");
   const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
   const [highlightMessageId, setHighlightMessageId] = useState<string | null>(null);
   const [center, setCenter] = useState(DEFAULT_CENTER);
   const [zoom, setZoom] = useState(13);
-  const [filterExpanded, setFilterExpanded] = useState(false);
-  const [profileExpanded, setProfileExpanded] = useState(false);
   const [showSignup, setShowSignup] = useState(false);
   const [posterFilters, setPosterFilters] = useState<string[]>([]);
   const [forMe, setForMe] = useState(false);
@@ -157,27 +160,13 @@ export default function HomePage() {
   }, [unlitUsers, userFilters, myLocation, isRegistered]);
 
   useEffect(() => {
-    const stored = sessionStorage.getItem(PANEL_STORAGE_KEY);
-    if (stored !== null) {
-      setPanelExpanded(stored === "true");
-    }
-    const messagesStored = sessionStorage.getItem(MESSAGES_PANEL_STORAGE_KEY);
-    if (messagesStored !== null) {
-      setMessagesExpanded(messagesStored === "true");
-    }
-  }, []);
-
-  useEffect(() => {
-    sessionStorage.setItem(PANEL_STORAGE_KEY, String(panelExpanded));
-    document.body.classList.toggle("intonow-panel-open", panelExpanded);
-    return () => document.body.classList.remove("intonow-panel-open");
-  }, [panelExpanded]);
-
-  useEffect(() => {
-    sessionStorage.setItem(MESSAGES_PANEL_STORAGE_KEY, String(messagesExpanded));
-    document.body.classList.toggle("intonow-messages-panel-open", messagesExpanded);
-    return () => document.body.classList.remove("intonow-messages-panel-open");
-  }, [messagesExpanded]);
+    document.body.classList.toggle("intonow-panel-open", openPanel === "posts");
+    document.body.classList.toggle("intonow-messages-panel-open", openPanel === "messages");
+    return () => {
+      document.body.classList.remove("intonow-panel-open");
+      document.body.classList.remove("intonow-messages-panel-open");
+    };
+  }, [openPanel]);
 
   useEffect(() => {
     if (!user) return;
@@ -186,7 +175,7 @@ export default function HomePage() {
       openConversationFromUrl(
         conversationId,
         messageId,
-        setMessagesExpanded,
+        () => setOpenPanel("messages"),
         setActiveConversationId,
         setHighlightMessageId,
         setMessagesView
@@ -205,7 +194,7 @@ export default function HomePage() {
         openConversationFromUrl(
           conversationId,
           messageId,
-          setMessagesExpanded,
+          () => setOpenPanel("messages"),
           setActiveConversationId,
           setHighlightMessageId,
           setMessagesView
@@ -230,8 +219,14 @@ export default function HomePage() {
     return () => clearTimeout(timer);
   }, [search, fetchPosts]);
 
+  // Center on the user's GPS position once, when the first fix arrives.
+  // Later fixes must NOT re-center: the camera belongs to MapLibre so free
+  // pan/zoom never snaps back (recenter is explicit — the crosshair button,
+  // or returning to the app, both handled in MapView).
+  const centeredOnFirstFix = useRef(false);
   useEffect(() => {
-    if (myLocation) {
+    if (myLocation && !centeredOnFirstFix.current) {
+      centeredOnFirstFix.current = true;
       setCenter(myLocation);
     }
   }, [myLocation]);
@@ -270,7 +265,7 @@ export default function HomePage() {
 
   const startConversation = useCallback(
     async (participantId: string) => {
-      setMessagesExpanded(true);
+      setOpenPanel("messages");
       if (!user) {
         setMessagesView("inbox");
         setActiveConversationId(null);
@@ -338,8 +333,8 @@ export default function HomePage() {
         onMessageUser={startConversation}
       />
       <FilterPanel
-        expanded={filterExpanded}
-        onExpandedChange={setFilterExpanded}
+        expanded={openPanel === "filters"}
+        onExpandedChange={(v) => setOpenPanel(v ? "filters" : null)}
         user={user}
         forMe={forMe}
         onForMeChange={setForMe}
@@ -349,13 +344,13 @@ export default function HomePage() {
         userFilters={userFilters}
         onUserFiltersChange={setUserFilters}
         onUpgradeClick={() => {
-          setProfileExpanded(true);
+          setOpenPanel("profile");
           setShowSignup(true);
         }}
       />
       <ProfilePanel
-        expanded={profileExpanded}
-        onExpandedChange={setProfileExpanded}
+        expanded={openPanel === "profile"}
+        onExpandedChange={(v) => setOpenPanel(v ? "profile" : null)}
         user={user}
         authLoading={authLoading}
         birthDate={user?.birthDate ?? "2000-01-01"}
@@ -377,12 +372,12 @@ export default function HomePage() {
         onSignupClose={() => setShowSignup(false)}
       />
       <MessagePanel
-        expanded={messagesExpanded}
+        expanded={openPanel === "messages"}
         view={messagesView}
         activeConversationId={activeConversationId}
         highlightMessageId={highlightMessageId}
         onHighlightComplete={() => setHighlightMessageId(null)}
-        onExpandedChange={setMessagesExpanded}
+        onExpandedChange={(v) => setOpenPanel(v ? "messages" : null)}
         onViewChange={setMessagesView}
         onConversationSelect={(id) => {
           setActiveConversationId(id);
@@ -417,9 +412,9 @@ export default function HomePage() {
         onPushPreferencesChange={updatePreferences}
       />
       <PostPanel
-        expanded={panelExpanded}
+        expanded={openPanel === "posts"}
         view={panelView}
-        onExpandedChange={setPanelExpanded}
+        onExpandedChange={(v) => setOpenPanel(v ? "posts" : null)}
         onViewChange={setPanelView}
         posts={filteredPosts}
         search={search}

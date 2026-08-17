@@ -73,15 +73,16 @@ export default function PostPanel({
       // best-effort; silent failure is acceptable for reporting UI
     }
   }
-  const panelPosition =
-    "intonow-panel fixed z-20 bottom-[max(1rem,env(safe-area-inset-bottom))] right-[max(1rem,env(safe-area-inset-right))]";
+  const closePanel = () => {
+    onViewChange("list");
+    onExpandedChange(false);
+  };
 
-  if (!expanded) {
-    return (
+  const fab = (
       <CornerControl
         position="bottom-right"
-        onClick={() => onExpandedChange(true)}
-        ariaLabel="Open posts panel"
+        onClick={() => (expanded ? closePanel() : onExpandedChange(true))}
+        ariaLabel={expanded ? "Close posts panel" : "Open posts panel"}
         accentColor="#FF4D6D"
         icon={
           <svg
@@ -117,36 +118,31 @@ export default function PostPanel({
           ) : undefined
         }
       />
-    );
-  }
+  );
+
+  if (!expanded) return fab;
 
   const isCreate = view === "create";
 
   return (
+    <>
+    {fab}
     <aside
-      className={`${panelPosition} left-[max(1rem,env(safe-area-inset-left))] flex max-h-[min(55vh,480px)] w-auto flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#0f0d18]/90 shadow-2xl backdrop-blur-xl sm:left-auto sm:w-[min(380px,calc(100vw-2rem))] ${
-        isCreate ? "max-h-[min(85dvh,640px)]" : ""
-      }`}
+      className="intonow-panel fixed inset-0 z-30 flex flex-col overflow-hidden bg-[#0f0d18]/95 backdrop-blur-xl"
       data-panel-expanded="true"
     >
-      <header className="flex shrink-0 items-center justify-between border-b border-white/5 px-4 py-3">
+      <header
+        onClick={closePanel}
+        className="flex shrink-0 cursor-pointer flex-col border-b border-white/5 bg-white/[0.02] px-[88px] pb-3 pt-[max(3.5rem,env(safe-area-inset-top))]"
+      >
+        <span className="mx-auto mb-2.5 h-[5px] w-11 rounded-full bg-white/20" />
         <div className="min-w-0">
           <p className="text-sm font-semibold text-[#FF4D6D]">Posts</p>
           <p className="mt-0.5 text-[11px] text-white/40">
             what are you into? <span className="text-[#FF4D6D]">NOW?</span>
           </p>
         </div>
-        <button
-          type="button"
-          onClick={() => {
-            onViewChange("list");
-            onExpandedChange(false);
-          }}
-          className="ml-2 shrink-0 rounded-lg border border-white/10 px-2.5 py-1.5 text-sm text-white/60 transition hover:text-white"
-          aria-label="Minimize panel"
-        >
-          ▼
-        </button>
+        <span className="text-[11px] text-white/45">▼ tap to close</span>
       </header>
 
       <div className="flex shrink-0 items-center gap-3 border-b border-white/5 px-4 py-2 text-xs text-white/50">
@@ -161,7 +157,7 @@ export default function PostPanel({
         {!sharing && <span className="text-amber-400/80">Location off</span>}
       </div>
 
-      <div className="flex min-h-0 flex-1 flex-col overflow-hidden p-4 pt-3">
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden p-4 pt-3 pb-28">
         {isCreate ? (
           <PostCreateForm
             onSubmit={onSubmitPost}
@@ -253,5 +249,6 @@ export default function PostPanel({
         )}
       </div>
     </aside>
+    </>
   );
 }

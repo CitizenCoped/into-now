@@ -48,12 +48,11 @@ export default function FilterPanel({
   const panelPosition =
     "intonow-filter-panel fixed z-20 top-[max(1rem,env(safe-area-inset-top))] left-[max(1rem,env(safe-area-inset-left))]";
 
-  if (!expanded) {
-    return (
+  const fab = (
       <CornerControl
         position="top-left"
-        onClick={() => onExpandedChange(true)}
-        ariaLabel="Open filters"
+        onClick={() => onExpandedChange(!expanded)}
+        ariaLabel={expanded ? "Close filters" : "Open filters"}
         accentColor="#FF4D6D"
         icon={
           <svg
@@ -76,12 +75,15 @@ export default function FilterPanel({
           </svg>
         }
       />
-    );
-  }
+  );
+
+  if (!expanded) return fab;
 
   const isRegistered = user && !user.isAnonymous;
 
   return (
+    <>
+    {fab}
     <aside
       className={`${panelPosition} flex max-h-[min(60vh,520px)] w-[min(340px,calc(100vw-2rem))] flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#0f0d18]/90 shadow-2xl backdrop-blur-xl`}
     >
@@ -292,5 +294,6 @@ export default function FilterPanel({
         )}
       </div>
     </aside>
+    </>
   );
 }
