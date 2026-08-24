@@ -1,7 +1,9 @@
 "use client";
 
+import { useState } from "react";
 import type { Post } from "@/lib/schema";
-import { getCategoryColor } from "@/lib/categories";
+import { getCodeColor, type IdentityToken, type LookingForToken } from "@/lib/codes";
+import CornerControl from "./CornerControl";
 import PostCreateForm from "./PostCreateForm";
 
 type PanelView = "list" | "create";
@@ -22,12 +24,14 @@ type Props = {
   onSubmitPost: (data: {
     title: string;
     description: string;
-    category: string;
+    posterIs: IdentityToken;
+    lookingFor: LookingForToken;
     lat: number;
     lng: number;
   }) => Promise<void>;
   defaultLat: number;
   defaultLng: number;
+  defaultPosterIs?: IdentityToken | null;
   currentUserId: string | null;
   onMessageAuthor: (authorId: string) => void;
 };
@@ -48,71 +52,104 @@ export default function PostPanel({
   onSubmitPost,
   defaultLat,
   defaultLng,
+  defaultPosterIs,
   currentUserId,
   onMessageAuthor,
 }: Props) {
-  const panelPosition =
-    "intonow-panel fixed z-20 bottom-[max(1rem,env(safe-area-inset-bottom))] right-[max(1rem,env(safe-area-inset-right))]";
+  const [reportedIds, setReportedIds] = useState<Set<string>>(new Set());
 
-  if (!expanded) {
-    return (
-      <button
-        type="button"
-        onClick={() => onExpandedChange(true)}
-        className={`${panelPosition} flex items-center gap-2 rounded-full border border-white/10 bg-[#0f0d18]/90 px-4 py-2.5 shadow-2xl backdrop-blur-xl transition hover:border-[#FF4D6D]/40 sm:left-auto`}
-        aria-label="Open posts panel"
-      >
-        <img src="/logo.svg" alt="" className="h-5 w-auto" />
-        <span
-          className={`h-2 w-2 rounded-full ${connected ? "bg-[#22FF66]" : "bg-white/30"}`}
-          style={connected ? { boxShadow: "0 0 6px #22FF66" } : undefined}
-        />
-        {liveCount > 0 && (
-          <span className="rounded-full bg-[#FF4D6D]/20 px-2 py-0.5 text-xs font-medium text-[#FF4D6D]">
-            {liveCount}
-          </span>
-        )}
-        <span className="text-white/50" aria-hidden>
-          ▲
-        </span>
-      </button>
-    );
+  async function handleReport(postId: string) {
+    if (reportedIds.has(postId)) return;
+    if (!window.confirm("Report this post to the moderators?")) return;
+    try {
+      const res = await fetch(`/api/posts/${postId}/report`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({}),
+      });
+      if (!res.ok) throw new Error();
+      setReportedIds((prev) => new Set(prev).add(postId));
+    } catch {
+      // best-effort; silent failure is acceptable for reporting UI
+    }
   }
+  const closePanel = () => {
+    onViewChange("list");
+    onExpandedChange(false);
+  };
+
+  const fab = (
+      <CornerControl
+        position="bottom-right"
+        onClick={() => (expanded ? closePanel() : onExpandedChange(true))}
+        ariaLabel={expanded ? "Close posts panel" : "Open posts panel"}
+        accentColor="#FF4D6D"
+        icon={
+          <svg
+            width="22"
+            height="22"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={1.8}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden
+          >
+            <path d="M16.5 19v-1.2a3.3 3.3 0 0 0-3.3-3.3H6.8a3.3 3.3 0 0 0-3.3 3.3V19" />
+            <circle cx="9.7" cy="8.3" r="2.8" />
+            <path d="M20.5 19v-1.2a2.8 2.8 0 0 0-2-2.7" />
+            <path d="M14.9 5.2a2.8 2.8 0 0 1 0 5.5" />
+          </svg>
+        }
+        statusDot={
+          <span
+            className={`absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-[#0f0d18] ${
+              connected ? "bg-[#FF9E2C]" : "bg-white/30"
+            }`}
+            style={connected ? { boxShadow: "0 0 6px #FF9E2C" } : undefined}
+          />
+        }
+        badge={
+          liveCount > 0 ? (
+            <span className="absolute -top-1.5 -right-1.5 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-[#FF4D6D] px-1 text-[10px] font-bold text-white">
+              {liveCount > 99 ? "99+" : liveCount}
+            </span>
+          ) : undefined
+        }
+      />
+  );
+
+  if (!expanded) return fab;
 
   const isCreate = view === "create";
 
   return (
+    <>
+    {fab}
     <aside
-      className={`${panelPosition} left-[max(1rem,env(safe-area-inset-left))] flex max-h-[min(55vh,480px)] w-auto flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#0f0d18]/90 shadow-2xl backdrop-blur-xl sm:left-auto sm:w-[min(380px,calc(100vw-2rem))] ${
-        isCreate ? "max-h-[min(70vh,560px)]" : ""
-      }`}
+      className="intonow-panel fixed inset-0 z-30 flex flex-col overflow-hidden bg-[#0f0d18]/95 backdrop-blur-xl"
       data-panel-expanded="true"
     >
-      <header className="flex shrink-0 items-center justify-between border-b border-white/5 px-4 py-3">
+      <header
+        onClick={closePanel}
+        className="flex shrink-0 cursor-pointer flex-col border-b border-white/5 bg-white/[0.02] px-[88px] pb-3 pt-[max(3.5rem,env(safe-area-inset-top))]"
+      >
+        <span className="mx-auto mb-2.5 h-[5px] w-11 rounded-full bg-white/20" />
         <div className="min-w-0">
-          <img src="/logo.svg" alt="into.now" className="h-6 w-auto" />
+          <p className="text-sm font-semibold text-[#FF4D6D]">Posts</p>
           <p className="mt-0.5 text-[11px] text-white/40">
             what are you into? <span className="text-[#FF4D6D]">NOW?</span>
           </p>
         </div>
-        <button
-          type="button"
-          onClick={() => {
-            onViewChange("list");
-            onExpandedChange(false);
-          }}
-          className="ml-2 shrink-0 rounded-lg border border-white/10 px-2.5 py-1.5 text-sm text-white/60 transition hover:text-white"
-          aria-label="Minimize panel"
-        >
-          ▼
-        </button>
+        <span className="text-[11px] text-white/45">▼ tap to close</span>
       </header>
 
       <div className="flex shrink-0 items-center gap-3 border-b border-white/5 px-4 py-2 text-xs text-white/50">
         <span className="flex items-center gap-1.5">
           <span
-            className={`h-2 w-2 rounded-full ${connected ? "bg-[#22FF66]" : "bg-white/20"}`}
-            style={connected ? { boxShadow: "0 0 6px #22FF66" } : undefined}
+            className={`h-2 w-2 rounded-full ${connected ? "bg-[#FF9E2C]" : "bg-white/20"}`}
+            style={connected ? { boxShadow: "0 0 6px #FF9E2C" } : undefined}
           />
           {connected ? "Live" : "Connecting..."}
         </span>
@@ -120,13 +157,14 @@ export default function PostPanel({
         {!sharing && <span className="text-amber-400/80">Location off</span>}
       </div>
 
-      <div className="flex min-h-0 flex-1 flex-col overflow-hidden p-4 pt-3">
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden p-4 pt-3 pb-28">
         {isCreate ? (
           <PostCreateForm
             onSubmit={onSubmitPost}
             onBack={() => onViewChange("list")}
             defaultLat={defaultLat}
             defaultLng={defaultLng}
+            defaultPosterIs={defaultPosterIs}
           />
         ) : (
           <>
@@ -139,7 +177,7 @@ export default function PostPanel({
             />
 
             <h3 className="mb-2 shrink-0 text-xs font-semibold uppercase tracking-wider text-white/40">
-              Nearby Posts
+              Who&apos;s looking, near you
             </h3>
 
             <div className="min-h-0 flex-1 space-y-2 overflow-y-auto pr-1">
@@ -147,7 +185,7 @@ export default function PostPanel({
                 <p className="py-4 text-center text-sm text-white/30">No posts yet — be the first!</p>
               )}
               {posts.map((post) => {
-                const color = getCategoryColor(post.category);
+                const color = getCodeColor(post.category);
                 const active = post.id === selectedId;
                 const canMessage =
                   post.authorId && post.authorId !== currentUserId;
@@ -162,8 +200,8 @@ export default function PostPanel({
                   >
                     <button type="button" onClick={() => onPostClick(post)} className="w-full text-left">
                       <span
-                        className="inline-block rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white"
-                        style={{ backgroundColor: color }}
+                        className="inline-block rounded-full px-2 py-0.5 text-[10px] font-black uppercase tracking-widest text-[#06040c]"
+                        style={{ backgroundColor: color, boxShadow: `0 0 8px ${color}55` }}
                       >
                         {post.category}
                       </span>
@@ -178,9 +216,19 @@ export default function PostPanel({
                       <button
                         type="button"
                         onClick={() => onMessageAuthor(post.authorId!)}
-                        className="mt-2 w-full rounded-lg border border-[#22D3EE]/30 bg-[#22D3EE]/10 px-3 py-1.5 text-xs font-semibold text-[#22D3EE] transition hover:bg-[#22D3EE]/20"
+                        className="mt-2 w-full rounded-lg border border-[#FF8A1E]/30 bg-[#FF8A1E]/10 px-3 py-1.5 text-xs font-semibold text-[#FF8A1E] transition hover:bg-[#FF8A1E]/20"
                       >
                         Message author
+                      </button>
+                    )}
+                    {post.authorId !== currentUserId && (
+                      <button
+                        type="button"
+                        onClick={() => handleReport(post.id)}
+                        disabled={reportedIds.has(post.id)}
+                        className="mt-1.5 w-full text-center text-[10px] text-white/25 transition hover:text-[#FF4D6D] disabled:text-white/40"
+                      >
+                        {reportedIds.has(post.id) ? "Reported — thank you" : "Report post"}
                       </button>
                     )}
                   </div>
@@ -201,5 +249,6 @@ export default function PostPanel({
         )}
       </div>
     </aside>
+    </>
   );
 }

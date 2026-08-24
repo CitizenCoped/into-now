@@ -1,9 +1,13 @@
 import {
   boolean,
+  date,
   doublePrecision,
+  foreignKey,
+  index,
   jsonb,
   pgTable,
   primaryKey,
+  smallint,
   text,
   timestamp,
   uuid,
@@ -11,20 +15,52 @@ import {
 
 export const users = pgTable("users", {
   id: uuid("id").primaryKey().defaultRandom(),
-  phone: text("phone").notNull().unique(),
+  email: text("email").unique(),
+  phone: text("phone").unique(),
+  authMethod: text("auth_method").notNull().default("phone"),
+  isAnonymous: boolean("is_anonymous").notNull().default(false),
+  expiresAt: timestamp("expires_at", { withTimezone: true }),
+  birthDate: date("birth_date"),
+  ageVerifiedAt: timestamp("age_verified_at", { withTimezone: true }),
+  displayName: text("display_name"),
+  photoUrl: text("photo_url"),
+  statement: text("statement"),
+  /** Identity token (M | W | T | MW | MM | WW) — powers "for me" matching
+   *  and pre-fills the "You are" picker when posting. */
+  identity: text("identity"),
+  lastLat: doublePrecision("last_lat"),
+  lastLng: doublePrecision("last_lng"),
+  lastLocationAt: timestamp("last_location_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
 export type User = typeof users.$inferSelect;
 
+export const authCodes = pgTable("auth_codes", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  channel: text("channel").notNull(),
+  destination: text("destination").notNull(),
+  codeHash: text("code_hash").notNull(),
+  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export type AuthCode = typeof authCodes.$inferSelect;
+
 export const posts = pgTable("posts", {
   id: uuid("id").primaryKey().defaultRandom(),
   title: text("title").notNull(),
   description: text("description").notNull(),
+  /** Derived personals code, e.g. "M4W" (kept in the legacy column name so
+   *  admin notify / activity log / existing queries keep working). */
   category: text("category").notNull(),
+  /** Who is posting: M | W | T | MW | MM | WW */
+  posterIs: text("poster_is").notNull(),
+  /** Who they seek: M | W | T | MW | MM | WW | ANY */
+  lookingFor: text("looking_for").notNull(),
   lat: doublePrecision("lat").notNull(),
   lng: doublePrecision("lng").notNull(),
-  authorId: uuid("author_id").references(() => users.id),
+  authorId: uuid("author_id").references(() => users.id, { onDelete: "set null" }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
@@ -35,7 +71,7 @@ export const liveSessions = pgTable("live_sessions", {
   id: uuid("id").primaryKey(),
   lat: doublePrecision("lat").notNull(),
   lng: doublePrecision("lng").notNull(),
-  userId: uuid("user_id").references(() => users.id),
+  userId: uuid("user_id").references(() => users.id, { onDelete: "cascade" }),
   lastSeenAt: timestamp("last_seen_at", { withTimezone: true }).notNull().defaultNow(),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
@@ -59,6 +95,7 @@ export const conversationParticipants = pgTable(
     userId: uuid("user_id")
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
+    lastReadAt: timestamp("last_read_at", { withTimezone: true }),
   },
   (table) => ({
     pk: primaryKey({ columns: [table.conversationId, table.userId] }),
@@ -72,7 +109,7 @@ export const messages = pgTable("messages", {
     .references(() => conversations.id, { onDelete: "cascade" }),
   senderId: uuid("sender_id")
     .notNull()
-    .references(() => users.id),
+    .references(() => users.id, { onDelete: "cascade" }),
   body: text("body").notNull(),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
@@ -98,6 +135,24 @@ export const pushPreferences = pgTable("push_preferences", {
   notifyPresence: boolean("notify_presence").notNull().default(true),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
+
+export const userBlocks = pgTable(
+  "user_blocks",
+  {
+    blockerId: uuid("blocker_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    blockedId: uuid("blocked_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => ({
+    pk: primaryKey({ columns: [table.blockerId, table.blockedId] }),
+  })
+);
+
+export type UserBlock = typeof userBlocks.$inferSelect;
 
 export const activityLog = pgTable("activity_log", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -125,3 +180,112 @@ export const presencePushLog = pgTable(
     pk: primaryKey({ columns: [table.recipientId, table.senderId] }),
   })
 );
+
+/** Reusable per-user photo library (max 10 ready photos, enforced in API).
+ *  `objectKey` is the private DO Spaces key — never a public URL; viewers
+ *  only ever receive short-lived presigned GET URLs minted per request. */
+export const userPhotos = pgTable(
+  "user_photos",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    objectKey: text("object_key").notNull(),
+    /** ~300B placeholder from src/lib/blur.ts — the only image unrevealed
+     *  viewers ever get. */
+    blurDataUrl: text("blur_data_url").notNull(),
+    aspectRatio: doublePrecision("aspect_ratio").notNull().default(1),
+    /** Camera-only capture — shows the LIVE badge. */
+    isLive: boolean("is_live").notNull().default(false),
+    /** scanning | ready | rejected */
+    status: text("status").notNull().default("scanning"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => ({
+    userIdx: index("user_photos_user_idx").on(table.userId),
+  })
+);
+
+export type UserPhoto = typeof userPhotos.$inferSelect;
+
+/** Photos attached to a message (max 5, ordered by position). */
+export const messagePhotos = pgTable(
+  "message_photos",
+  {
+    messageId: uuid("message_id")
+      .notNull()
+      .references(() => messages.id, { onDelete: "cascade" }),
+    photoId: uuid("photo_id")
+      .notNull()
+      .references(() => userPhotos.id, { onDelete: "cascade" }),
+    position: smallint("position").notNull().default(0),
+    /** Closed-eye toggle — while true the server stops issuing presigned
+     *  URLs for this photo to anyone, sender included. Reversible. */
+    hiddenBySender: boolean("hidden_by_sender").notNull().default(false),
+  },
+  (table) => ({
+    pk: primaryKey({ columns: [table.messageId, table.photoId] }),
+  })
+);
+
+export type MessagePhoto = typeof messagePhotos.$inferSelect;
+
+/** Reveal grants (supports tap-to-reveal AND sender-grant models).
+ *  v3 ships tap-to-reveal with persist ephemerality: `grantedAt` set means
+ *  the viewer keeps access; `viewedAt` is reserved for future view-once. */
+export const photoReveals = pgTable(
+  "photo_reveals",
+  {
+    messageId: uuid("message_id").notNull(),
+    photoId: uuid("photo_id").notNull(),
+    viewerId: uuid("viewer_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    requestedAt: timestamp("requested_at", { withTimezone: true }),
+    grantedAt: timestamp("granted_at", { withTimezone: true }),
+    viewedAt: timestamp("viewed_at", { withTimezone: true }),
+  },
+  (table) => ({
+    pk: primaryKey({ columns: [table.messageId, table.photoId, table.viewerId] }),
+    messagePhotoFk: foreignKey({
+      columns: [table.messageId, table.photoId],
+      foreignColumns: [messagePhotos.messageId, messagePhotos.photoId],
+      name: "photo_reveals_message_photo_fk",
+    }).onDelete("cascade"),
+  })
+);
+
+export type PhotoReveal = typeof photoReveals.$inferSelect;
+
+/** Photos attached to a post (Phase 4 surface — table ships now so the
+ *  library is the single source for both DMs and posts). */
+export const postPhotos = pgTable(
+  "post_photos",
+  {
+    postId: uuid("post_id")
+      .notNull()
+      .references(() => posts.id, { onDelete: "cascade" }),
+    photoId: uuid("photo_id")
+      .notNull()
+      .references(() => userPhotos.id, { onDelete: "cascade" }),
+    position: smallint("position").notNull().default(0),
+  },
+  (table) => ({
+    pk: primaryKey({ columns: [table.postId, table.photoId] }),
+  })
+);
+
+export type MapUser = {
+  id: string;
+  userId: string;
+  lat: number;
+  lng: number;
+  isLit: boolean;
+  displayName: string | null;
+  photoUrl: string | null;
+  statement: string | null;
+  isAnonymous: boolean;
+  birthDate: string | null;
+  lastSeenAt: string | Date | null;
+};

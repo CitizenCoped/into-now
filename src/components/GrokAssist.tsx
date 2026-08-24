@@ -2,21 +2,23 @@
 
 import { useState } from "react";
 
+import type { IdentityToken, LookingForToken } from "@/lib/codes";
+
 type Suggestion = {
   suggestedTitle: string;
   suggestedDescription: string;
   tips: string[];
-  category?: string | null;
 };
 
 type Props = {
-  category: string;
+  posterIs: IdentityToken;
+  lookingFor: LookingForToken;
   title: string;
   description: string;
   onApply: (title: string, description: string) => void;
 };
 
-export default function GrokAssist({ category, title, description, onApply }: Props) {
+export default function GrokAssist({ posterIs, lookingFor, title, description, onApply }: Props) {
   const [loading, setLoading] = useState(false);
   const [suggestion, setSuggestion] = useState<Suggestion | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -28,7 +30,12 @@ export default function GrokAssist({ category, title, description, onApply }: Pr
       const res = await fetch("/api/assist", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ category, titleDraft: title, descriptionDraft: description }),
+        body: JSON.stringify({
+          posterIs,
+          lookingFor,
+          titleDraft: title,
+          descriptionDraft: description,
+        }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -44,14 +51,14 @@ export default function GrokAssist({ category, title, description, onApply }: Pr
   }
 
   return (
-    <div className="mt-3 rounded-xl border border-[#22D3EE]/20 bg-[#22D3EE]/5 p-3">
+    <div className="mt-3 rounded-xl border border-[#FF8A1E]/20 bg-[#FF8A1E]/5 p-3">
       <div className="flex items-center justify-between gap-2">
-        <p className="text-xs font-semibold text-[#22D3EE]">Grok Post Coach</p>
+        <p className="text-xs font-semibold text-[#FF8A1E]">Grok Post Coach</p>
         <button
           type="button"
           onClick={getHelp}
           disabled={loading}
-          className="rounded-lg bg-[#22D3EE]/20 px-3 py-1 text-xs font-medium text-[#22D3EE] transition hover:bg-[#22D3EE]/30 disabled:opacity-50"
+          className="rounded-lg bg-[#FF8A1E]/20 px-3 py-1 text-xs font-medium text-[#FF8A1E] transition hover:bg-[#FF8A1E]/30 disabled:opacity-50"
         >
           {loading ? "Thinking..." : "Help me post"}
         </button>
@@ -85,7 +92,7 @@ export default function GrokAssist({ category, title, description, onApply }: Pr
             onClick={() =>
               onApply(suggestion.suggestedTitle, suggestion.suggestedDescription)
             }
-            className="w-full rounded-lg bg-[#22D3EE] py-1.5 text-xs font-semibold text-[#06040c] transition hover:brightness-110"
+            className="w-full rounded-lg bg-[#FF8A1E] py-1.5 text-xs font-semibold text-[#06040c] transition hover:brightness-110"
           >
             Use suggestion
           </button>

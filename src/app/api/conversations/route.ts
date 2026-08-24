@@ -1,5 +1,6 @@
 import { logActivity } from "@/lib/activity";
-import { getAuthUserFromRequest, maskPhone } from "@/lib/auth";
+import { getAuthUserFromRequest, getDisplayLabel } from "@/lib/auth";
+import { isBlockedBetween } from "@/lib/blocks";
 import { findOrCreateConversation } from "@/lib/conversations";
 import { getDb } from "@/lib/db";
 import { previewMessage } from "@/lib/messagePreview";
@@ -11,7 +12,7 @@ import {
   messages,
   users,
 } from "@/lib/schema";
-import { and, desc, eq, gt, inArray } from "drizzle-orm";
+import { and, desc, eq, gt, inArray, ne } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
@@ -27,7 +28,10 @@ export async function GET(request: NextRequest) {
 
   const db = getDb();
   const myConversations = await db
-    .select({ conversationId: conversationParticipants.conversationId })
+    .select({
+      conversationId: conversationParticipants.conversationId,
+      lastReadAt: conversationParticipants.lastReadAt,
+    })
     .from(conversationParticipants)
     .where(eq(conversationParticipants.userId, user.id));
 
@@ -35,6 +39,10 @@ export async function GET(request: NextRequest) {
   if (conversationIds.length === 0) {
     return NextResponse.json({ conversations: [] });
   }
+
+  const lastReadByConvo = new Map(
+    myConversations.map((row) => [row.conversationId, row.lastReadAt])
+  );
 
   const convoRows = await db
     .select()
@@ -47,6 +55,12 @@ export async function GET(request: NextRequest) {
       conversationId: conversationParticipants.conversationId,
       userId: users.id,
       phone: users.phone,
+      email: users.email,
+      displayName: users.displayName,
+      photoUrl: users.photoUrl,
+      statement: users.statement,
+      isAnonymous: users.isAnonymous,
+      expiresAt: users.expiresAt,
     })
     .from(conversationParticipants)
     .innerJoin(users, eq(users.id, conversationParticipants.userId))
@@ -62,6 +76,23 @@ export async function GET(request: NextRequest) {
   for (const message of lastMessages) {
     if (!lastMessageByConvo.has(message.conversationId)) {
       lastMessageByConvo.set(message.conversationId, message);
+    }
+  }
+
+  const unreadRows = await db
+    .select({
+      conversationId: messages.conversationId,
+      createdAt: messages.createdAt,
+    })
+    .from(messages)
+    .where(and(inArray(messages.conversationId, conversationIds), ne(messages.senderId, user.id)));
+
+  const EPOCH = new Date(0);
+  const unreadCountByConvo = new Map<string, number>();
+  for (const row of unreadRows) {
+    const lastReadAt = lastReadByConvo.get(row.conversationId) ?? EPOCH;
+    if (row.createdAt > lastReadAt) {
+      unreadCountByConvo.set(row.conversationId, (unreadCountByConvo.get(row.conversationId) ?? 0) + 1);
     }
   }
 
@@ -82,10 +113,11 @@ export async function GET(request: NextRequest) {
     onlineRows.map((row) => row.userId).filter((id): id is string => Boolean(id))
   );
 
-  const otherByConvo = new Map<string, { id: string; phone: string }>();
+  const now = new Date();
+  const otherByConvo = new Map<string, (typeof participants)[number]>();
   for (const row of participants) {
     if (row.userId !== user.id) {
-      otherByConvo.set(row.conversationId, { id: row.userId, phone: row.phone });
+      otherByConvo.set(row.conversationId, row);
     }
   }
 
@@ -93,15 +125,22 @@ export async function GET(request: NextRequest) {
     const other = otherByConvo.get(convo.id);
     const lastMessage = lastMessageByConvo.get(convo.id);
     const preview = lastMessage ? previewMessage(lastMessage.body) : { preview: "", isTruncated: false };
+    const isExpired = Boolean(other?.isAnonymous && other.expiresAt && other.expiresAt < now);
 
     return {
       id: convo.id,
       updatedAt: convo.updatedAt,
+      unreadCount: unreadCountByConvo.get(convo.id) ?? 0,
       otherUser: other
         ? {
-            id: other.id,
-            maskedPhone: maskPhone(other.phone),
-            isOnline: onlineUserIds.has(other.id),
+            id: other.userId,
+            displayName: other.displayName,
+            photoUrl: other.photoUrl,
+            statement: other.statement,
+            displayLabel: getDisplayLabel(other),
+            isAnonymous: other.isAnonymous,
+            isExpired,
+            isOnline: !isExpired && onlineUserIds.has(other.userId),
           }
         : null,
       lastMessage: lastMessage
@@ -138,7 +177,11 @@ export async function POST(request: NextRequest) {
 
   const db = getDb();
   const [participant] = await db
-    .select({ id: users.id })
+    .select({
+      id: users.id,
+      isAnonymous: users.isAnonymous,
+      expiresAt: users.expiresAt,
+    })
     .from(users)
     .where(eq(users.id, parsed.data.participantId))
     .limit(1);
@@ -147,10 +190,18 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "User not found" }, { status: 404 });
   }
 
+  if (participant.isAnonymous && participant.expiresAt && participant.expiresAt < new Date()) {
+    return NextResponse.json({ error: "This user has expired" }, { status: 410 });
+  }
+
+  if (await isBlockedBetween(user.id, parsed.data.participantId)) {
+    return NextResponse.json({ error: "You can't message this user" }, { status: 403 });
+  }
+
   const conversationId = await findOrCreateConversation(user.id, parsed.data.participantId);
 
   const [otherUser] = await db
-    .select({ phone: users.phone })
+    .select({ phone: users.phone, email: users.email, displayName: users.displayName })
     .from(users)
     .where(eq(users.id, parsed.data.participantId))
     .limit(1);
@@ -161,7 +212,7 @@ export async function POST(request: NextRequest) {
     metadata: {
       conversationId,
       participantId: parsed.data.participantId,
-      participantPhone: otherUser?.phone ?? null,
+      participantLabel: otherUser ? getDisplayLabel(otherUser) : null,
     },
   });
 

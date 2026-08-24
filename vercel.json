@@ -1,0 +1,16 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/expire-anonymous",
+      "schedule": "0 0 * * *"
+    },
+    {
+      "path": "/api/cron/reap-sessions",
+      "schedule": "30 * * * *"
+    },
+    {
+      "path": "/api/cron/expire-posts",
+      "schedule": "15 * * * *"
+    }
+  ]
+}

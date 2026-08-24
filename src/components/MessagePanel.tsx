@@ -3,10 +3,11 @@
 import type { AuthUser } from "@/hooks/useAuth";
 import type { ConversationSummary } from "@/hooks/useMessages";
 import type { PushPreferences } from "@/hooks/usePushNotifications";
-import type { Message } from "@/lib/schema";
-import AuthForm from "./AuthForm";
+import type { MessageView } from "@/lib/photoTypes";
 import ConversationList from "./ConversationList";
 import ConversationThread from "./ConversationThread";
+import CornerControl from "./CornerControl";
+import PhoneAuthForm from "./PhoneAuthForm";
 import PushSettings from "./PushSettings";
 
 type PanelView = "inbox" | "thread";
@@ -27,10 +28,12 @@ type Props = {
   onVerifyCode: (phone: string, code: string) => Promise<void>;
   onLogout: () => Promise<void>;
   conversations: ConversationSummary[];
-  messages: Message[];
+  messages: MessageView[];
   loadingInbox: boolean;
   loadingThread: boolean;
-  onSendMessage: (body: string) => Promise<void>;
+  onSendMessage: (body: string, photoIds: string[]) => Promise<void>;
+  onRevealPhoto: (messageId: string, photoId: string) => void;
+  onToggleHidePhoto: (messageId: string, photoId: string, current: boolean) => void;
   unreadCount: number;
   pushPermission: NotificationPermission;
   pushSubscribed: boolean;
@@ -41,6 +44,12 @@ type Props = {
   onDisablePush: () => Promise<void>;
   onPushPreferencesChange: (next: Partial<PushPreferences>) => Promise<void>;
 };
+
+function sessionLabel(user: AuthUser) {
+  if (user.maskedPhone) return user.maskedPhone;
+  if (user.displayLabel) return user.displayLabel;
+  return "Signed in";
+}
 
 export default function MessagePanel({
   expanded,
@@ -62,6 +71,8 @@ export default function MessagePanel({
   loadingInbox,
   loadingThread,
   onSendMessage,
+  onRevealPhoto,
+  onToggleHidePhoto,
   unreadCount,
   pushPermission,
   pushSubscribed,
@@ -72,76 +83,91 @@ export default function MessagePanel({
   onDisablePush,
   onPushPreferencesChange,
 }: Props) {
-  const panelPosition =
-    "intonow-messages-panel fixed z-20 bottom-[max(1rem,env(safe-area-inset-bottom))] left-[max(1rem,env(safe-area-inset-left))]";
+  const closePanel = () => {
+    onViewChange("inbox");
+    onBackToInbox();
+    onExpandedChange(false);
+  };
 
-  if (!expanded) {
-    return (
-      <button
-        type="button"
-        onClick={() => onExpandedChange(true)}
-        className={`${panelPosition} flex items-center gap-2 rounded-full border border-white/10 bg-[#0f0d18]/90 px-4 py-2.5 shadow-2xl backdrop-blur-xl transition hover:border-[#22D3EE]/40`}
-        aria-label="Open messages panel"
-      >
-        <span className="text-sm font-semibold text-[#22D3EE]">Messages</span>
-        {unreadCount > 0 && (
-          <span className="rounded-full bg-[#22D3EE]/20 px-2 py-0.5 text-xs font-medium text-[#22D3EE]">
-            {unreadCount}
-          </span>
-        )}
-        <span className="text-white/50" aria-hidden>
-          ▲
-        </span>
-      </button>
-    );
-  }
+  const fab = (
+    <CornerControl
+      position="bottom-left"
+      onClick={() => (expanded ? closePanel() : onExpandedChange(true))}
+      ariaLabel={expanded ? "Close messages panel" : "Open messages panel"}
+        accentColor="#FF8A1E"
+        icon={
+          <svg
+            width="22"
+            height="22"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={1.8}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden
+          >
+            <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
+          </svg>
+        }
+        badge={
+          unreadCount > 0 ? (
+            <span className="absolute -top-1.5 -right-1.5 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-[#FF8A1E] px-1 text-[10px] font-bold text-[#06040c]">
+              {unreadCount > 99 ? "99+" : unreadCount}
+            </span>
+          ) : undefined
+        }
+      />
+  );
+
+  if (!expanded) return fab;
 
   const activeConversation = conversations.find((c) => c.id === activeConversationId) ?? null;
 
   return (
+    <>
+    {fab}
     <aside
-      className={`${panelPosition} flex max-h-[min(55vh,480px)] w-[min(380px,calc(100vw-2rem))] flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#0f0d18]/90 shadow-2xl backdrop-blur-xl ${
-        view === "thread" ? "max-h-[min(70vh,560px)]" : ""
-      }`}
+      className="intonow-messages-panel fixed inset-0 z-30 flex flex-col overflow-hidden bg-[#0f0d18]/95 backdrop-blur-xl"
       data-messages-panel-expanded="true"
     >
-      <header className="flex shrink-0 items-center justify-between border-b border-white/5 px-4 py-3">
-        <div className="min-w-0">
-          <p className="text-sm font-semibold text-[#22D3EE]">Messages</p>
-          <p className="mt-0.5 text-[11px] text-white/40">
-            {user ? user.maskedPhone : "Sign in to chat"}
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
+      <header
+        onClick={closePanel}
+        className="flex shrink-0 cursor-pointer flex-col border-b border-white/5 bg-white/[0.02] px-[88px] pb-3 pt-[max(3.5rem,env(safe-area-inset-top))]"
+      >
+        <span className="mx-auto mb-2.5 h-[5px] w-11 rounded-full bg-white/20" />
+        <div className="flex items-center justify-between gap-2">
+          <div className="min-w-0">
+            <p className="text-sm font-semibold text-[#FF8A1E]">Messages</p>
+            <p className="mt-0.5 truncate text-[11px] text-white/40">
+              {user ? sessionLabel(user) : "Sign in to chat"}
+            </p>
+          </div>
           {user && (
             <button
               type="button"
-              onClick={() => onLogout()}
+              onClick={(e) => {
+                e.stopPropagation();
+                onLogout();
+              }}
               className="rounded-lg border border-white/10 px-2 py-1 text-[10px] text-white/50 transition hover:text-white"
             >
               Log out
             </button>
           )}
-          <button
-            type="button"
-            onClick={() => {
-              onViewChange("inbox");
-              onBackToInbox();
-              onExpandedChange(false);
-            }}
-            className="shrink-0 rounded-lg border border-white/10 px-2.5 py-1.5 text-sm text-white/60 transition hover:text-white"
-            aria-label="Minimize panel"
-          >
-            ▼
-          </button>
         </div>
+        <span className="text-[11px] text-white/45">▼ tap to close</span>
       </header>
 
-      <div className="flex min-h-0 flex-1 flex-col overflow-hidden p-4 pt-3">
+      <div
+        className={`flex min-h-0 flex-1 flex-col overflow-hidden ${
+          view === "inbox" ? "p-3 pt-2 pb-28" : "p-4 pt-3 pb-28"
+        }`}
+      >
         {authLoading ? (
           <p className="py-6 text-center text-sm text-white/30">Checking session...</p>
         ) : !user ? (
-          <AuthForm onSendCode={onSendCode} onVerifyCode={onVerifyCode} />
+          <PhoneAuthForm onSendCode={onSendCode} onVerifyCode={onVerifyCode} />
         ) : view === "thread" && activeConversationId ? (
           <>
             <button
@@ -162,11 +188,13 @@ export default function MessagePanel({
               highlightMessageId={highlightMessageId}
               onHighlightComplete={onHighlightComplete}
               onSend={onSendMessage}
+              onRevealPhoto={onRevealPhoto}
+              onToggleHidePhoto={onToggleHidePhoto}
             />
           </>
         ) : (
           <>
-            <h3 className="mb-2 shrink-0 text-xs font-semibold uppercase tracking-wider text-white/40">
+            <h3 className="mb-1.5 shrink-0 text-xs font-semibold uppercase tracking-wider text-white/40">
               Conversations
             </h3>
             <ConversationList
@@ -191,5 +219,6 @@ export default function MessagePanel({
         )}
       </div>
     </aside>
+    </>
   );
 }

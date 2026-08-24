@@ -16,11 +16,13 @@ export function getPusherServer() {
   return pusherServer;
 }
 
-export const PRESENCE_CHANNEL = "presence-into-now";
-export const PRESENCE_EVENT = "presence-update";
-export const PRESENCE_TTL_MS = 45_000;
+export { PRESENCE_CHANNEL, PRESENCE_EVENT, PRESENCE_TTL_MS } from "./presenceConfig";
 
 export const MESSAGE_EVENT = "message-new";
+
+/** Fired on the conversation channel when a sender toggles the closed-eye
+ *  (hidden) state of a sent photo. Payload: PhotoUpdatedPayload. */
+export const PHOTO_UPDATED_EVENT = "photo-updated";
 
 export function userChannel(userId: string) {
   return `private-user-${userId}`;

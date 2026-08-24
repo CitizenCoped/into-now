@@ -54,9 +54,30 @@ export async function isConversationParticipant(conversationId: string, userId: 
   return Boolean(row);
 }
 
+export async function markConversationRead(conversationId: string, userId: string) {
+  await getDb()
+    .update(conversationParticipants)
+    .set({ lastReadAt: new Date() })
+    .where(
+      and(
+        eq(conversationParticipants.conversationId, conversationId),
+        eq(conversationParticipants.userId, userId)
+      )
+    );
+}
+
 export async function getOtherParticipant(conversationId: string, userId: string) {
   const [row] = await getDb()
-    .select({ id: users.id, phone: users.phone })
+    .select({
+      id: users.id,
+      phone: users.phone,
+      email: users.email,
+      displayName: users.displayName,
+      photoUrl: users.photoUrl,
+      statement: users.statement,
+      isAnonymous: users.isAnonymous,
+      expiresAt: users.expiresAt,
+    })
     .from(conversationParticipants)
     .innerJoin(users, eq(users.id, conversationParticipants.userId))
     .where(

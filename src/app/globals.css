@@ -4,7 +4,7 @@
 
 :root {
   --intonow-coral: #ff4d6d;
-  --intonow-cyan: #22d3ee;
+  --intonow-ember: #ff8a1e;
   --intonow-void: #06040c;
 }
 
@@ -13,6 +13,17 @@ body {
   font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   background: var(--intonow-void);
   color: #ededed;
+}
+
+/* Photo moderation scan sweep (PhotoSheet scanning tile) — silent orange
+   bar loop, .45s per design_handoff_photo_messaging. */
+@keyframes scanSweep {
+  0% {
+    top: -40%;
+  }
+  100% {
+    top: 110%;
+  }
 }
 
 .maplibregl-popup-content {
@@ -37,8 +48,31 @@ body {
   filter: invert(1) opacity(0.7);
 }
 
+/*
+ * Corner control chrome (Agent 3 / Sniff UX map padding pass).
+ * The nav (zoom) control lives in the map's own bottom-right corner, which
+ * is also where the collapsed Posts FAB sits. Keep it inset above the FAB's
+ * footprint (button diameter + margin + gap) so they never overlap, and
+ * push it further up when the Posts panel is fully expanded.
+ */
+.intonow-corner-btn {
+  will-change: transform;
+}
+
+/*
+ * `.intonow-install-anchor` (in HomePage) offsets InstallPrompt's own fixed
+ * banners below the centered logo via a transformed containing block. The
+ * anchor itself must stay click-through (it has no visible content of its
+ * own), so only its actual rendered content should receive pointer events.
+ */
+.intonow-install-anchor > * {
+  pointer-events: auto;
+}
+
 .maplibregl-ctrl-bottom-right {
-  transition: bottom 0.2s ease;
+  right: max(1rem, env(safe-area-inset-right)) !important;
+  bottom: calc(max(1rem, env(safe-area-inset-bottom)) + 56px + 0.75rem) !important;
+  transition: bottom 0.2s ease, right 0.2s ease;
 }
 
 body.intonow-panel-open .maplibregl-ctrl-bottom-right {

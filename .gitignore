@@ -36,3 +36,9 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+.env*
+
+# scratch/bridge artifacts
+_to_delete/
+*.lock
+!package-lock.json

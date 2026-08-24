@@ -1,54 +1,92 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import Map, { Marker, Popup, NavigationControl } from "react-map-gl/maplibre";
-import type { LiveSession, Post } from "@/lib/schema";
-import { getCategoryColor } from "@/lib/categories";
+import Map, { Marker, Popup } from "react-map-gl/maplibre";
+import type { MapUser, Post } from "@/lib/schema";
+import { getCodeColor } from "@/lib/codes";
+import { getMapChromePadding } from "@/lib/mapChrome";
+import AnimatedMarker from "./AnimatedMarker";
 import LiveUserMarker from "./LiveUserMarker";
+import ProfileAvatar from "./ProfileAvatar";
 import { BASE_MAP_STYLE, applyIntoNowMapStyle } from "@/lib/mapStyle";
 import "maplibre-gl/dist/maplibre-gl.css";
 
 type Props = {
   posts: Post[];
-  liveUsers: LiveSession[];
+  litUsers: MapUser[];
+  unlitUsers: MapUser[];
   myLocation: { lat: number; lng: number } | null;
   center: { lat: number; lng: number };
   zoom: number;
   selectedId: string | null;
   onSelect: (id: string | null) => void;
   currentUserId: string | null;
+  currentUserPhotoUrl?: string | null;
+  currentUserDisplayName?: string | null;
   onMessageUser: (userId: string) => void;
 };
 
 export default function MapView({
   posts,
-  liveUsers,
+  litUsers,
+  unlitUsers,
   myLocation,
   center,
   zoom,
   selectedId,
   onSelect,
   currentUserId,
+  currentUserPhotoUrl,
+  currentUserDisplayName,
   onMessageUser,
 }: Props) {
   const mapRef = useRef<import("maplibre-gl").Map | null>(null);
-  const [selectedLiveUserId, setSelectedLiveUserId] = useState<string | null>(null);
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+
+  const myLocationRef = useRef(myLocation);
+  useEffect(() => {
+    myLocationRef.current = myLocation;
+  }, [myLocation]);
 
   const selected = useMemo(
     () => posts.find((p) => p.id === selectedId) ?? null,
     [posts, selectedId]
   );
 
-  const selectedLiveUser = useMemo(
-    () => liveUsers.find((u) => u.userId === selectedLiveUserId) ?? null,
-    [liveUsers, selectedLiveUserId]
+  const allUsers = useMemo(() => [...litUsers, ...unlitUsers], [litUsers, unlitUsers]);
+
+  const selectedUser = useMemo(
+    () => allUsers.find((u) => u.userId === selectedUserId) ?? null,
+    [allUsers, selectedUserId]
   );
 
-  const onLoad = useCallback((evt: { target: import("maplibre-gl").Map }) => {
-    mapRef.current = evt.target;
-    applyIntoNowMapStyle(evt.target);
+  // --- Map chrome padding (confine map) -------------------------------
+  // Keeps pan/zoom/center inside the rectangle bounded by the four corner
+  // controls + centered logo, so the camera never settles somewhere hidden
+  // under a FAB. Applied on load and on resize only; does not touch marker
+  // rendering or props (owned by Agent 1).
+  const applyChromePadding = useCallback(() => {
+    mapRef.current?.setPadding(getMapChromePadding());
   }, []);
 
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    window.addEventListener("resize", applyChromePadding);
+    return () => window.removeEventListener("resize", applyChromePadding);
+  }, [applyChromePadding]);
+  // ----------------------------------------------------------------------
+
+  const onLoad = useCallback(
+    (evt: { target: import("maplibre-gl").Map }) => {
+      mapRef.current = evt.target;
+      applyIntoNowMapStyle(evt.target);
+      applyChromePadding();
+    },
+    [applyChromePadding]
+  );
+
+  // Flies only on explicit camera events (post tap, initial location fix) —
+  // `center`/`zoom` change solely then, so free pan/zoom never snaps back.
   useEffect(() => {
     mapRef.current?.flyTo({
       center: [center.lng, center.lat],
@@ -57,44 +95,91 @@ export default function MapView({
     });
   }, [center.lat, center.lng, zoom]);
 
+  const recenter = useCallback(() => {
+    if (!myLocationRef.current) return;
+    mapRef.current?.flyTo({
+      center: [myLocationRef.current.lng, myLocationRef.current.lat],
+      zoom: 13,
+      duration: 800,
+    });
+  }, []);
+
+  // Returning to the app refocuses the map on the user's GPS position.
+  useEffect(() => {
+    const onVisibilityChange = () => {
+      if (document.visibilityState === "visible") recenter();
+    };
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    return () => document.removeEventListener("visibilitychange", onVisibilityChange);
+  }, [recenter]);
+
   return (
     <div className="absolute inset-0">
-      <div className="pointer-events-none absolute inset-0 z-10 bg-[radial-gradient(ellipse_at_top,rgba(255,77,109,0.08),transparent_50%),radial-gradient(ellipse_at_bottom_right,rgba(34,211,238,0.06),transparent_40%)]" />
+      <div className="pointer-events-none absolute inset-0 z-10 bg-[radial-gradient(ellipse_at_top,rgba(255,77,109,0.08),transparent_50%),radial-gradient(ellipse_at_bottom_right,rgba(255,138,30,0.06),transparent_40%)]" />
       <Map
         initialViewState={{ latitude: center.lat, longitude: center.lng, zoom }}
+        minZoom={3}
         mapStyle={BASE_MAP_STYLE}
         onLoad={onLoad}
         onClick={() => {
-          setSelectedLiveUserId(null);
+          setSelectedUserId(null);
         }}
         style={{ width: "100%", height: "100%" }}
         attributionControl={false}
       >
-        <NavigationControl position="bottom-right" showCompass={false} />
         {myLocation && (
-          <Marker latitude={myLocation.lat} longitude={myLocation.lng} anchor="center">
-            <LiveUserMarker isSelf />
-          </Marker>
+          <AnimatedMarker latitude={myLocation.lat} longitude={myLocation.lng} anchor="center">
+            <LiveUserMarker
+              isSelf
+              isLit
+              photoUrl={currentUserPhotoUrl}
+              displayName={currentUserDisplayName}
+              userId={currentUserId}
+            />
+          </AnimatedMarker>
         )}
-        {liveUsers.map((user) => (
+        {unlitUsers.map((user) => (
           <Marker
-            key={user.id}
+            key={`unlit-${user.userId}`}
             latitude={user.lat}
             longitude={user.lng}
             anchor="center"
             onClick={(e) => {
               e.originalEvent.stopPropagation();
-              if (user.userId) {
-                setSelectedLiveUserId(user.userId);
-                onSelect(null);
-              }
+              setSelectedUserId(user.userId);
+              onSelect(null);
             }}
           >
-            <LiveUserMarker />
+            <LiveUserMarker
+              isLit={false}
+              photoUrl={user.photoUrl}
+              displayName={user.displayName}
+              userId={user.userId}
+            />
           </Marker>
         ))}
+        {litUsers.map((user) => (
+          <AnimatedMarker
+            key={`lit-${user.userId}`}
+            latitude={user.lat}
+            longitude={user.lng}
+            anchor="center"
+            onClick={(e) => {
+              e.originalEvent.stopPropagation();
+              setSelectedUserId(user.userId);
+              onSelect(null);
+            }}
+          >
+            <LiveUserMarker
+              isLit
+              photoUrl={user.photoUrl}
+              displayName={user.displayName}
+              userId={user.userId}
+            />
+          </AnimatedMarker>
+        ))}
         {posts.map((post) => {
-          const color = getCategoryColor(post.category);
+          const color = getCodeColor(post.category);
           const isSelected = post.id === selectedId;
           return (
             <Marker
@@ -104,7 +189,7 @@ export default function MapView({
               anchor="center"
               onClick={(e) => {
                 e.originalEvent.stopPropagation();
-                setSelectedLiveUserId(null);
+                setSelectedUserId(null);
                 onSelect(post.id);
               }}
             >
@@ -134,7 +219,10 @@ export default function MapView({
             className="intonow-popup"
           >
             <div className="min-w-[180px]">
-              <p className="text-xs font-medium uppercase tracking-wide text-[#FF4D6D]">
+              <p
+                className="text-xs font-bold uppercase tracking-widest"
+                style={{ color: getCodeColor(selected.category) }}
+              >
                 {selected.category}
               </p>
               <p className="mt-1 font-semibold text-white">{selected.title}</p>
@@ -143,7 +231,7 @@ export default function MapView({
                 <button
                   type="button"
                   onClick={() => onMessageUser(selected.authorId!)}
-                  className="mt-3 w-full rounded-lg border border-[#22D3EE]/30 bg-[#22D3EE]/10 px-3 py-1.5 text-xs font-semibold text-[#22D3EE] transition hover:bg-[#22D3EE]/20"
+                  className="mt-3 w-full rounded-lg border border-[#FF8A1E]/30 bg-[#FF8A1E]/10 px-3 py-1.5 text-xs font-semibold text-[#FF8A1E] transition hover:bg-[#FF8A1E]/20"
                 >
                   Message author
                 </button>
@@ -151,24 +239,41 @@ export default function MapView({
             </div>
           </Popup>
         )}
-        {selectedLiveUser && selectedLiveUser.userId && (
+        {selectedUser && (
           <Popup
-            latitude={selectedLiveUser.lat}
-            longitude={selectedLiveUser.lng}
+            latitude={selectedUser.lat}
+            longitude={selectedUser.lng}
             anchor="bottom"
             closeButton={false}
             closeOnClick={false}
             offset={14}
             className="intonow-popup"
           >
-            <div className="min-w-[140px]">
-              <p className="text-sm font-semibold text-white">Nearby user</p>
-              <p className="mt-1 text-xs text-white/50">Live on the map now</p>
-              {selectedLiveUser.userId !== currentUserId && (
+            <div className="min-w-[200px]">
+              <div className="flex items-center gap-2">
+                <ProfileAvatar
+                  photoUrl={selectedUser.photoUrl}
+                  displayName={selectedUser.displayName}
+                  userId={selectedUser.userId}
+                  size="sm"
+                />
+                <div>
+                  <p className="text-sm font-semibold text-white">
+                    {selectedUser.displayName ?? "Nearby user"}
+                  </p>
+                  <p className="text-[10px] text-white/50">
+                    {selectedUser.isLit ? "Live on the map" : "Was here recently"}
+                  </p>
+                </div>
+              </div>
+              {selectedUser.statement && (
+                <p className="mt-2 text-xs text-white/60 line-clamp-3">{selectedUser.statement}</p>
+              )}
+              {selectedUser.userId !== currentUserId && (
                 <button
                   type="button"
-                  onClick={() => onMessageUser(selectedLiveUser.userId!)}
-                  className="mt-3 w-full rounded-lg border border-[#22D3EE]/30 bg-[#22D3EE]/10 px-3 py-1.5 text-xs font-semibold text-[#22D3EE] transition hover:bg-[#22D3EE]/20"
+                  onClick={() => onMessageUser(selectedUser.userId)}
+                  className="mt-3 w-full rounded-lg border border-[#FF8A1E]/30 bg-[#FF8A1E]/10 px-3 py-1.5 text-xs font-semibold text-[#FF8A1E] transition hover:bg-[#FF8A1E]/20"
                 >
                   Message
                 </button>
@@ -177,6 +282,33 @@ export default function MapView({
           </Popup>
         )}
       </Map>
+      {/* Fixed map chrome: GPS recenter crosshair. Positioned above the
+          Posts FAB footprint (56px button + safe-area margin + gap); z-15
+          sits above the map, below panels (z-30) and corner FABs (z-40). */}
+      <button
+        type="button"
+        aria-label="Center map on my location"
+        onClick={recenter}
+        className="absolute right-[18px] bottom-[118px] z-[15] flex h-12 w-12 items-center justify-center rounded-full border-[1.5px] border-white/75 bg-[#0f0d18]/35 text-white/90 backdrop-blur transition hover:border-[#FF9E2C] hover:bg-[#0f0d18]/60"
+      >
+        <svg
+          width="24"
+          height="24"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth={1.8}
+          strokeLinecap="round"
+          aria-hidden
+        >
+          <circle cx="12" cy="12" r="6.5" />
+          <line x1="12" y1="1.5" x2="12" y2="5" />
+          <line x1="12" y1="19" x2="12" y2="22.5" />
+          <line x1="1.5" y1="12" x2="5" y2="12" />
+          <line x1="19" y1="12" x2="22.5" y2="12" />
+          <circle cx="12" cy="12" r="1.6" fill="currentColor" stroke="none" />
+        </svg>
+      </button>
     </div>
   );
 }

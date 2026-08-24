@@ -5,13 +5,13 @@ export const BASE_MAP_STYLE =
 
 const PALETTE = {
   void: "#06040c",
-  water: "#0a3d52",
+  water: "#0a2f3a",
   land: "#0f0d18",
-  park: "#0d1f14",
-  road: "#2a2248",
-  roadMajor: "#3d3568",
-  building: "#16122a",
-  label: "#c4bdd8",
+  park: "#141a0d",
+  road: "#241a10",
+  roadMajor: "#3a2a12",
+  building: "#1c140f",
+  label: "#d8cbb8",
 };
 
 export function applyIntoNowMapStyle(map: MapLibreMap) {
