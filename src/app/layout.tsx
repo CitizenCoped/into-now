@@ -52,6 +52,16 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: "#06040c",
+  width: "device-width",
+  initialScale: 1,
+  // Map app: page-level zoom fights map pinch-zoom and double-tap on the
+  // controls. iOS still allows deliberate accessibility zoom.
+  maximumScale: 1,
+  userScalable: false,
+  // Real env(safe-area-inset-*) values — the corner FABs and the map's
+  // chrome padding both key off them.
+  viewportFit: "cover",
+  interactiveWidget: "resizes-content",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

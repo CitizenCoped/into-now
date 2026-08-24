@@ -24,7 +24,7 @@ export default function ConversationList({ conversations, loading, onSelect }: P
   }
 
   return (
-    <div className="min-h-0 flex-1 overflow-y-auto pr-1">
+    <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain pr-1">
       {conversations.map((convo) => (
         <button
           key={convo.id}

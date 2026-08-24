@@ -7,6 +7,7 @@ import { useLivePresence } from "@/hooks/useLivePresence";
 import { useMessages } from "@/hooks/useMessages";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { ageFromBirthDate, haversineMiles } from "@/lib/geo";
+import { CORNER_BUFFER, CORNER_BUTTON_SIZE, CORNER_MARGIN } from "@/lib/mapChrome";
 import { isIdentityToken, type IdentityToken, type LookingForToken } from "@/lib/codes";
 import type { MapUser, Post } from "@/lib/schema";
 import FilterPanel, { type UserFilters } from "./FilterPanel";
@@ -18,6 +19,9 @@ import ProfilePanel from "./ProfilePanel";
 const MapView = dynamic(() => import("./MapView"), { ssr: false });
 
 const DEFAULT_CENTER = { lat: 37.7749, lng: -122.4194 };
+
+/** How far a gesture-guard band extends beyond the margin/safe-area edge. */
+const GESTURE_BAND_EXTENT = CORNER_BUTTON_SIZE + CORNER_BUFFER;
 
 type PostPanelView = "list" | "create";
 type MessagePanelView = "inbox" | "thread";
@@ -292,7 +296,7 @@ export default function HomePage() {
   const postLng = myLocation?.lng ?? center.lng;
 
   return (
-    <main className="relative h-screen w-full overflow-hidden bg-[#06040c]">
+    <main className="relative h-dvh w-full overflow-hidden bg-[#06040c]">
       {/*
         Fixed top-center wordmark. The wrapper below establishes a new
         containing block (via `transform`) for InstallPrompt's own
@@ -307,8 +311,11 @@ export default function HomePage() {
         />
       </div>
       <div
-        className="intonow-install-anchor pointer-events-none relative z-30"
-        style={{ transform: "translateZ(0)", paddingTop: "3.25rem" }}
+        className="intonow-install-anchor pointer-events-none fixed inset-x-0 top-0 z-30"
+        style={{
+          transform: "translateZ(0)",
+          paddingTop: "calc(max(0.75rem, env(safe-area-inset-top)) + 2.5rem)",
+        }}
       >
         <InstallPrompt />
       </div>
@@ -331,6 +338,29 @@ export default function HomePage() {
         currentUserPhotoUrl={user?.photoUrl ?? null}
         currentUserDisplayName={user?.displayName ?? null}
         onMessageUser={startConversation}
+      />
+      {/*
+        Gesture-guard bands: the map may only be manipulated in the frame
+        between the corner-control strips. These invisible fixed layers catch
+        touches over the top (logo + FAB) and bottom (FAB) bands so a drag
+        starting there never pans the map. Heights mirror the "safe
+        rectangle" from mapChrome.ts; z-12 sits above the map (z-10 overlay)
+        and below the recenter button (z-15), logo (z-20), panels (z-30),
+        and FABs (z-40) — all of which stay tappable.
+      */}
+      <div
+        aria-hidden
+        className="fixed inset-x-0 top-0 z-[12] touch-none"
+        style={{
+          height: `calc(max(${CORNER_MARGIN}px, env(safe-area-inset-top)) + ${GESTURE_BAND_EXTENT}px)`,
+        }}
+      />
+      <div
+        aria-hidden
+        className="fixed inset-x-0 bottom-0 z-[12] touch-none"
+        style={{
+          height: `calc(max(${CORNER_MARGIN}px, env(safe-area-inset-bottom)) + ${GESTURE_BAND_EXTENT}px)`,
+        }}
       />
       <FilterPanel
         expanded={openPanel === "filters"}

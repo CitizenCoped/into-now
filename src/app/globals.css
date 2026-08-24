@@ -15,6 +15,19 @@ body {
   color: #ededed;
 }
 
+/*
+ * Lock the document to the viewport. Without this, iOS Safari sizes the
+ * page to the *large* viewport (toolbars hidden), the document scrolls,
+ * and the fixed corner FABs drift off screen. overscroll-behavior kills
+ * rubber-banding and pull-to-refresh; only the map pans.
+ */
+html,
+body {
+  height: 100%;
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
 /* Photo moderation scan sweep (PhotoSheet scanning tile) — silent orange
    bar loop, .45s per design_handoff_photo_messaging. */
 @keyframes scanSweep {
@@ -57,6 +70,7 @@ body {
  */
 .intonow-corner-btn {
   will-change: transform;
+  touch-action: manipulation;
 }
 
 /*

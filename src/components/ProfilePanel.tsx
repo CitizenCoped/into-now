@@ -130,7 +130,7 @@ export default function ProfilePanel({
         </button>
       </header>
 
-      <div className="min-h-0 flex-1 overflow-y-auto p-4">
+      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-4">
         {authLoading ? (
           <p className="py-6 text-center text-sm text-white/30">Checking session...</p>
         ) : showSignup || !user ? (

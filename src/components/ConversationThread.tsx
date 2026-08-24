@@ -206,7 +206,7 @@ export default function ConversationThread({
         <p className="mb-3 shrink-0 text-xs text-white/50">{otherUser.statement}</p>
       )}
 
-      <div ref={scrollRef} className="min-h-0 flex-1 space-y-2 overflow-y-auto pr-1">
+      <div ref={scrollRef} className="min-h-0 flex-1 space-y-2 overflow-y-auto overscroll-contain pr-1">
         {loading && messages.length === 0 && (
           <p className="py-4 text-center text-sm text-white/30">Loading messages...</p>
         )}

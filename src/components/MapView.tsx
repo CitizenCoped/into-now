@@ -71,8 +71,17 @@ export default function MapView({
 
   useEffect(() => {
     if (typeof window === "undefined") return;
+    // iOS Safari toolbar show/hide fires visualViewport.resize without a
+    // reliable window resize; listen to both (plus orientation changes).
+    const visualViewport = window.visualViewport;
     window.addEventListener("resize", applyChromePadding);
-    return () => window.removeEventListener("resize", applyChromePadding);
+    window.addEventListener("orientationchange", applyChromePadding);
+    visualViewport?.addEventListener("resize", applyChromePadding);
+    return () => {
+      window.removeEventListener("resize", applyChromePadding);
+      window.removeEventListener("orientationchange", applyChromePadding);
+      visualViewport?.removeEventListener("resize", applyChromePadding);
+    };
   }, [applyChromePadding]);
   // ----------------------------------------------------------------------
 
@@ -289,7 +298,7 @@ export default function MapView({
         type="button"
         aria-label="Center map on my location"
         onClick={recenter}
-        className="absolute right-[18px] bottom-[118px] z-[15] flex h-12 w-12 items-center justify-center rounded-full border-[1.5px] border-white/75 bg-[#0f0d18]/35 text-white/90 backdrop-blur transition hover:border-[#FF9E2C] hover:bg-[#0f0d18]/60"
+        className="absolute right-[18px] bottom-[118px] z-[15] flex h-12 w-12 touch-manipulation items-center justify-center rounded-full border-[1.5px] border-white/75 bg-[#0f0d18]/35 text-white/90 backdrop-blur transition hover:border-[#FF9E2C] hover:bg-[#0f0d18]/60"
       >
         <svg
           width="24"

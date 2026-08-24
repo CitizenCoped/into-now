@@ -65,14 +65,14 @@ export default function InstallPrompt() {
           <button
             type="button"
             onClick={handleInstall}
-            className="flex-1 rounded-lg bg-gradient-to-r from-[#FFB03A] to-[#F56A00] py-2 text-xs font-semibold text-[#06040c]"
+            className="flex-1 touch-manipulation rounded-lg bg-gradient-to-r from-[#FFB03A] to-[#F56A00] py-2 text-xs font-semibold text-[#06040c]"
           >
             Install
           </button>
           <button
             type="button"
             onClick={handleDismiss}
-            className="rounded-lg border border-white/10 px-3 py-2 text-xs text-white/50"
+            className="touch-manipulation rounded-lg border border-white/10 px-3 py-2 text-xs text-white/50"
           >
             Later
           </button>
@@ -103,7 +103,7 @@ export default function InstallPrompt() {
         <button
           type="button"
           onClick={handleDismiss}
-          className="mt-3 w-full rounded-lg border border-white/10 py-2 text-xs text-white/50"
+          className="mt-3 w-full touch-manipulation rounded-lg border border-white/10 py-2 text-xs text-white/50"
         >
           Got it
         </button>

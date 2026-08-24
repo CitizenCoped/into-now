@@ -127,7 +127,7 @@ export default function PostCreateForm({
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       {/* Scrollable form body — footer stays pinned below. */}
-      <div className="min-h-0 flex-1 overflow-y-auto pr-1">
+      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain pr-1">
         <button
           type="button"
           onClick={onBack}

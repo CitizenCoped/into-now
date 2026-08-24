@@ -99,7 +99,7 @@ export default function FilterPanel({
         </button>
       </header>
 
-      <div className="min-h-0 flex-1 overflow-y-auto p-4">
+      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-4">
         {!isRegistered ? (
           <div className="space-y-3">
             <p className="text-sm text-white/60">
