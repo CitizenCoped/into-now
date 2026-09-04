@@ -42,7 +42,7 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
     const scanUrl = isSpacesConfigured() ? await presignView(photo.objectKey) : null;
     result = scanUrl
       ? await scanImageUrl(scanUrl)
-      : { ok: true, skipped: true, topScore: 0, topClass: null };
+      : { ok: true, skipped: true, topScore: 0, topClass: null, scores: {} };
   } catch (error) {
     // Leave the photo in `scanning` — never silently approve on vendor
     // failure. The client can retry.
@@ -59,7 +59,13 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
     logActivity("photo.approved", {
       userId: user.id,
       phone: user.phone,
-      metadata: { photoId: params.id, moderationSkipped: result.skipped },
+      metadata: {
+        photoId: params.id,
+        moderationSkipped: result.skipped,
+        topClass: result.topClass,
+        topScore: result.topScore,
+        scores: result.scores,
+      },
     });
 
     return NextResponse.json({ status: "ready" });
@@ -84,6 +90,7 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
       photoId: params.id,
       topClass: result.topClass,
       topScore: result.topScore,
+      scores: result.scores,
     },
   });
 

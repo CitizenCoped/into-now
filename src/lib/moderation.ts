@@ -2,8 +2,8 @@
  * Sightengine image moderation — sync REST check at upload time.
  *
  * Called from POST /api/photos/[id]/scan with a short-lived presigned GET
- * URL for the just-uploaded object. Rejects when any watched class scores
- * at or above the threshold (start conservative: 0.6).
+ * URL for the just-uploaded object. Rejects when any WATCHED_PATHS score is
+ * at or above REJECT_THRESHOLD (0.6).
  *
  * Env: SIGHTENGINE_USER / SIGHTENGINE_SECRET. While the vendor account is
  * pending, both are unset and scans PASS with `skipped: true` — the scan
@@ -18,18 +18,38 @@
 
 const SIGHTENGINE_ENDPOINT = "https://api.sightengine.com/1.0/check.json";
 
-/** Reject when any watched class scores >= this. */
+/** Reject when any watched score is >= this. */
 const REJECT_THRESHOLD = 0.6;
 
-/** Model set: nudity / minor / gore classes per the handoff spec.
+/** Model set: nudity / gore / offensive per the handoff spec.
  *  Overridable without a deploy via SIGHTENGINE_MODELS. */
 const DEFAULT_MODELS = "nudity-2.1,gore-2.0,offensive";
 
-/** Response keys whose numeric leaves are safety scores we act on. Keys
- *  expressing "none of the above" are skipped so a clean image (e.g.
- *  nudity.none = 0.99) never trips the threshold. */
-const WATCHED_ROOTS = new Set(["nudity", "gore", "offensive", "type", "faces", "minor"]);
-const SAFE_LEAF_KEYS = new Set(["none", "safe", "context"]);
+/**
+ * The aggregate safety scores we act on, as dot-paths into the Sightengine
+ * response. This is an explicit allowlist on purpose: the response also
+ * carries *descriptors* that read as high-confidence but are not safety
+ * signals — `nudity.context.indoor_other` (scene: indoors), `gore.type.real`
+ * (it's a real photo, not a drawing), `nudity.suggestive_classes.*` (fine-
+ * grained breakdown of the suggestive tiers). A blanket "reject any leaf
+ * >= threshold" rule rejected every indoor selfie on those. Suggestive tiers
+ * (`very_suggestive`, `suggestive`, `mildly_suggestive`) are deliberately
+ * not watched — swimwear/beach/cleavage photos are fine for this product.
+ *
+ * Response shape reference (nudity-2.1 / gore-2.0 / offensive), 2026-09:
+ *   nudity: { sexual_activity, sexual_display, erotica, very_suggestive,
+ *             suggestive, mildly_suggestive, none, suggestive_classes{…},
+ *             context{ sea_lake_pool, outdoor_other, indoor_other } }
+ *   gore:   { prob, classes{…}, type{ animated, fake, real } }
+ *   offensive: { prob, nazi, confederate, supremacist, terrorist, middle_finger }
+ */
+const WATCHED_PATHS = [
+  "nudity.sexual_activity",
+  "nudity.sexual_display",
+  "nudity.erotica",
+  "gore.prob",
+  "offensive.prob",
+] as const;
 
 export type ModerationResult = {
   ok: boolean;
@@ -39,32 +59,22 @@ export type ModerationResult = {
   topScore: number;
   /** Dot-path of the highest watched score, e.g. "nudity.sexual_activity". */
   topClass: string | null;
+  /** Every watched score, for activity logging / threshold tuning. */
+  scores: Partial<Record<(typeof WATCHED_PATHS)[number], number>>;
 };
 
 export function isModerationConfigured(): boolean {
   return Boolean(process.env.SIGHTENGINE_USER && process.env.SIGHTENGINE_SECRET);
 }
 
-function collectScores(
-  node: unknown,
-  path: string,
-  out: { path: string; score: number }[]
-) {
-  if (typeof node === "number") {
-    const leaf = path.split(".").pop() ?? "";
-    if (!SAFE_LEAF_KEYS.has(leaf)) out.push({ path, score: node });
-    return;
+/** Read a numeric leaf at a dot-path; undefined if absent or non-numeric. */
+function scoreAt(data: Record<string, unknown>, path: string): number | undefined {
+  let node: unknown = data;
+  for (const key of path.split(".")) {
+    if (!node || typeof node !== "object") return undefined;
+    node = (node as Record<string, unknown>)[key];
   }
-  if (Array.isArray(node)) {
-    for (const item of node) collectScores(item, path, out);
-    return;
-  }
-  if (node && typeof node === "object") {
-    for (const [key, value] of Object.entries(node)) {
-      if (key === "id" || key === "x1" || key === "x2" || key === "y1" || key === "y2") continue;
-      collectScores(value, path ? `${path}.${key}` : key, out);
-    }
-  }
+  return typeof node === "number" ? node : undefined;
 }
 
 /**
@@ -75,7 +85,7 @@ function collectScores(
 export async function scanImageUrl(imageUrl: string): Promise<ModerationResult> {
   if (!isModerationConfigured()) {
     console.warn("moderation: SIGHTENGINE_USER/SECRET not set — scan skipped (photo passes)");
-    return { ok: true, skipped: true, topScore: 0, topClass: null };
+    return { ok: true, skipped: true, topScore: 0, topClass: null, scores: {} };
   }
 
   const params = new URLSearchParams({
@@ -95,14 +105,13 @@ export async function scanImageUrl(imageUrl: string): Promise<ModerationResult> 
     throw new Error(`Sightengine error: ${JSON.stringify(data.error ?? data.status)}`);
   }
 
-  const scores: { path: string; score: number }[] = [];
-  for (const [key, value] of Object.entries(data)) {
-    if (WATCHED_ROOTS.has(key)) collectScores(value, key, scores);
-  }
-
-  let top = { path: null as string | null, score: 0 };
-  for (const entry of scores) {
-    if (entry.score > top.score) top = { path: entry.path, score: entry.score };
+  const scores: ModerationResult["scores"] = {};
+  let top: { path: string | null; score: number } = { path: null, score: 0 };
+  for (const path of WATCHED_PATHS) {
+    const score = scoreAt(data, path);
+    if (score === undefined) continue;
+    scores[path] = score;
+    if (score > top.score) top = { path, score };
   }
 
   return {
@@ -110,5 +119,6 @@ export async function scanImageUrl(imageUrl: string): Promise<ModerationResult> 
     skipped: false,
     topScore: top.score,
     topClass: top.path,
+    scores,
   };
 }
