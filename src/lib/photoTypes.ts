@@ -8,7 +8,10 @@ import type { Message } from "./schema";
 /** Library limits (enforced server-side, mirrored in the UI). */
 export const MAX_LIBRARY_PHOTOS = 10;
 export const MAX_PHOTOS_PER_MESSAGE = 5;
-export const MAX_PHOTO_BYTES = 5 * 1024 * 1024;
+/** Server-side safety net only. Clients always normalize to a ≤4MB JPEG
+ *  before upload (src/lib/imageNormalize.ts), so a real upload never gets
+ *  near this; it exists to bound what a presigned PUT can accept. */
+export const MAX_PHOTO_BYTES = 10 * 1024 * 1024;
 
 /** Client state of a library photo. */
 export type LibraryPhoto = {

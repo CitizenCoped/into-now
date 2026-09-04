@@ -15,7 +15,9 @@ export async function POST(request: NextRequest) {
       body,
       request,
       onBeforeGenerateToken: async () => ({
-        allowedContentTypes: ["image/jpeg", "image/png", "image/webp", "image/gif"],
+        // ProfileEditor normalizes every pick to a ≤512px JPEG before
+        // upload (src/lib/imageNormalize.ts), so this is all we accept.
+        allowedContentTypes: ["image/jpeg"],
         maximumSizeInBytes: 2 * 1024 * 1024,
         tokenPayload: JSON.stringify({ userId: user.id }),
       }),

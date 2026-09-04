@@ -307,6 +307,7 @@ export default function ConversationThread({
                 previewUrls={library.previewUrls}
                 selectedIds={selectedIds}
                 error={library.error}
+                preparing={library.preparing}
                 onToggleSelect={toggleSelect}
                 onUpload={library.uploadPhoto}
                 onDelete={library.deletePhoto}

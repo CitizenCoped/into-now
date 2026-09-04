@@ -5,10 +5,17 @@
  * (max 10) behind the composer PhotoSheet.
  *
  * Upload flow (see photo-feature-handoff-v3.md §3):
- *   1. generate blur placeholder + aspect ratio locally (src/lib/blur.ts)
+ *   1. normalize locally (src/lib/imageNormalize.ts): decode anything the
+ *      phone produced (HEIC, 12MB JPEG, …), downscale, re-encode as JPEG,
+ *      and get the blur placeholder + aspect ratio from that same decode.
+ *      `preparing` is true for this step — no tile exists yet.
  *   2. POST /api/photos → { photoId, uploadUrl } (row starts `scanning`)
- *   3. PUT the file directly to Spaces via the presigned URL
+ *   3. PUT the normalized blob directly to Spaces via the presigned URL.
+ *      Content-Length is part of the signature, so the exact blob whose
+ *      size we declared is the one we send.
  *   4. POST /api/photos/[id]/scan → `ready` | `rejected`
+ *   On failure at 3 or 4 the row is DELETEd (with a reason) so it neither
+ *   lingers as a `scanning` orphan nor counts toward the library cap.
  *
  * While a photo is `scanning` the tile shows the silent sweep animation —
  * its duration is the real upload+moderation latency, never a fixed timer.
@@ -20,19 +27,50 @@
  * blur placeholder (the API never returns real URLs for the library).
  */
 
-import { generateBlurDataUrl, imageAspectRatio } from "@/lib/blur";
+import {
+  DM_PHOTO_NORMALIZE,
+  decodeErrorMessage,
+  normalizeImage,
+  type NormalizedImage,
+} from "@/lib/imageNormalize";
 import type { LibraryPhoto } from "@/lib/photoTypes";
-import { MAX_LIBRARY_PHOTOS, MAX_PHOTO_BYTES } from "@/lib/photoTypes";
+import { MAX_LIBRARY_PHOTOS } from "@/lib/photoTypes";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 /** How long the danger tile stays visible before a rejected photo is
  *  removed from the grid. */
 const REJECTED_TILE_MS = 1600;
 
+/** A non-2xx response from the presigned PUT to Spaces. */
+class UploadPutError extends Error {
+  readonly status: number;
+  constructor(status: number) {
+    super(`Upload failed (${status})`);
+    this.name = "UploadPutError";
+    this.status = status;
+  }
+}
+
+function uploadErrorMessage(err: unknown): string {
+  if (err instanceof UploadPutError) {
+    // 403 = signature mismatch or expired presign; 413 = over the signed
+    // Content-Length (shouldn't happen — we declare the exact blob size).
+    if (err.status === 403) return "Upload link expired. Try again.";
+    if (err.status === 413) return "Photo is too large.";
+    return `Upload failed (${err.status}). Try again.`;
+  }
+  // fetch() rejects with a TypeError on network drop or CORS preflight
+  // failure — indistinguishable from the client, so keep the copy generic.
+  return "Upload failed. Check your connection and try again.";
+}
+
 export function usePhotoLibrary(enabled: boolean) {
   const [photos, setPhotos] = useState<LibraryPhoto[]>([]);
   const [previewUrls, setPreviewUrls] = useState<Record<string, string>>({});
   const [error, setError] = useState("");
+  /** True while a picked file is being decoded/resized, before any tile. */
+  const [preparing, setPreparing] = useState(false);
+  const preparingRef = useRef(false);
   const previewUrlsRef = useRef(previewUrls);
   previewUrlsRef.current = previewUrls;
 
@@ -84,45 +122,59 @@ export function usePhotoLibrary(enabled: boolean) {
     });
   }, []);
 
+  /** Drop a row whose upload or scan never completed. Local removal is
+   *  immediate; the server DELETE is best-effort and logs the reason as
+   *  `photo.upload_failed` so failures are visible in the activity feed. */
+  const discardPhoto = useCallback(
+    (id: string, reason: "upload_failed" | "scan_failed", status?: number) => {
+      removePhoto(id);
+      const qs = new URLSearchParams({ reason, status: String(status ?? 0) });
+      void fetch(`/api/photos/${id}?${qs}`, { method: "DELETE", keepalive: true }).catch(
+        () => {}
+      );
+    },
+    [removePhoto]
+  );
+
   /** Upload a photo file into the library. Returns the new photoId, or
    *  null if the upload never started (validation) or was rejected. */
   const uploadPhoto = useCallback(
     async (file: Blob, isLive: boolean): Promise<string | null> => {
       setError("");
 
-      if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
-        setError("Photos must be JPEG, PNG, or WebP.");
-        return null;
-      }
-      if (file.size > MAX_PHOTO_BYTES) {
-        setError("Photos must be under 5MB.");
-        return null;
-      }
+      // Guard against a second pick while the first is still decoding.
+      if (preparingRef.current) return null;
+
       if (photos.filter((p) => p.status !== "rejected").length >= MAX_LIBRARY_PHOTOS) {
         setError(`Library is full (${MAX_LIBRARY_PHOTOS} photos max).`);
         return null;
       }
 
-      let blurDataUrl: string;
-      let aspectRatio: number;
+      // Normalize first: this is what turns a HEIC or a 12MB camera JPEG
+      // into something every later step accepts.
+      let normalized: NormalizedImage;
+      preparingRef.current = true;
+      setPreparing(true);
       try {
-        [blurDataUrl, aspectRatio] = await Promise.all([
-          generateBlurDataUrl(file),
-          imageAspectRatio(file),
-        ]);
-      } catch {
-        setError("That file couldn't be read as an image.");
+        normalized = await normalizeImage(file, DM_PHOTO_NORMALIZE);
+      } catch (err) {
+        setError(decodeErrorMessage(err));
         return null;
+      } finally {
+        preparingRef.current = false;
+        setPreparing(false);
       }
+      const { blob, blurDataUrl, aspectRatio } = normalized;
+      const contentType = blob.type || "image/jpeg";
 
-      let photoId: string;
+      let photoId: string | undefined;
       try {
         const res = await fetch("/api/photos", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            contentType: file.type,
-            sizeBytes: file.size,
+            contentType,
+            sizeBytes: blob.size,
             isLive,
             blurDataUrl,
             aspectRatio,
@@ -133,26 +185,32 @@ export function usePhotoLibrary(enabled: boolean) {
           setError(typeof data.error === "string" ? data.error : "Upload failed.");
           return null;
         }
-        photoId = data.photoId;
+        photoId = data.photoId as string;
 
         // Tile appears immediately in the scanning state; the sweep runs
         // for the real upload + moderation duration.
-        const previewUrl = URL.createObjectURL(file);
-        setPreviewUrls((prev) => ({ ...prev, [photoId]: previewUrl }));
+        const previewUrl = URL.createObjectURL(blob);
+        setPreviewUrls((prev) => ({ ...prev, [photoId!]: previewUrl }));
         setPhotos((prev) => [
           ...prev,
-          { id: photoId, blurDataUrl, aspectRatio, isLive, status: "scanning" },
+          { id: photoId!, blurDataUrl, aspectRatio, isLive, status: "scanning" },
         ]);
 
         const put = await fetch(data.uploadUrl, {
           method: "PUT",
-          headers: { "Content-Type": file.type },
-          body: file,
+          headers: { "Content-Type": contentType },
+          body: blob,
         });
-        if (!put.ok) throw new Error(`Upload failed (${put.status})`);
-      } catch {
-        setError("Upload failed. Check your connection and try again.");
-        if (photoId!) removePhoto(photoId!);
+        if (!put.ok) throw new UploadPutError(put.status);
+      } catch (err) {
+        setError(uploadErrorMessage(err));
+        if (photoId) {
+          discardPhoto(
+            photoId,
+            "upload_failed",
+            err instanceof UploadPutError ? err.status : undefined
+          );
+        }
         return null;
       }
 
@@ -165,7 +223,7 @@ export function usePhotoLibrary(enabled: boolean) {
           // Danger tile flashes briefly, then the photo is gone — the
           // object was already deleted server-side.
           patchPhoto(photoId, { status: "rejected" });
-          window.setTimeout(() => removePhoto(photoId), REJECTED_TILE_MS);
+          window.setTimeout(() => removePhoto(photoId!), REJECTED_TILE_MS);
           return null;
         }
 
@@ -173,11 +231,11 @@ export function usePhotoLibrary(enabled: boolean) {
         return photoId;
       } catch {
         setError("Scan failed. Try uploading again.");
-        removePhoto(photoId);
+        discardPhoto(photoId, "scan_failed");
         return null;
       }
     },
-    [photos, patchPhoto, removePhoto]
+    [photos, patchPhoto, removePhoto, discardPhoto]
   );
 
   /** Remove a photo from the library (and Spaces, server-side). */
@@ -197,6 +255,7 @@ export function usePhotoLibrary(enabled: boolean) {
     photos,
     previewUrls,
     error,
+    preparing,
     clearError: () => setError(""),
     fetchLibrary,
     uploadPhoto,

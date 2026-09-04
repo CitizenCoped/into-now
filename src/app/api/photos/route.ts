@@ -6,11 +6,12 @@ import { MAX_LIBRARY_PHOTOS, MAX_PHOTO_BYTES } from "@/lib/photoTypes";
 import { userPhotos } from "@/lib/schema";
 import {
   ALLOWED_PHOTO_CONTENT_TYPES,
+  deleteObject,
   isSpacesConfigured,
   photoObjectKey,
   presignUpload,
 } from "@/lib/spaces";
-import { and, desc, eq, ne } from "drizzle-orm";
+import { and, desc, eq, lt, ne } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
@@ -23,8 +24,14 @@ const createSchema = z.object({
   aspectRatio: z.number().positive().max(10).default(1),
 });
 
+/** A `scanning` row older than this is an upload that never finished (the
+ *  presigned PUT expires after 5 min). It can't be resumed, so it's swept. */
+const STALE_SCANNING_MS = 15 * 60 * 1000;
+
 /** GET /api/photos — the caller's library. Blur placeholders only; no
- *  object keys, no URLs. */
+ *  object keys, no URLs. Only `ready` rows: a `scanning` row is either an
+ *  in-flight upload this client already knows about locally, or an orphan
+ *  from a failed one — never something another session can resume. */
 export async function GET(request: NextRequest) {
   const user = await getAuthUserFromRequest(request);
   if (!user) {
@@ -40,7 +47,7 @@ export async function GET(request: NextRequest) {
       status: userPhotos.status,
     })
     .from(userPhotos)
-    .where(and(eq(userPhotos.userId, user.id), ne(userPhotos.status, "rejected")))
+    .where(and(eq(userPhotos.userId, user.id), eq(userPhotos.status, "ready")))
     .orderBy(desc(userPhotos.createdAt));
 
   return NextResponse.json({ photos: rows });
@@ -76,6 +83,28 @@ export async function POST(request: NextRequest) {
   }
 
   const db = getDb();
+
+  // Sweep this user's abandoned uploads so they don't count toward the cap.
+  const stale = await db
+    .delete(userPhotos)
+    .where(
+      and(
+        eq(userPhotos.userId, user.id),
+        eq(userPhotos.status, "scanning"),
+        lt(userPhotos.createdAt, new Date(Date.now() - STALE_SCANNING_MS))
+      )
+    )
+    .returning({ id: userPhotos.id, objectKey: userPhotos.objectKey });
+  if (stale.length > 0) {
+    await Promise.allSettled(
+      stale.filter((row) => row.objectKey).map((row) => deleteObject(row.objectKey))
+    );
+    logActivity("photo.upload_abandoned", {
+      userId: user.id,
+      phone: user.phone,
+      metadata: { photoIds: stale.map((row) => row.id) },
+    });
+  }
 
   const existing = await db
     .select({ id: userPhotos.id })

@@ -26,7 +26,9 @@ import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
  *  privacy model server-side. */
 const VIEW_URL_TTL_SECONDS = 60;
 
-/** Presigned PUT TTL — enough for a slow mobile upload of a 5MB photo. */
+/** Presigned PUT TTL — enough for a slow mobile upload of a normalized
+ *  (≤4MB) photo. Rows still `scanning` well past this are swept as
+ *  abandoned by POST /api/photos. */
 const UPLOAD_URL_TTL_SECONDS = 300;
 
 let client: S3Client | null = null;
@@ -76,17 +78,25 @@ export function photoObjectKey(userId: string, photoId: string, contentType: str
 }
 
 /** Presigned PUT the client uploads directly to. Private ACL (S3 default —
- *  no x-amz-acl header is signed, so the object stays unreadable via CDN). */
+ *  no x-amz-acl header is signed, so the object stays unreadable via CDN).
+ *
+ *  What the signature actually enforces (verified against the SDK):
+ *  - `Content-Length` IS signed, as an exact match — not a range. Callers
+ *    must pass the byte length of the exact Blob the client will PUT; any
+ *    other body gets a 403 from Spaces.
+ *  - `Content-Type` is NOT signed (the presigner marks it unsignable). It
+ *    only shapes the stored object's metadata via the client's own header.
+ *  That's why the client normalizes first and declares `blob.size`. */
 export async function presignUpload(
   key: string,
   contentType: string,
-  maxBytes: number
+  exactBytes: number
 ): Promise<string> {
   const command = new PutObjectCommand({
     Bucket: getBucket(),
     Key: key,
     ContentType: contentType,
-    ContentLength: maxBytes,
+    ContentLength: exactBytes,
   });
   return getSignedUrl(getClient(), command, { expiresIn: UPLOAD_URL_TTL_SECONDS });
 }

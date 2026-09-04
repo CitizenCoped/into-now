@@ -30,6 +30,9 @@ type Props = {
   /** Ordered selection (send order). */
   selectedIds: string[];
   error: string;
+  /** True while a picked file is being decoded/resized (before a tile
+   *  exists). Add/camera tiles are inert and a hint line shows. */
+  preparing: boolean;
   onToggleSelect: (photoId: string) => void;
   onUpload: (file: Blob, isLive: boolean) => Promise<string | null>;
   onDelete: (photoId: string) => void;
@@ -264,6 +267,7 @@ export default function PhotoSheet({
   previewUrls,
   selectedIds,
   error,
+  preparing,
   onToggleSelect,
   onUpload,
   onDelete,
@@ -310,17 +314,23 @@ export default function PhotoSheet({
         {/* Add tile — dashed; goes inert at 10/10 until one is removed. */}
         <button
           type="button"
-          title={full ? "Library full — remove a photo first" : "Upload from library"}
-          disabled={full}
+          title={
+            full
+              ? "Library full — remove a photo first"
+              : preparing
+                ? "Preparing photo…"
+                : "Upload from library"
+          }
+          disabled={full || preparing}
           onClick={() => fileInputRef.current?.click()}
           className="flex flex-col items-center justify-center bg-transparent"
           style={{
             aspectRatio: 1,
             borderRadius: 9,
             border: "1px dashed rgba(255,255,255,.2)",
-            color: full ? "rgba(255,255,255,.25)" : "rgba(255,255,255,.5)",
+            color: full || preparing ? "rgba(255,255,255,.25)" : "rgba(255,255,255,.5)",
             gap: 5,
-            cursor: full ? "default" : "pointer",
+            cursor: full || preparing ? "default" : "pointer",
           }}
         >
           <svg
@@ -344,13 +354,14 @@ export default function PhotoSheet({
           <button
             type="button"
             title="Live camera capture"
+            disabled={preparing}
             onClick={() => setCameraOpen(true)}
-            className="flex items-center justify-center bg-transparent text-[#FF9E2C]"
+            className="flex items-center justify-center bg-transparent text-[#FF9E2C] disabled:opacity-40"
             style={{
               aspectRatio: 1,
               borderRadius: 9,
               border: "1px dashed rgba(255,158,44,.35)",
-              cursor: "pointer",
+              cursor: preparing ? "default" : "pointer",
             }}
           >
             <svg
@@ -370,21 +381,28 @@ export default function PhotoSheet({
         )}
       </div>
 
-      {error && (
+      {error ? (
         <p className="mt-2" style={{ fontSize: 10, color: "#FF4D6D" }}>
           {error}
         </p>
-      )}
+      ) : preparing ? (
+        <p className="mt-2" style={{ fontSize: 10, color: "rgba(255,255,255,.4)" }}>
+          Preparing photo…
+        </p>
+      ) : null}
 
+      {/* Accept anything the OS calls an image. HEIC/HEIF are listed
+          explicitly because some pickers filter on the exact type; the
+          normalizer (src/lib/imageNormalize.ts) handles whatever arrives. */}
       <input
         ref={fileInputRef}
         type="file"
-        accept="image/jpeg,image/png,image/webp"
+        accept="image/*,image/heic,image/heif"
         className="hidden"
         onChange={(e) => {
           const file = e.target.files?.[0];
           e.target.value = "";
-          if (file) void onUpload(file, false);
+          if (file && !preparing) void onUpload(file, false);
         }}
       />
 

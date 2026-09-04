@@ -3,6 +3,7 @@
 import { upload } from "@vercel/blob/client";
 import { useRef, useState } from "react";
 import type { AuthUser } from "@/hooks/useAuth";
+import { AVATAR_NORMALIZE, decodeErrorMessage, normalizeImage } from "@/lib/imageNormalize";
 import {
   IDENTITY_TOKENS,
   TOKEN_LABELS,
@@ -30,23 +31,41 @@ export default function ProfileEditor({ user, onSave }: Props) {
     user.identity && isIdentityToken(user.identity) ? user.identity : null
   );
   const [loading, setLoading] = useState(false);
-  const [uploading, setUploading] = useState(false);
+  /** "preparing" = decoding/resizing locally; "uploading" = Blob PUT. */
+  const [photoStep, setPhotoStep] = useState<"idle" | "preparing" | "uploading">("idle");
+  const uploading = photoStep !== "idle";
   const [error, setError] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
 
   async function handlePhotoSelect(file: File) {
-    setUploading(true);
+    if (uploading) return;
     setError("");
+
+    // Normalize first (HEIC, huge JPEGs, EXIF rotation → small upright
+    // JPEG) so the 2MB Blob cap and JPEG-only allowlist are never hit.
+    setPhotoStep("preparing");
+    let blob: Blob;
     try {
-      const blob = await upload(file.name, file, {
+      ({ blob } = await normalizeImage(file, AVATAR_NORMALIZE));
+    } catch (err) {
+      setError(decodeErrorMessage(err));
+      setPhotoStep("idle");
+      return;
+    }
+
+    setPhotoStep("uploading");
+    try {
+      // Generated pathname: never leak the device filename into a public URL.
+      const result = await upload(`avatar-${user.id}-${Date.now()}.jpg`, blob, {
         access: "public",
         handleUploadUrl: "/api/upload",
+        contentType: "image/jpeg",
       });
-      setPhotoUrl(blob.url);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Upload failed");
+      setPhotoUrl(result.url);
+    } catch {
+      setError("Upload failed. Try again.");
     } finally {
-      setUploading(false);
+      setPhotoStep("idle");
     }
   }
 
@@ -84,16 +103,21 @@ export default function ProfileEditor({ user, onSave }: Props) {
         >
           <ProfileAvatar photoUrl={photoUrl} displayName={displayName} userId={user.id} size="lg" />
           <p className="mt-2 text-xs text-[#FF8A1E]">
-            {uploading ? "Uploading..." : "Tap to add your photo"}
+            {photoStep === "preparing"
+              ? "Preparing..."
+              : photoStep === "uploading"
+                ? "Uploading..."
+                : "Tap to add your photo"}
           </p>
         </button>
         <input
           ref={fileRef}
           type="file"
-          accept="image/*"
+          accept="image/*,image/heic,image/heif"
           className="hidden"
           onChange={(e) => {
             const file = e.target.files?.[0];
+            e.target.value = "";
             if (file) void handlePhotoSelect(file);
           }}
         />
