@@ -190,15 +190,20 @@ export function readManagementCookie(request: NextRequest): string | undefined {
   return request.cookies.get(MANAGEMENT_COOKIE)?.value;
 }
 
-export async function requireManagementAdmin(request: NextRequest) {
+export async function requireManagementAdmin(
+  request: NextRequest
+): Promise<
+  | { admin: ManagementAdmin; response: null }
+  | { admin: null; response: NextResponse }
+> {
   const admin = await getManagementAdminFromRequest(request);
   if (!admin) {
     return {
-      admin: null as ManagementAdmin | null,
+      admin: null,
       response: NextResponse.json({ error: "Unauthorized" }, { status: 401 }),
     };
   }
-  return { admin, response: null as NextResponse | null };
+  return { admin, response: null };
 }
 
 export async function getManagementAdminFromRequest(
