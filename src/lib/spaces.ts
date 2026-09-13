@@ -102,9 +102,12 @@ export async function presignUpload(
 }
 
 /** Presigned GET, 60s TTL — minted per authorized viewer, per request. */
-export async function presignView(key: string): Promise<string> {
+export async function presignView(
+  key: string,
+  expiresIn: number = VIEW_URL_TTL_SECONDS
+): Promise<string> {
   const command = new GetObjectCommand({ Bucket: getBucket(), Key: key });
-  return getSignedUrl(getClient(), command, { expiresIn: VIEW_URL_TTL_SECONDS });
+  return getSignedUrl(getClient(), command, { expiresIn });
 }
 
 /** Permanently remove an object (library delete, moderation reject). */

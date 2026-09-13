@@ -7,6 +7,10 @@ const withSerwist = withSerwistInit({
 });
 
 /** @type {import('next').NextConfig} */
-const nextConfig = {};
+const nextConfig = {
+  async redirects() {
+    return [{ source: "/admin", destination: "/management", permanent: false }];
+  },
+};
 
 export default withSerwist(nextConfig);

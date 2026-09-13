@@ -181,6 +181,39 @@ export const presencePushLog = pgTable(
   })
 );
 
+export const adminUsers = pgTable("admin_users", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  username: text("username").notNull().unique(),
+  passwordHash: text("password_hash").notNull(),
+  totpSecretEncrypted: text("totp_secret_encrypted").notNull(),
+  totpConfirmedAt: timestamp("totp_confirmed_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  lastLoginAt: timestamp("last_login_at", { withTimezone: true }),
+});
+
+export type AdminUser = typeof adminUsers.$inferSelect;
+
+export const adminInvites = pgTable("admin_invites", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  tokenHash: text("token_hash").notNull().unique(),
+  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+  usedAt: timestamp("used_at", { withTimezone: true }),
+  createdBy: uuid("created_by").references(() => adminUsers.id, { onDelete: "set null" }),
+  pendingAdminId: uuid("pending_admin_id").references(() => adminUsers.id, {
+    onDelete: "set null",
+  }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export type AdminInvite = typeof adminInvites.$inferSelect;
+
+export const moderationSettings = pgTable("moderation_settings", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  classes: jsonb("classes").$type<Record<string, { enabled: boolean; threshold: number }>>().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedBy: uuid("updated_by").references(() => adminUsers.id, { onDelete: "set null" }),
+});
+
 /** Reusable per-user photo library (max 10 ready photos, enforced in API).
  *  `objectKey` is the private DO Spaces key — never a public URL; viewers
  *  only ever receive short-lived presigned GET URLs minted per request. */
@@ -200,10 +233,19 @@ export const userPhotos = pgTable(
     isLive: boolean("is_live").notNull().default(false),
     /** scanning | ready | rejected */
     status: text("status").notNull().default("scanning"),
+    moderationScores: jsonb("moderation_scores").$type<Record<string, number> | null>(),
+    moderationRaw: jsonb("moderation_raw").$type<Record<string, unknown> | null>(),
+    /** pending | upheld | overturned | expired — null when auto-approved */
+    reviewStatus: text("review_status"),
+    reviewedAt: timestamp("reviewed_at", { withTimezone: true }),
+    reviewedBy: uuid("reviewed_by").references(() => adminUsers.id, { onDelete: "set null" }),
+    objectPurgeAt: timestamp("object_purge_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => ({
     userIdx: index("user_photos_user_idx").on(table.userId),
+    reviewIdx: index("user_photos_review_idx").on(table.reviewStatus),
+    purgeIdx: index("user_photos_purge_idx").on(table.objectPurgeAt),
   })
 );
 

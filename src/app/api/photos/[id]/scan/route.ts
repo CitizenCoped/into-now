@@ -1,9 +1,11 @@
 import { logActivity } from "@/lib/activity";
+import { notifyAdminPhotoRejection } from "@/lib/adminNotify";
 import { getAuthUserFromRequest } from "@/lib/auth";
 import { getDb } from "@/lib/db";
 import { scanImageUrl } from "@/lib/moderation";
+import { REJECT_HOLD_MS } from "@/lib/moderationCatalog";
 import { userPhotos } from "@/lib/schema";
-import { deleteObject, isSpacesConfigured, presignView } from "@/lib/spaces";
+import { isSpacesConfigured, presignView } from "@/lib/spaces";
 import { and, eq } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -13,8 +15,8 @@ type RouteContext = {
 
 /** POST /api/photos/[id]/scan — called by the client after the direct
  *  upload completes. Runs sync moderation and flips the photo to `ready`
- *  or `rejected`. Rejected objects are deleted from Spaces immediately —
- *  no image is ever kept for a rejected photo. */
+ *  or `rejected`. Rejected objects are kept for 7 days so a human can
+ *  allow or uphold the decision. */
 export async function POST(request: NextRequest, { params }: RouteContext) {
   const user = await getAuthUserFromRequest(request);
   if (!user) {
@@ -37,15 +39,19 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
 
   let result;
   try {
-    // The scan URL is a short-lived presigned GET minted just for the
-    // moderation vendor; the object itself stays private.
     const scanUrl = isSpacesConfigured() ? await presignView(photo.objectKey) : null;
     result = scanUrl
       ? await scanImageUrl(scanUrl)
-      : { ok: true, skipped: true, topScore: 0, topClass: null, scores: {} };
+      : {
+          ok: true,
+          skipped: true,
+          topScore: 0,
+          topClass: null,
+          scores: {},
+          triggered: [],
+          raw: null,
+        };
   } catch (error) {
-    // Leave the photo in `scanning` — never silently approve on vendor
-    // failure. The client can retry.
     console.error("photo scan failed:", error);
     return NextResponse.json({ error: "Scan failed, try again" }, { status: 502 });
   }
@@ -53,7 +59,13 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
   if (result.ok) {
     await db
       .update(userPhotos)
-      .set({ status: "ready" })
+      .set({
+        status: "ready",
+        moderationScores: result.scores,
+        moderationRaw: result.raw,
+        reviewStatus: null,
+        objectPurgeAt: null,
+      })
       .where(eq(userPhotos.id, params.id));
 
     logActivity("photo.approved", {
@@ -71,17 +83,18 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
     return NextResponse.json({ status: "ready" });
   }
 
-  // Rejected: mark the row (kept for audit) and delete the object now.
+  const objectPurgeAt = new Date(Date.now() + REJECT_HOLD_MS);
+
   await db
     .update(userPhotos)
-    .set({ status: "rejected" })
+    .set({
+      status: "rejected",
+      moderationScores: result.scores,
+      moderationRaw: result.raw,
+      reviewStatus: "pending",
+      objectPurgeAt,
+    })
     .where(eq(userPhotos.id, params.id));
-
-  try {
-    await deleteObject(photo.objectKey);
-  } catch (error) {
-    console.error("failed to delete rejected photo object:", error);
-  }
 
   logActivity("photo.rejected", {
     userId: user.id,
@@ -91,7 +104,15 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
       topClass: result.topClass,
       topScore: result.topScore,
       scores: result.scores,
+      triggered: result.triggered,
     },
+  });
+
+  void notifyAdminPhotoRejection({
+    photoId: params.id,
+    userId: user.id,
+    topClass: result.topClass,
+    topScore: result.topScore,
   });
 
   return NextResponse.json({ status: "rejected" });

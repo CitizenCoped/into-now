@@ -8,7 +8,9 @@
     "start": "next start",
     "lint": "next lint",
     "db:generate": "drizzle-kit generate",
-    "db:migrate": "drizzle-kit migrate"
+    "db:migrate": "drizzle-kit migrate",
+    "management:invite": "tsx scripts/management-invite.ts",
+    "sightengine:probe": "tsx scripts/sightengine-probe.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1104.0",
@@ -24,6 +26,7 @@
     "maplibre-gl": "^5.24.0",
     "next": "14.2.35",
     "pusher": "^5.3.4",
+    "qrcode": "^1.5.4",
     "pusher-js": "^8.5.0",
     "react": "^18",
     "react-dom": "^18",
@@ -37,6 +40,8 @@
   "devDependencies": {
     "@types/maplibre-gl": "^1.13.2",
     "@types/node": "^20",
+    "@types/qrcode": "^1.5.5",
+    "tsx": "^4.21.0",
     "@types/react": "^18",
     "@types/react-dom": "^18",
     "@types/web-push": "^3.6.4",

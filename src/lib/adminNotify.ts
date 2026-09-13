@@ -1,3 +1,4 @@
+import { getAppUrl } from "@/lib/appUrl";
 import { getDisplayLabel } from "@/lib/auth";
 import { getDb } from "@/lib/db";
 import { pushoverAlert } from "@/lib/pushover";
@@ -112,5 +113,21 @@ export async function notifyAdminNewMessage(params: {
   pushoverAlert(
     "into.now: New message",
     `Sender: ${senderLabel}\nRecipient(s): ${recipientLabels}\n\nMessage:\n${params.body}`
+  );
+}
+
+export async function notifyAdminPhotoRejection(params: {
+  photoId: string;
+  userId: string;
+  topClass: string | null;
+  topScore: number;
+}) {
+  const owner = await lookupUser(params.userId);
+  const contact = owner ? formatUserContact(owner) : "unknown";
+  const url = `${getAppUrl()}/management/moderation/${params.photoId}`;
+  pushoverAlert(
+    "Photo Rejection",
+    `A photo was held for review.\n\nUser: ${contact}\nTop class: ${params.topClass ?? "none"}\nTop score: ${params.topScore.toFixed(3)}`,
+    { url, urlTitle: "Open review" }
   );
 }

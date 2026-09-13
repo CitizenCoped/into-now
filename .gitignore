@@ -39,6 +39,7 @@ next-env.d.ts
 .env*
 
 # scratch/bridge artifacts
+/tmp/
 _to_delete/
 *.lock
 !package-lock.json
