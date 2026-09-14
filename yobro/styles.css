@@ -1,0 +1,196 @@
+:root {
+  --bg: #07080c;
+  --ink: #f4f1ea;
+  --muted: rgba(244, 241, 234, 0.62);
+  --accent: #7dffb3;
+  --accent-ink: #04140c;
+  --glow-teal: rgba(64, 214, 180, 0.28);
+  --glow-amber: rgba(255, 170, 70, 0.16);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  min-height: 100%;
+  color: var(--ink);
+  background:
+    radial-gradient(1200px 700px at 12% -10%, rgba(70, 190, 170, 0.16), transparent 55%),
+    radial-gradient(900px 600px at 90% 110%, rgba(255, 150, 60, 0.1), transparent 50%),
+    linear-gradient(165deg, #0b0d14 0%, var(--bg) 45%, #0a1012 100%);
+  font-family: "Space Grotesk", sans-serif;
+  overflow-x: hidden;
+}
+
+.noise {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.14;
+  mix-blend-mode: soft-light;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  z-index: 0;
+}
+
+.glow {
+  position: fixed;
+  border-radius: 50%;
+  filter: blur(70px);
+  pointer-events: none;
+  z-index: 0;
+  animation: drift 12s ease-in-out infinite alternate;
+}
+
+.glow-a {
+  width: min(46vw, 420px);
+  height: min(46vw, 420px);
+  top: 8%;
+  left: 8%;
+  background: var(--glow-teal);
+}
+
+.glow-b {
+  width: min(40vw, 360px);
+  height: min(40vw, 360px);
+  right: 6%;
+  bottom: 10%;
+  background: var(--glow-amber);
+  animation-delay: -4s;
+  animation-duration: 14s;
+}
+
+.stage {
+  position: relative;
+  z-index: 1;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 1.1rem;
+  padding: clamp(1.5rem, 6vw, 4.5rem);
+  max-width: 920px;
+}
+
+.brand {
+  margin: 0;
+  font-family: "Syne", sans-serif;
+  font-weight: 800;
+  font-size: clamp(3.4rem, 12vw, 7.5rem);
+  letter-spacing: -0.06em;
+  line-height: 0.9;
+  text-transform: lowercase;
+  animation: rise 900ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.line {
+  margin: 0;
+  font-family: "Syne", sans-serif;
+  font-weight: 700;
+  font-size: clamp(1.35rem, 3.6vw, 2.15rem);
+  letter-spacing: -0.03em;
+  line-height: 1.15;
+  max-width: 14ch;
+  color: rgba(244, 241, 234, 0.92);
+  animation: rise 1000ms cubic-bezier(0.2, 0.8, 0.2, 1) 80ms both;
+}
+
+.sub {
+  margin: 0.15rem 0 0.85rem;
+  color: var(--muted);
+  font-size: clamp(0.95rem, 2.2vw, 1.1rem);
+  letter-spacing: 0.02em;
+  animation: rise 1100ms cubic-bezier(0.2, 0.8, 0.2, 1) 140ms both;
+}
+
+.cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 3.15rem;
+  padding: 0.9rem 1.35rem;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--accent-ink);
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 1.02rem;
+  letter-spacing: -0.01em;
+  box-shadow: 0 0 0 1px rgba(125, 255, 179, 0.25), 0 18px 50px rgba(125, 255, 179, 0.18);
+  transition: transform 180ms ease, box-shadow 180ms ease, background 180ms ease;
+  animation: rise 1200ms cubic-bezier(0.2, 0.8, 0.2, 1) 220ms both, pulse 2.8s ease-in-out 1.4s infinite;
+}
+
+.cta:hover {
+  transform: translateY(-2px) scale(1.02);
+  background: #97ffc2;
+  box-shadow: 0 0 0 1px rgba(125, 255, 179, 0.35), 0 22px 60px rgba(125, 255, 179, 0.28);
+}
+
+.cta:active {
+  transform: translateY(0) scale(0.99);
+}
+
+.cta:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 3px;
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes drift {
+  from {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  to {
+    transform: translate3d(18px, -22px, 0) scale(1.08);
+  }
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 1px rgba(125, 255, 179, 0.25), 0 18px 50px rgba(125, 255, 179, 0.18);
+  }
+  50% {
+    box-shadow: 0 0 0 1px rgba(125, 255, 179, 0.35), 0 18px 58px rgba(125, 255, 179, 0.32);
+  }
+}
+
+@media (max-width: 640px) {
+  .stage {
+    align-items: stretch;
+  }
+
+  .cta {
+    width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .glow,
+  .brand,
+  .line,
+  .sub,
+  .cta {
+    animation: none !important;
+  }
+}
