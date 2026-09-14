@@ -94,11 +94,24 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Too many attempts. Try again in 15 minutes." }, { status: 429 });
   }
 
-  const [admin] = await getDb()
-    .select()
-    .from(adminUsers)
-    .where(eq(adminUsers.username, username))
-    .limit(1);
+  let admin;
+  try {
+    [admin] = await getDb()
+      .select()
+      .from(adminUsers)
+      .where(eq(adminUsers.username, username))
+      .limit(1);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "";
+    if (message.includes("admin_users") || message.includes("does not exist")) {
+      console.error("management login: admin_users table missing — run db:migrate on this database");
+      return NextResponse.json(
+        { error: "Admin database is not initialized. Run the latest migration, then use a setup invite." },
+        { status: 503 }
+      );
+    }
+    throw error;
+  }
 
   if (!admin?.totpConfirmedAt || !(await verifyPassword(parsed.data.password, admin.passwordHash))) {
     recordLoginFailure(username);
