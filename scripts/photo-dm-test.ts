@@ -113,7 +113,7 @@ async function uploadReadyPhoto(actor: Actor, jpeg: Buffer): Promise<string> {
   const put = await fetch(uploadUrl, {
     method: "PUT",
     headers: { "Content-Type": "image/jpeg", "Content-Length": String(jpeg.length) },
-    body: jpeg,
+    body: new Uint8Array(jpeg),
   });
   if (!put.ok) {
     throw new Error(`${actor.label} Spaces PUT ${put.status} ${await put.text()}`);
