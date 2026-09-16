@@ -231,7 +231,7 @@ export const userPhotos = pgTable(
     aspectRatio: doublePrecision("aspect_ratio").notNull().default(1),
     /** Camera-only capture — shows the LIVE badge. */
     isLive: boolean("is_live").notNull().default(false),
-    /** scanning | ready | rejected */
+    /** scanning | ready | rejected | archived */
     status: text("status").notNull().default("scanning"),
     moderationScores: jsonb("moderation_scores").$type<Record<string, number> | null>(),
     moderationRaw: jsonb("moderation_raw").$type<Record<string, unknown> | null>(),

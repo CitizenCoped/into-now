@@ -14,7 +14,8 @@
  *   runs for the real upload + moderation latency.
  * - Rejected tile: danger state ("Can't be shared") flashes briefly, then
  *   the photo is removed (usePhotoLibrary handles the timing).
- * - Long-press a ready tile to remove it from the library.
+ * - Long-press or the X on a ready tile to remove it from the library.
+ *   Already-sent copies stay in chats.
  */
 
 import type { LibraryPhoto } from "@/lib/photoTypes";
@@ -22,6 +23,16 @@ import { MAX_LIBRARY_PHOTOS, MAX_PHOTOS_PER_MESSAGE } from "@/lib/photoTypes";
 import { useEffect, useRef, useState } from "react";
 
 const LONG_PRESS_MS = 550;
+
+function confirmRemove(onDelete: (photoId: string) => void, photoId: string) {
+  if (
+    window.confirm(
+      "Remove this photo from My photos? Chats that already include it will keep it."
+    )
+  ) {
+    onDelete(photoId);
+  }
+}
 
 type Props = {
   photos: LibraryPhoto[];
@@ -59,9 +70,7 @@ function LibraryTile({
     longPressed.current = false;
     pressTimer.current = window.setTimeout(() => {
       longPressed.current = true;
-      if (window.confirm("Remove this photo from your library?")) {
-        onDelete(photo.id);
-      }
+      confirmRemove(onDelete, photo.id);
     }, LONG_PRESS_MS);
   }
 
@@ -168,6 +177,44 @@ function LibraryTile({
         >
           {selectionIndex + 1}
         </span>
+      )}
+
+      {photo.status === "ready" && (
+        <button
+          type="button"
+          title="Remove from My photos"
+          aria-label="Remove from My photos"
+          onPointerDown={(e) => e.stopPropagation()}
+          onClick={(e) => {
+            e.stopPropagation();
+            confirmRemove(onDelete, photo.id);
+          }}
+          className="absolute flex items-center justify-center"
+          style={{
+            right: 3,
+            bottom: 3,
+            width: 20,
+            height: 20,
+            borderRadius: 6,
+            background: "rgba(6,4,12,.72)",
+            border: "1px solid rgba(255,255,255,.18)",
+            color: "rgba(255,255,255,.8)",
+          }}
+        >
+          <svg
+            width="10"
+            height="10"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={2.2}
+            strokeLinecap="round"
+            aria-hidden
+          >
+            <line x1="6" y1="6" x2="18" y2="18" />
+            <line x1="18" y1="6" x2="6" y2="18" />
+          </svg>
+        </button>
       )}
     </div>
   );
@@ -388,6 +435,10 @@ export default function PhotoSheet({
       ) : preparing ? (
         <p className="mt-2" style={{ fontSize: 10, color: "rgba(255,255,255,.4)" }}>
           Preparing photo…
+        </p>
+      ) : full ? (
+        <p className="mt-2" style={{ fontSize: 10, color: "rgba(255,255,255,.4)" }}>
+          Remove a photo to add another.
         </p>
       ) : null}
 

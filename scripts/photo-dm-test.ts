@@ -50,7 +50,7 @@ async function api(
   const { cookie, ...rest } = init;
   const headers = new Headers(rest.headers);
   if (cookie) headers.set("Cookie", cookie);
-  if (rest.body && !headers.has("Content-Type") && !(rest.body instanceof Buffer)) {
+  if (rest.body && !headers.has("Content-Type") && typeof rest.body === "string") {
     headers.set("Content-Type", "application/json");
   }
   const res = await fetch(`${BASE}${path}`, { ...rest, headers });
@@ -108,15 +108,15 @@ async function uploadReadyPhoto(actor: Actor, jpeg: Buffer): Promise<string> {
     );
   }
   const photoId = created.data.photoId as string;
-  const uploadUrl = created.data.uploadUrl as string;
 
-  const put = await fetch(uploadUrl, {
+  const put = await api(`/api/photos/${photoId}/content`, {
     method: "PUT",
-    headers: { "Content-Type": "image/jpeg", "Content-Length": String(jpeg.length) },
+    cookie: actor.cookie,
+    headers: { "Content-Type": "image/jpeg" },
     body: new Uint8Array(jpeg),
   });
-  if (!put.ok) {
-    throw new Error(`${actor.label} Spaces PUT ${put.status} ${await put.text()}`);
+  if (put.status !== 200) {
+    throw new Error(`${actor.label} content PUT ${put.status} ${JSON.stringify(put.data)}`);
   }
 
   let scan = await api(`/api/photos/${photoId}/scan`, {
@@ -219,6 +219,49 @@ async function sendAndReceive(sender: Actor, recipient: Actor, photoId: string) 
   if (!img.ok) {
     throw new Error(`${recipient.label} revealed URL HTTP ${img.status}`);
   }
+
+  const removed = await api(`/api/photos/${photoId}`, {
+    method: "DELETE",
+    cookie: sender.cookie,
+  });
+  if (removed.status !== 200) {
+    throw new Error(
+      `${sender.label} gallery delete ${removed.status} ${JSON.stringify(removed.data)}`
+    );
+  }
+  const library = await api("/api/photos", { cookie: sender.cookie });
+  const remaining = (library.data.photos as { id: string }[]) ?? [];
+  if (remaining.some((p) => p.id === photoId)) {
+    throw new Error(`${sender.label} gallery still lists deleted photo`);
+  }
+
+  const kept = await api(`/api/conversations/${conversationId}/messages`, {
+    cookie: recipient.cookie,
+  });
+  const keptPhoto = ((kept.data.messages as { id: string; photos: PhotoView[] }[]) ?? []).find(
+    (m) => m.id === message.id
+  )?.photos[0];
+  if (!keptPhoto?.revealed || !keptPhoto.url) {
+    throw new Error(`${recipient.label} lost sent photo after sender gallery delete`);
+  }
+}
+
+async function probeSpacesCors() {
+  const origin = process.env.PHOTO_TEST_CORS_ORIGIN ?? "https://thebestdrug.com";
+  const url = "https://thebestdrug.sfo3.digitaloceanspaces.com/intonow-photos/cors-probe.jpg";
+  const res = await fetch(url, {
+    method: "OPTIONS",
+    headers: {
+      Origin: origin,
+      "Access-Control-Request-Method": "PUT",
+      "Access-Control-Request-Headers": "content-type",
+    },
+  });
+  const allow = res.headers.get("access-control-allow-origin");
+  const ok = res.ok && (allow === origin || allow === "*");
+  console.log(
+    `Spaces CORS ${origin}: ${ok ? "PASS" : `WARN HTTP ${res.status} allow=${allow ?? "none"}`}\n`
+  );
 }
 
 async function cleanup(actors: Actor[]) {
@@ -237,6 +280,7 @@ async function cleanup(actors: Actor[]) {
 
 async function main() {
   console.log(`Photo DM matrix against ${BASE}\n`);
+  await probeSpacesCors();
   const jpeg = await loadFixtureJpeg();
   console.log(`Fixture JPEG ${jpeg.length} bytes\n`);
 

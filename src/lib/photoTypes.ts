@@ -10,8 +10,12 @@ export const MAX_LIBRARY_PHOTOS = 10;
 export const MAX_PHOTOS_PER_MESSAGE = 5;
 /** Server-side safety net only. Clients always normalize to a ≤4MB JPEG
  *  before upload (src/lib/imageNormalize.ts), so a real upload never gets
- *  near this; it exists to bound what a presigned PUT can accept. */
+ *  near this; it exists to bound what a PUT can accept. */
 export const MAX_PHOTO_BYTES = 10 * 1024 * 1024;
+
+/** Statuses that occupy a gallery slot. `archived` photos stay in chats
+ *  but no longer count toward the 10-photo cap. */
+export const LIBRARY_SLOT_STATUSES = ["scanning", "ready"] as const;
 
 /** Client state of a library photo. */
 export type LibraryPhoto = {

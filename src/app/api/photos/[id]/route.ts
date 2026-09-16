@@ -1,7 +1,7 @@
 import { logActivity } from "@/lib/activity";
 import { getAuthUserFromRequest } from "@/lib/auth";
 import { getDb } from "@/lib/db";
-import { userPhotos } from "@/lib/schema";
+import { messagePhotos, postPhotos, userPhotos } from "@/lib/schema";
 import { deleteObject, isSpacesConfigured } from "@/lib/spaces";
 import { and, eq } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
@@ -14,14 +14,15 @@ type RouteContext = {
  *  Anything else (or absent) is a normal user-initiated removal. */
 const FAILURE_REASONS = new Set(["upload_failed", "scan_failed"]);
 
-/** DELETE /api/photos/[id] — remove a photo from the caller's library and
- *  from Spaces. Cascades remove message/post attachments and reveal
- *  grants, so previously-sent copies go dark everywhere.
+/** DELETE /api/photos/[id] — remove a photo from the caller's library.
+ *
+ *  If the photo was already sent (message or post attachment), it is
+ *  `archived`: it no longer occupies a gallery slot, but the object stays
+ *  so existing chats keep working. Never-sent photos are deleted from the
+ *  DB and from Spaces.
  *
  *  `?reason=upload_failed|scan_failed&status=NNN` marks a cleanup after a
- *  failed direct-to-Spaces PUT or moderation scan; it is logged as
- *  `photo.upload_failed` instead of `photo.deleted` so failures show up in
- *  the activity feed rather than vanishing silently. */
+ *  failed upload or scan; those rows are always hard-deleted. */
 export async function DELETE(request: NextRequest, { params }: RouteContext) {
   const user = await getAuthUserFromRequest(request);
   if (!user) {
@@ -34,13 +35,41 @@ export async function DELETE(request: NextRequest, { params }: RouteContext) {
 
   const db = getDb();
   const [photo] = await db
-    .select({ id: userPhotos.id, objectKey: userPhotos.objectKey })
+    .select({ id: userPhotos.id, objectKey: userPhotos.objectKey, status: userPhotos.status })
     .from(userPhotos)
     .where(and(eq(userPhotos.id, params.id), eq(userPhotos.userId, user.id)))
     .limit(1);
 
   if (!photo) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
+
+  if (!failure) {
+    const [inMessage] = await db
+      .select({ messageId: messagePhotos.messageId })
+      .from(messagePhotos)
+      .where(eq(messagePhotos.photoId, photo.id))
+      .limit(1);
+    const [inPost] = await db
+      .select({ postId: postPhotos.postId })
+      .from(postPhotos)
+      .where(eq(postPhotos.photoId, photo.id))
+      .limit(1);
+
+    if (inMessage || inPost) {
+      await db
+        .update(userPhotos)
+        .set({ status: "archived" })
+        .where(eq(userPhotos.id, photo.id));
+
+      logActivity("photo.archived", {
+        userId: user.id,
+        phone: user.phone,
+        metadata: { photoId: params.id },
+      });
+
+      return NextResponse.json({ ok: true, archived: true });
+    }
   }
 
   await db.delete(userPhotos).where(eq(userPhotos.id, params.id));
@@ -71,5 +100,5 @@ export async function DELETE(request: NextRequest, { params }: RouteContext) {
     });
   }
 
-  return NextResponse.json({ ok: true });
+  return NextResponse.json({ ok: true, archived: false });
 }

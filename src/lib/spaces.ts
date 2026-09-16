@@ -19,7 +19,12 @@
  *   DO_SPACES_KEY / DO_SPACES_SECRET  (same pair used for video uploads)
  */
 
-import { DeleteObjectCommand, GetObjectCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import {
+  DeleteObjectCommand,
+  GetObjectCommand,
+  PutObjectCommand,
+  S3Client,
+} from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
 /** Presigned GET TTL. Short on purpose — this is what enforces the blur
@@ -108,6 +113,25 @@ export async function presignView(
 ): Promise<string> {
   const command = new GetObjectCommand({ Bucket: getBucket(), Key: key });
   return getSignedUrl(getClient(), command, { expiresIn });
+}
+
+/** Server-side PUT used by `/api/photos/[id]/content`. Private ACL (S3
+ *  default). Prefer this over a browser presigned PUT so uploads don't
+ *  depend on Spaces CORS. */
+export async function putObject(
+  key: string,
+  body: Uint8Array,
+  contentType: string
+): Promise<void> {
+  await getClient().send(
+    new PutObjectCommand({
+      Bucket: getBucket(),
+      Key: key,
+      Body: body,
+      ContentType: contentType,
+      ContentLength: body.byteLength,
+    })
+  );
 }
 
 /** Permanently remove an object (library delete, moderation reject). */

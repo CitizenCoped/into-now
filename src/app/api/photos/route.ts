@@ -2,7 +2,7 @@ import { logActivity } from "@/lib/activity";
 import { getAuthUserFromRequest } from "@/lib/auth";
 import { getDb } from "@/lib/db";
 import { FEATURES } from "@/lib/flags";
-import { MAX_LIBRARY_PHOTOS, MAX_PHOTO_BYTES } from "@/lib/photoTypes";
+import { LIBRARY_SLOT_STATUSES, MAX_LIBRARY_PHOTOS, MAX_PHOTO_BYTES } from "@/lib/photoTypes";
 import { userPhotos } from "@/lib/schema";
 import {
   ALLOWED_PHOTO_CONTENT_TYPES,
@@ -11,7 +11,7 @@ import {
   photoObjectKey,
   presignUpload,
 } from "@/lib/spaces";
-import { and, desc, eq, lt, ne } from "drizzle-orm";
+import { and, desc, eq, inArray, lt } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
@@ -53,8 +53,9 @@ export async function GET(request: NextRequest) {
   return NextResponse.json({ photos: rows });
 }
 
-/** POST /api/photos — create a `scanning` library row and return a
- *  presigned PUT for direct-to-Spaces upload. */
+/** POST /api/photos — create a `scanning` library row. The client then
+ *  PUTs bytes to `/api/photos/[id]/content` (same-origin). `uploadUrl` is
+ *  still returned for older clients; new clients ignore it. */
 export async function POST(request: NextRequest) {
   if (!FEATURES.photoBlur) {
     return NextResponse.json({ error: "Photos are not enabled" }, { status: 403 });
@@ -109,7 +110,9 @@ export async function POST(request: NextRequest) {
   const existing = await db
     .select({ id: userPhotos.id })
     .from(userPhotos)
-    .where(and(eq(userPhotos.userId, user.id), ne(userPhotos.status, "rejected")));
+    .where(
+      and(eq(userPhotos.userId, user.id), inArray(userPhotos.status, [...LIBRARY_SLOT_STATUSES]))
+    );
   if (existing.length >= MAX_LIBRARY_PHOTOS) {
     return NextResponse.json(
       { error: `Library is full (${MAX_LIBRARY_PHOTOS} photos max)` },
