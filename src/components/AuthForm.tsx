@@ -3,13 +3,17 @@
 import { useState } from "react";
 
 type Props = {
-  birthDate: string;
   onSendPhoneCode: (phone: string) => Promise<string>;
   onSendEmailCode: (email: string) => Promise<string>;
   onVerifyPhoneCode: (phone: string, code: string) => Promise<unknown>;
   onVerifyEmailCode: (email: string, code: string) => Promise<unknown>;
   /** Rendered as "← Back" in the footer row when provided (landing card). */
   onBack?: () => void;
+  /** "signin" only changes copy; the parent decides whether a birth date is sent. */
+  mode?: "signup" | "signin";
+  initialChannel?: "phone" | "email";
+  initialPhone?: string;
+  initialEmail?: string;
 };
 
 const inputClass =
@@ -19,16 +23,19 @@ const ctaClass =
   "w-full rounded-[14px] bg-[#FF2D8A] py-3 font-display italic uppercase text-[16px] leading-none tracking-[.06em] text-[#07060B] shadow-[0_10px_30px_-8px_rgba(255,45,138,.6)] transition hover:shadow-[0_12px_34px_-6px_rgba(255,45,138,.8)] active:scale-[.99] disabled:opacity-45";
 
 export default function AuthForm({
-  birthDate,
   onSendPhoneCode,
   onSendEmailCode,
   onVerifyPhoneCode,
   onVerifyEmailCode,
   onBack,
+  mode = "signup",
+  initialChannel = "phone",
+  initialPhone = "",
+  initialEmail = "",
 }: Props) {
-  const [channel, setChannel] = useState<"phone" | "email">("phone");
-  const [phone, setPhone] = useState("");
-  const [email, setEmail] = useState("");
+  const [channel, setChannel] = useState<"phone" | "email">(initialChannel);
+  const [phone, setPhone] = useState(initialPhone);
+  const [email, setEmail] = useState(initialEmail);
   const [normalizedPhone, setNormalizedPhone] = useState("");
   const [normalizedEmail, setNormalizedEmail] = useState("");
   const [code, setCode] = useState("");
@@ -137,7 +144,6 @@ export default function AuthForm({
           <p className="text-[12px] text-[#F5F5F0]/50">
             Code sent to <span className="text-[#00F0FF]">{destination}</span>
           </p>
-          <input type="hidden" value={birthDate} readOnly />
           <input
             type="text"
             inputMode="numeric"
@@ -178,7 +184,9 @@ export default function AuthForm({
         ) : (
           <span />
         )}
-        <span className="text-[11px] text-[#F5F5F0]/35">Free account · 24-hour sessions</span>
+        <span className="text-[11px] text-[#F5F5F0]/35">
+          {mode === "signin" ? "Welcome back · 24-hour sessions" : "Free account · 24-hour sessions"}
+        </span>
       </div>
     </div>
   );

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import type { AuthUser } from "@/hooks/useAuth";
+import { AuthError, type AuthUser } from "@/hooks/useAuth";
 import { isAdult } from "@/lib/geo";
 import AuthForm from "./AuthForm";
 import LandingVideoBackdrop from "./LandingVideoBackdrop";
@@ -13,8 +13,8 @@ type Props = {
   onCreateAnonymous: (birthDate: string) => Promise<unknown>;
   onSendPhoneCode: (phone: string) => Promise<string>;
   onSendEmailCode: (email: string) => Promise<string>;
-  onVerifyPhoneCode: (phone: string, code: string, birthDate: string) => Promise<unknown>;
-  onVerifyEmailCode: (email: string, code: string, birthDate: string) => Promise<unknown>;
+  onVerifyPhoneCode: (phone: string, code: string, birthDate?: string) => Promise<unknown>;
+  onVerifyEmailCode: (email: string, code: string, birthDate?: string) => Promise<unknown>;
   children: React.ReactNode;
 };
 
@@ -129,9 +129,17 @@ export default function OnboardingGate({
   const [day, setDay] = useState(initialBirth ? Number(initialBirth[2]) : 0);
   const [year, setYear] = useState(initialBirth ? Number(initialBirth[0]) : 0);
   const [localStep, setLocalStep] = useState<Step>("birthday");
-  // "Already a member? Sign in" — the verify API still needs a birth date, so
-  // members confirm it first and then skip the join-mode step.
+  // "Already a member? Sign in" goes straight to the auth card and sends no
+  // birth date (the account already holds one). The server answers
+  // NO_ACCOUNT (unknown contact → sign-up) or AGE_REQUIRED (legacy account
+  // that never age-verified → birthday step); the contact is kept so the
+  // retry is prefilled.
   const [signInIntent, setSignInIntent] = useState(false);
+  const [ageRequired, setAgeRequired] = useState(false);
+  const [pendingContact, setPendingContact] = useState<{
+    channel: "phone" | "email";
+    value: string;
+  } | null>(null);
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
@@ -190,13 +198,47 @@ export default function OnboardingGate({
 
   function handleSignIn() {
     setError("");
-    if (birthDate && isAdult(birthDate)) {
-      setLocalStep("auth");
-      return;
-    }
     setSignInIntent(true);
+    setAgeRequired(false);
+    setLocalStep("auth");
+  }
+
+  function startSignUp() {
+    setError("");
+    setSignInIntent(false);
+    setAgeRequired(false);
     setLocalStep("birthday");
   }
+
+  // Sign-in omits the birth date unless the server asked for it (AGE_REQUIRED).
+  const sendBirthDate = signInIntent && !ageRequired ? undefined : birthDate;
+
+  async function verifyWithRecovery(channel: "phone" | "email", contact: string, code: string) {
+    try {
+      if (channel === "phone") await onVerifyPhoneCode(contact, code, sendBirthDate);
+      else await onVerifyEmailCode(contact, code, sendBirthDate);
+    } catch (err) {
+      if (err instanceof AuthError && err.code === "NO_ACCOUNT") {
+        setPendingContact({ channel, value: contact });
+        startSignUp();
+        return;
+      }
+      if (err instanceof AuthError && err.code === "AGE_REQUIRED") {
+        setPendingContact({ channel, value: contact });
+        setAgeRequired(true);
+        setError("");
+        setLocalStep("birthday");
+        return;
+      }
+      throw err;
+    }
+  }
+
+  const birthdayHint = signInIntent
+    ? "Confirm your birthday to finish signing in."
+    : pendingContact
+      ? "No account found for that contact — let’s get you signed up."
+      : "You must be 18 or older to join.";
 
   async function handleAnonymous() {
     setSubmitting(true);
@@ -219,18 +261,14 @@ export default function OnboardingGate({
 
         <section className="mt-4 flex-none px-7">
           <div className="rounded-[22px] border border-[#F5F5F0]/10 bg-[#120A14]/45 p-4 pt-3.5 shadow-[0_30px_60px_-20px_rgba(0,0,0,.8)] backdrop-blur-[18px]">
-            <StepIndicator step={step} />
+            {!signInIntent && <StepIndicator step={step} />}
             <p className="mt-2 text-center font-display italic uppercase text-[16px] leading-none tracking-[.04em] text-[#F5F5F0]">
               {step === "auth" && signInIntent ? "Sign in" : STEP_TITLES[step]}
             </p>
 
             {step === "birthday" && (
               <form onSubmit={handleBirthdaySubmit} className="mt-2 flex flex-col gap-2.5">
-                <p className="text-center text-[11px] text-[#F5F5F0]/45">
-                  {signInIntent
-                    ? "Confirm your birthday to sign in."
-                    : "You must be 18 or older to join."}
-                </p>
+                <p className="text-center text-[11px] text-[#F5F5F0]/45">{birthdayHint}</p>
                 <div className="grid grid-cols-[1.4fr_0.8fr_1fr] gap-2">
                   <div className="relative">
                     <select
@@ -344,14 +382,20 @@ export default function OnboardingGate({
             {step === "auth" && (
               <div className="mt-4">
                 <AuthForm
-                  birthDate={birthDate}
+                  key={signInIntent ? "signin" : "signup"}
+                  mode={signInIntent ? "signin" : "signup"}
+                  initialChannel={pendingContact?.channel}
+                  initialPhone={pendingContact?.channel === "phone" ? pendingContact.value : undefined}
+                  initialEmail={pendingContact?.channel === "email" ? pendingContact.value : undefined}
                   onSendPhoneCode={onSendPhoneCode}
                   onSendEmailCode={onSendEmailCode}
-                  onVerifyPhoneCode={(phone, code) => onVerifyPhoneCode(phone, code, birthDate)}
-                  onVerifyEmailCode={(email, code) => onVerifyEmailCode(email, code, birthDate)}
+                  onVerifyPhoneCode={(phone, code) => verifyWithRecovery("phone", phone, code)}
+                  onVerifyEmailCode={(email, code) => verifyWithRecovery("email", email, code)}
                   onBack={() => {
+                    const wasSignIn = signInIntent;
                     setSignInIntent(false);
-                    setLocalStep("mode");
+                    setAgeRequired(false);
+                    setLocalStep(wasSignIn ? "birthday" : "mode");
                   }}
                 />
               </div>
@@ -369,7 +413,7 @@ export default function OnboardingGate({
             </Link>{" "}
             · thebestdrug.com
           </p>
-          {step !== "auth" && (
+          {step !== "auth" ? (
             <p className="mt-2 text-center text-[12px] text-[#F5F5F0]/60">
               Already a member?{" "}
               <button
@@ -380,7 +424,18 @@ export default function OnboardingGate({
                 Sign in
               </button>
             </p>
-          )}
+          ) : signInIntent ? (
+            <p className="mt-2 text-center text-[12px] text-[#F5F5F0]/60">
+              New here?{" "}
+              <button
+                type="button"
+                onClick={startSignUp}
+                className="font-semibold text-[#00F0FF] transition hover:text-[#7DF9FF]"
+              >
+                Sign up
+              </button>
+            </p>
+          ) : null}
         </section>
       </div>
     </main>

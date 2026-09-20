@@ -136,7 +136,6 @@ export default function ProfilePanel({
           <p className="py-6 text-center text-sm text-white/30">Checking session...</p>
         ) : showSignup || !user ? (
           <AuthForm
-            birthDate={birthDate}
             onSendPhoneCode={onSendPhoneCode}
             onSendEmailCode={onSendEmailCode}
             onVerifyPhoneCode={(phone, code) => onVerifyPhoneCode(phone, code, birthDate)}

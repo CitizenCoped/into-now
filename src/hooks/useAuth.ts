@@ -20,6 +20,23 @@ export type AuthUser = {
   profileComplete: boolean;
 };
 
+/**
+ * Thrown by the auth calls when the API answers with an error. `code` carries
+ * the machine-readable reason when the server sends one (e.g. "NO_ACCOUNT",
+ * "AGE_REQUIRED" from verify-code) so callers can branch without parsing copy.
+ */
+export class AuthError extends Error {
+  status: number;
+  code?: string;
+
+  constructor(message: string, status: number, code?: string) {
+    super(message);
+    this.name = "AuthError";
+    this.status = status;
+    this.code = code;
+  }
+}
+
 export function useAuth() {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
@@ -81,14 +98,15 @@ export function useAuth() {
   }, []);
 
   const verifyPhoneCode = useCallback(
-    async (phone: string, code: string, birthDate: string) => {
+    async (phone: string, code: string, birthDate?: string) => {
       const res = await fetch("/api/auth/verify-code", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ channel: "phone", phone, code, birthDate }),
+        // Sign-up sends the birth date; sign-in omits it (the account has one).
+        body: JSON.stringify({ channel: "phone", phone, code, ...(birthDate ? { birthDate } : {}) }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? "Verification failed");
+      if (!res.ok) throw new AuthError(data.error ?? "Verification failed", res.status, data.code);
       setUser(data.user ?? null);
       await refresh();
       return data.user as AuthUser;
@@ -96,7 +114,7 @@ export function useAuth() {
     [refresh]
   );
 
-  /** Legacy Twilio Verify flow — phone + code only, no age gate at sign-in. */
+  /** Legacy Twilio Verify flow — phone + code only; signs in existing accounts, never creates one. */
   const verifyCode = useCallback(
     async (phone: string, code: string) => {
       const res = await fetch("/api/auth/verify-code", {
@@ -105,7 +123,7 @@ export function useAuth() {
         body: JSON.stringify({ phone, code }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? "Verification failed");
+      if (!res.ok) throw new AuthError(data.error ?? "Verification failed", res.status, data.code);
       setUser(data.user ?? null);
       await refresh();
       return data.user as AuthUser;
@@ -114,14 +132,14 @@ export function useAuth() {
   );
 
   const verifyEmailCode = useCallback(
-    async (email: string, code: string, birthDate: string) => {
+    async (email: string, code: string, birthDate?: string) => {
       const res = await fetch("/api/auth/verify-code", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ channel: "email", email, code, birthDate }),
+        body: JSON.stringify({ channel: "email", email, code, ...(birthDate ? { birthDate } : {}) }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? "Verification failed");
+      if (!res.ok) throw new AuthError(data.error ?? "Verification failed", res.status, data.code);
       setUser(data.user ?? null);
       await refresh();
       return data.user as AuthUser;
