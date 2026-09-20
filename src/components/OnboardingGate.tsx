@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import type { AuthUser } from "@/hooks/useAuth";
 import { isAdult } from "@/lib/geo";
@@ -18,6 +19,14 @@ type Props = {
 };
 
 type Step = "birthday" | "mode" | "auth";
+
+const STEP_INDEX: Record<Step, number> = { birthday: 1, mode: 2, auth: 3 };
+
+const STEP_TITLES: Record<Step, string> = {
+  birthday: "When is your birthday?",
+  mode: "How do you want to join?",
+  auth: "Create your free account",
+};
 
 const MONTHS = [
   "January",
@@ -43,34 +52,67 @@ function pad(value: number) {
   return String(value).padStart(2, "0");
 }
 
-function OnboardingBackdrop() {
+const ctaClass =
+  "w-full rounded-[14px] bg-[#FF2D8A] py-3 font-display italic uppercase text-[16px] leading-none tracking-[.06em] text-[#07060B] shadow-[0_10px_30px_-8px_rgba(255,45,138,.6)] transition hover:shadow-[0_12px_34px_-6px_rgba(255,45,138,.8)] active:scale-[.99] disabled:opacity-45";
+
+function selectClass(chosen: boolean) {
+  return `w-full appearance-none rounded-[14px] border bg-[#F5F5F0]/[.06] py-[11px] pl-3 pr-6 text-[14px] text-[#F5F5F0] outline-none transition focus:border-[#00F0FF]/60 ${
+    chosen ? "border-[#00F0FF]/50" : "border-[#F5F5F0]/12"
+  }`;
+}
+
+function Chevron() {
   return (
-    <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden>
-      <div className="absolute -left-1/3 top-0 h-[55vh] w-[70vw] rounded-full bg-[#FF8A1E]/10 blur-[120px]" />
-      <div className="absolute -right-1/4 bottom-0 h-[45vh] w-[55vw] rounded-full bg-[#FFB03A]/8 blur-[100px]" />
-    </div>
+    <span
+      aria-hidden
+      className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-[11px] text-[#F5F5F0]/40"
+    >
+      ▾
+    </span>
   );
 }
 
-function OnboardingHero() {
+function Hero() {
   return (
-    <section className="w-full text-center">
-      <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.28em] text-[#FF8A1E]/90">
-        into.now
-      </p>
-      <h1 className="mb-3 text-3xl font-semibold leading-tight text-white sm:text-4xl">
-        What are you into?
-        <span className="block text-[#FF8A1E]">Right now.</span>
+    <section className="flex flex-none flex-col items-center gap-1.5 px-6 text-center">
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src="/mark.svg"
+        alt=""
+        width={52}
+        height={56}
+        className="mb-1.5 h-14 w-[52px] drop-shadow-[0_4px_18px_rgba(255,45,138,.45)]"
+      />
+      <h1 className="font-display italic uppercase text-[40px] leading-none tracking-[.04em] text-[#F5F5F0] [text-shadow:0_3px_20px_rgba(0,0,0,.7)]">
+        The Best{" "}
+        <span className="text-[#FF2D8A] [text-shadow:0_4px_28px_rgba(255,45,138,.45)]">Drug</span>
       </h1>
-      <p className="text-sm leading-relaxed text-white/60">
+      <p className="font-display italic uppercase text-[14px] leading-none tracking-[.16em] text-[#FF2D8A] [text-shadow:0_2px_14px_rgba(0,0,0,.6)]">
+        Get on <span className="text-[#F5F5F0]">then get</span>{" "}
+        <span className="text-[#00F0FF]">off</span>
+      </p>
+      <p className="mt-0.5 max-w-[280px] text-[12px] leading-[1.4] text-[#F5F5F0]/70 [text-shadow:0_1px_8px_rgba(0,0,0,.7)]">
         See who&apos;s nearby, share what you&apos;re into, and connect in the moment.
       </p>
     </section>
   );
 }
 
-const selectClass =
-  "w-full appearance-none rounded-xl border border-white/10 bg-white/5 px-3 py-3.5 text-base text-white outline-none transition focus:border-[#FF8A1E]/60 focus:bg-white/10";
+function StepIndicator({ step }: { step: Step }) {
+  const reached = STEP_INDEX[step];
+  return (
+    <div className="flex items-center justify-center gap-1.5" aria-hidden>
+      {[1, 2, 3].map((i) => (
+        <span
+          key={i}
+          className={`h-[3px] w-[22px] rounded-[2px] ${
+            i <= reached ? "bg-[#FF2D8A]" : "bg-[#F5F5F0]/[.18]"
+          }`}
+        />
+      ))}
+    </div>
+  );
+}
 
 export default function OnboardingGate({
   user,
@@ -87,6 +129,9 @@ export default function OnboardingGate({
   const [day, setDay] = useState(initialBirth ? Number(initialBirth[2]) : 0);
   const [year, setYear] = useState(initialBirth ? Number(initialBirth[0]) : 0);
   const [localStep, setLocalStep] = useState<Step>("birthday");
+  // "Already a member? Sign in" — the verify API still needs a birth date, so
+  // members confirm it first and then skip the join-mode step.
+  const [signInIntent, setSignInIntent] = useState(false);
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
@@ -102,21 +147,22 @@ export default function OnboardingGate({
   function changeMonth(value: number) {
     setMonth(value);
     setDay((d) => Math.min(d, daysInMonth(year, value)));
+    setError("");
   }
 
   function changeYear(value: number) {
     setYear(value);
     setDay((d) => Math.min(d, daysInMonth(value, month)));
+    setError("");
   }
 
   if (loading) {
     return (
-      <main className="relative flex min-h-screen items-center justify-center bg-[#06040c] px-4">
+      <main className="relative flex h-dvh items-center justify-center bg-[#07060B] px-4">
         <LandingVideoBackdrop />
-        <OnboardingBackdrop />
         <div className="relative flex flex-col items-center gap-6">
-          <div className="h-2 w-2 animate-pulse rounded-full bg-[#FF8A1E]" />
-          <p className="text-sm text-white/40">Loading...</p>
+          <div className="h-2 w-2 animate-pulse rounded-full bg-[#FF2D8A]" />
+          <p className="text-sm text-[#F5F5F0]/40">Loading...</p>
         </div>
       </main>
     );
@@ -136,10 +182,20 @@ export default function OnboardingGate({
       return;
     }
     if (!isAdult(birthDate)) {
-      setError("You must be 18 or older to use Into Now.");
+      setError("You must be 18 or older to use The Best Drug.");
       return;
     }
-    setLocalStep("mode");
+    setLocalStep(signInIntent ? "auth" : "mode");
+  }
+
+  function handleSignIn() {
+    setError("");
+    if (birthDate && isAdult(birthDate)) {
+      setLocalStep("auth");
+      return;
+    }
+    setSignInIntent(true);
+    setLocalStep("birthday");
   }
 
   async function handleAnonymous() {
@@ -155,104 +211,133 @@ export default function OnboardingGate({
   }
 
   return (
-    <main className="relative min-h-screen overflow-x-hidden bg-[#06040c]">
+    <main className="relative h-dvh w-full overflow-y-auto overflow-x-hidden bg-[#07060B]">
       <LandingVideoBackdrop />
-      <OnboardingBackdrop />
 
-      <div className="relative mx-auto flex min-h-screen w-full max-w-md flex-col items-center justify-center gap-8 px-4 py-8 sm:px-6">
-        <OnboardingHero />
+      <div className="relative mx-auto flex w-full max-w-md flex-col pb-10 pt-[170px]">
+        <Hero />
 
-        <section className="w-full shrink-0">
-          <div className="rounded-2xl border border-white/10 bg-[#0f0d18]/60 p-6 shadow-2xl backdrop-blur-xl">
-            <p className="text-center text-sm font-medium text-white/70">
-              {step === "birthday" && "When is your birthday?"}
-              {step === "mode" && "How do you want to join?"}
-              {step === "auth" && "Create your free account"}
+        <section className="mt-4 flex-none px-7">
+          <div className="rounded-[22px] border border-[#F5F5F0]/10 bg-[#120A14]/45 p-4 pt-3.5 shadow-[0_30px_60px_-20px_rgba(0,0,0,.8)] backdrop-blur-[18px]">
+            <StepIndicator step={step} />
+            <p className="mt-2 text-center font-display italic uppercase text-[16px] leading-none tracking-[.04em] text-[#F5F5F0]">
+              {step === "auth" && signInIntent ? "Sign in" : STEP_TITLES[step]}
             </p>
 
             {step === "birthday" && (
-              <form onSubmit={handleBirthdaySubmit} className="mt-6 space-y-4">
-                <p className="text-center text-xs text-white/40">
-                  You must be 18 or older to join.
+              <form onSubmit={handleBirthdaySubmit} className="mt-2 flex flex-col gap-2.5">
+                <p className="text-center text-[11px] text-[#F5F5F0]/45">
+                  {signInIntent
+                    ? "Confirm your birthday to sign in."
+                    : "You must be 18 or older to join."}
                 </p>
                 <div className="grid grid-cols-[1.4fr_0.8fr_1fr] gap-2">
-                  <select
-                    aria-label="Birth month"
-                    value={month}
-                    onChange={(e) => changeMonth(Number(e.target.value))}
-                    className={selectClass}
-                  >
-                    <option value={0} disabled>
-                      Month
-                    </option>
-                    {MONTHS.map((name, i) => (
-                      <option key={name} value={i + 1} className="bg-[#0f0d18]">
-                        {name}
+                  <div className="relative">
+                    <select
+                      aria-label="Birth month"
+                      value={month}
+                      onChange={(e) => changeMonth(Number(e.target.value))}
+                      className={selectClass(month > 0)}
+                    >
+                      <option value={0} disabled>
+                        Month
                       </option>
-                    ))}
-                  </select>
-                  <select
-                    aria-label="Birth day"
-                    value={day}
-                    onChange={(e) => setDay(Number(e.target.value))}
-                    className={selectClass}
-                  >
-                    <option value={0} disabled>
-                      Day
-                    </option>
-                    {days.map((d) => (
-                      <option key={d} value={d} className="bg-[#0f0d18]">
-                        {d}
+                      {MONTHS.map((name, i) => (
+                        <option key={name} value={i + 1} className="bg-[#120A14]">
+                          {name}
+                        </option>
+                      ))}
+                    </select>
+                    <Chevron />
+                  </div>
+                  <div className="relative">
+                    <select
+                      aria-label="Birth day"
+                      value={day}
+                      onChange={(e) => {
+                        setDay(Number(e.target.value));
+                        setError("");
+                      }}
+                      className={selectClass(day > 0)}
+                    >
+                      <option value={0} disabled>
+                        Day
                       </option>
-                    ))}
-                  </select>
-                  <select
-                    aria-label="Birth year"
-                    value={year}
-                    onChange={(e) => changeYear(Number(e.target.value))}
-                    className={selectClass}
-                  >
-                    <option value={0} disabled>
-                      Year
-                    </option>
-                    {years.map((y) => (
-                      <option key={y} value={y} className="bg-[#0f0d18]">
-                        {y}
+                      {days.map((d) => (
+                        <option key={d} value={d} className="bg-[#120A14]">
+                          {d}
+                        </option>
+                      ))}
+                    </select>
+                    <Chevron />
+                  </div>
+                  <div className="relative">
+                    <select
+                      aria-label="Birth year"
+                      value={year}
+                      onChange={(e) => changeYear(Number(e.target.value))}
+                      className={selectClass(year > 0)}
+                    >
+                      <option value={0} disabled>
+                        Year
                       </option>
-                    ))}
-                  </select>
+                      {years.map((y) => (
+                        <option key={y} value={y} className="bg-[#120A14]">
+                          {y}
+                        </option>
+                      ))}
+                    </select>
+                    <Chevron />
+                  </div>
                 </div>
-                {error && <p className="text-sm text-[#FF4D6D]">{error}</p>}
-                <button
-                  type="submit"
-                  disabled={!birthDate}
-                  className="w-full rounded-xl bg-gradient-to-r from-[#FFB03A] to-[#F56A00] py-3.5 text-base font-semibold text-[#06040c] transition active:scale-[0.99] disabled:opacity-50"
-                >
+                {error && <p className="text-[13px] text-[#FF2D8A]">{error}</p>}
+                <button type="submit" disabled={!birthDate} className={ctaClass}>
                   Continue
                 </button>
               </form>
             )}
 
             {step === "mode" && (
-              <div className="mt-6 space-y-3">
+              <div className="mt-[18px] flex flex-col gap-2.5">
                 <button
                   type="button"
                   onClick={() => setLocalStep("auth")}
-                  className="w-full rounded-lg border border-[#FF8A1E]/30 bg-[#FF8A1E]/10 px-4 py-3 text-left transition hover:bg-[#FF8A1E]/20"
+                  className="flex w-full items-center justify-between gap-3 rounded-[14px] border border-[#FF2D8A]/45 bg-[#FF2D8A]/[.12] px-4 py-3.5 text-left transition hover:bg-[#FF2D8A]/20"
                 >
-                  <p className="font-semibold text-[#FF8A1E]">Sign up free</p>
-                  <p className="mt-1 text-xs text-white/50">Verify with phone or email</p>
+                  <span>
+                    <span className="block font-display italic uppercase text-[17px] leading-none tracking-[.04em] text-[#FF2D8A]">
+                      Sign up free
+                    </span>
+                    <span className="mt-1 block text-[12px] text-[#F5F5F0]/55">
+                      Verify with phone or email
+                    </span>
+                  </span>
+                  <span className="text-[18px] text-[#FF2D8A]">→</span>
                 </button>
                 <button
                   type="button"
                   onClick={() => void handleAnonymous()}
                   disabled={submitting}
-                  className="w-full rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-left transition hover:bg-white/10 disabled:opacity-50"
+                  className="flex w-full items-center justify-between gap-3 rounded-[14px] border border-[#F5F5F0]/12 bg-[#F5F5F0]/5 px-4 py-3.5 text-left transition hover:bg-[#F5F5F0]/10 disabled:opacity-50"
                 >
-                  <p className="font-semibold text-white">Stay anonymous</p>
-                  <p className="mt-1 text-xs text-white/50">4-hour session, no account needed</p>
+                  <span>
+                    <span className="block font-display italic uppercase text-[17px] leading-none tracking-[.04em] text-[#F5F5F0]">
+                      Stay anonymous
+                    </span>
+                    <span className="mt-1 block text-[12px] text-[#F5F5F0]/55">
+                      4-hour session, no account needed
+                    </span>
+                  </span>
+                  <span className="text-[18px] text-[#00F0FF]">→</span>
                 </button>
-                {error && <p className="text-sm text-[#FF4D6D]">{error}</p>}
+                {error && <p className="text-[13px] text-[#FF2D8A]">{error}</p>}
+                <button
+                  type="button"
+                  onClick={() => setLocalStep("birthday")}
+                  className="mt-0.5 text-[12px] text-[#F5F5F0]/45 transition hover:text-[#F5F5F0]"
+                >
+                  ← Back
+                </button>
               </div>
             )}
 
@@ -264,10 +349,34 @@ export default function OnboardingGate({
                   onSendEmailCode={onSendEmailCode}
                   onVerifyPhoneCode={(phone, code) => onVerifyPhoneCode(phone, code, birthDate)}
                   onVerifyEmailCode={(email, code) => onVerifyEmailCode(email, code, birthDate)}
+                  onBack={() => {
+                    setSignInIntent(false);
+                    setLocalStep("mode");
+                  }}
                 />
               </div>
             )}
           </div>
+
+          <p className="mt-2.5 text-center text-[10px] uppercase tracking-[.14em] text-[#F5F5F0]/40">
+            18+ only ·{" "}
+            <Link href="/terms" className="text-[#F5F5F0]/55 transition hover:text-[#F5F5F0]">
+              Terms
+            </Link>{" "}
+            · thebestdrug.com
+          </p>
+          {step !== "auth" && (
+            <p className="mt-2 text-center text-[12px] text-[#F5F5F0]/60">
+              Already a member?{" "}
+              <button
+                type="button"
+                onClick={handleSignIn}
+                className="font-semibold text-[#00F0FF] transition hover:text-[#7DF9FF]"
+              >
+                Sign in
+              </button>
+            </p>
+          )}
         </section>
       </div>
     </main>
