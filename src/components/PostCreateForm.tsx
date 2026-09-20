@@ -56,7 +56,7 @@ function TokenPicker<T extends LookingForToken>({
               aria-pressed={active}
               className={`rounded-full border px-2.5 py-1.5 text-[11px] font-semibold transition ${
                 active
-                  ? "border-[#FF8A1E]/60 bg-[#FF8A1E]/20 text-[#FF8A1E]"
+                  ? "border-[#FF2D8A]/60 bg-[#FF2D8A]/20 text-[#FF2D8A]"
                   : "border-white/10 text-white/50 hover:text-white"
               }`}
             >
@@ -138,7 +138,7 @@ export default function PostCreateForm({
 
         <h3 className="text-base font-semibold text-white">New Post</h3>
         <p className="mt-0.5 text-xs text-white/40">
-          Who are you looking for — <span style={{ color: THEME.coral }}>right now?</span>
+          Who are you looking for — <span style={{ color: THEME.accent }}>right now?</span>
         </p>
 
         {/* Live code preview — the classic personals header, composed live. */}
@@ -174,7 +174,7 @@ export default function PostCreateForm({
           onChange={(e) => setTitle(e.target.value)}
           onFocus={scrollFieldIntoView}
           placeholder="Headline — make it count"
-          className="mt-3 w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/30 outline-none focus:border-[#FF4D6D]/50"
+          className="mt-3 w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/30 outline-none focus:border-[#FF2D8A]/50"
         />
 
         <textarea
@@ -183,7 +183,7 @@ export default function PostCreateForm({
           onFocus={scrollFieldIntoView}
           placeholder="What you're looking for, where, and when. Right now."
           rows={3}
-          className="mt-2 w-full resize-none rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/30 outline-none focus:border-[#FF4D6D]/50"
+          className="mt-2 w-full resize-none rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/30 outline-none focus:border-[#FF2D8A]/50"
         />
 
         <GrokAssist
@@ -201,7 +201,7 @@ export default function PostCreateForm({
       {/* Pinned footer: errors + actions always visible. */}
       <div className="shrink-0 border-t border-white/5 pt-2">
         {error && (
-          <p className="mb-2 rounded-lg border border-[#FF4D6D]/30 bg-[#FF4D6D]/10 px-3 py-2 text-xs text-[#FF4D6D]">
+          <p className="mb-2 rounded-lg border border-[#FF2D8A]/30 bg-[#FF2D8A]/10 px-3 py-2 text-xs text-[#FF2D8A]">
             {error}
           </p>
         )}
@@ -210,7 +210,7 @@ export default function PostCreateForm({
             type="button"
             onClick={handleSubmit}
             disabled={submitting}
-            className="flex-1 rounded-lg bg-gradient-to-r from-[#FFB03A] to-[#F56A00] py-2 text-sm font-semibold text-[#06040c] transition hover:brightness-110 disabled:opacity-50"
+            className="flex-1 rounded-lg bg-[#FF2D8A] py-2 text-sm font-semibold text-[#07060B] transition hover:brightness-110 disabled:opacity-50"
           >
             {submitting ? "Posting..." : "Post Now"}
           </button>

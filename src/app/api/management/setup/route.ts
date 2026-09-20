@@ -81,7 +81,7 @@ export async function POST(request: NextRequest) {
   const qrDataUrl = await QRCode.toDataURL(otpauth, {
     margin: 1,
     width: 240,
-    color: { dark: "#06040c", light: "#ffffff" },
+    color: { dark: "#07060B", light: "#ffffff" },
   });
 
   return NextResponse.json({ otpauth, qrDataUrl, username });

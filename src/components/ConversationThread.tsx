@@ -183,23 +183,23 @@ export default function ConversationThread({
           size="sm"
         />
         <span
-          className={`h-2 w-2 rounded-full ${otherUser?.isOnline ? "bg-[#FF9E2C]" : "bg-white/20"}`}
-          style={otherUser?.isOnline ? { boxShadow: "0 0 6px #FF9E2C" } : undefined}
+          className={`h-2 w-2 rounded-full ${otherUser?.isOnline ? "bg-[#00F0FF]" : "bg-white/20"}`}
+          style={otherUser?.isOnline ? { boxShadow: "0 0 6px #00F0FF" } : undefined}
         />
         <span className="font-semibold text-white">{otherUser?.displayLabel ?? "Chat"}</span>
-        {otherUser?.isOnline && <span className="text-[10px] text-[#FF9E2C]">Online</span>}
-        {expired && <span className="text-[10px] text-[#FF4D6D]">Expired</span>}
+        {otherUser?.isOnline && <span className="text-[10px] text-[#00F0FF]">Online</span>}
+        {expired && <span className="text-[10px] text-[#FF2D8A]">Expired</span>}
         {otherUser?.id && !blocked && (
           <button
             type="button"
             onClick={handleBlock}
             disabled={blocking}
-            className="ml-auto shrink-0 text-[10px] text-white/25 transition hover:text-[#FF4D6D]"
+            className="ml-auto shrink-0 text-[10px] text-white/25 transition hover:text-[#FF2D8A]"
           >
             {blocking ? "Blocking..." : "Block"}
           </button>
         )}
-        {blocked && <span className="ml-auto text-[10px] text-[#FF4D6D]">Blocked</span>}
+        {blocked && <span className="ml-auto text-[10px] text-[#FF2D8A]">Blocked</span>}
       </div>
 
       {otherUser?.statement && (
@@ -231,10 +231,10 @@ export default function ConversationThread({
               onClick={() => isTruncated && toggleExpanded(message.id)}
               className={`block w-[calc(100%-1.5rem)] rounded-xl border px-3 py-2.5 text-left transition ${
                 isMine
-                  ? "ml-6 border-[#FF8A1E]/20 bg-[#FF8A1E]/10"
+                  ? "ml-6 border-[#FF2D8A]/20 bg-[#FF2D8A]/10"
                   : "mr-6 border-white/5 bg-white/5"
               } ${isTruncated ? "cursor-pointer hover:border-white/15" : "cursor-default"} ${
-                isHighlighted ? "ring-2 ring-[#FF8A1E]/60 border-[#FF8A1E]/40" : ""
+                isHighlighted ? "ring-2 ring-[#FF2D8A]/60 border-[#FF2D8A]/40" : ""
               }`}
             >
               {hasText && (
@@ -264,13 +264,13 @@ export default function ConversationThread({
 
       {showContactWarning && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-          <div className="w-full max-w-sm rounded-2xl border border-white/10 bg-[#0f0d18] p-5 shadow-2xl">
+          <div className="w-full max-w-sm rounded-2xl border border-white/10 bg-[#120A14] p-5 shadow-2xl">
             <p className="text-sm text-white/90">{CONTACT_WARNING_MESSAGE}</p>
             <div className="mt-4 flex gap-2">
               <button
                 type="button"
                 onClick={() => setShowContactWarning(false)}
-                className="flex-1 rounded-lg bg-gradient-to-r from-[#FFB03A] to-[#F56A00] py-2 text-sm font-semibold text-[#06040c] transition hover:brightness-110"
+                className="flex-1 rounded-lg bg-[#FF2D8A] py-2 text-sm font-semibold text-[#07060B] transition hover:brightness-110"
               >
                 Edit
               </button>
@@ -290,11 +290,11 @@ export default function ConversationThread({
       )}
 
       {blocked ? (
-        <p className="mt-3 shrink-0 text-center text-xs text-[#FF4D6D]">
+        <p className="mt-3 shrink-0 text-center text-xs text-[#FF2D8A]">
           You blocked this user. They can no longer message you.
         </p>
       ) : expired ? (
-        <p className="mt-3 shrink-0 text-center text-xs text-[#FF4D6D]">
+        <p className="mt-3 shrink-0 text-center text-xs text-[#FF2D8A]">
           This user&apos;s anonymous session has ended.
         </p>
       ) : (
@@ -315,7 +315,7 @@ export default function ConversationThread({
             </div>
           )}
           <form onSubmit={handleSend} className="border-t border-white/5 pt-3">
-            {error && <p className="mb-2 text-xs text-[#FF4D6D]">{error}</p>}
+            {error && <p className="mb-2 text-xs text-[#FF2D8A]">{error}</p>}
             <div className="flex items-end gap-2">
               {photosEnabled && (
                 <button
@@ -330,9 +330,9 @@ export default function ConversationThread({
                     borderRadius: 10,
                     background: "rgba(255,255,255,.04)",
                     border: `1px solid ${
-                      attachActive ? "rgba(255,138,30,.5)" : "rgba(255,255,255,.1)"
+                      attachActive ? "rgba(255,45,138,.5)" : "rgba(255,255,255,.1)"
                     }`,
-                    color: attachActive ? "#FF8A1E" : "rgba(255,255,255,.5)",
+                    color: attachActive ? "#FF2D8A" : "rgba(255,255,255,.5)",
                   }}
                 >
                   <svg
@@ -356,13 +356,13 @@ export default function ConversationThread({
                 onChange={(e) => setDraft(e.target.value)}
                 placeholder="Reply..."
                 rows={1}
-                className="min-w-0 flex-1 resize-none rounded-[10px] border border-white/10 bg-white/5 px-3 text-sm text-white placeholder:text-white/30 outline-none focus:border-[#FF8A1E]/50"
+                className="min-w-0 flex-1 resize-none rounded-[10px] border border-white/10 bg-white/5 px-3 text-sm text-white placeholder:text-white/30 outline-none focus:border-[#FF2D8A]/50"
                 style={{ paddingTop: 9, paddingBottom: 9 }}
               />
               <button
                 type="submit"
                 disabled={sendDisabled}
-                className="shrink-0 rounded-[10px] bg-gradient-to-r from-[#FFB03A] to-[#F56A00] text-sm font-bold text-[#06040c] transition hover:brightness-110 disabled:opacity-[.45]"
+                className="shrink-0 rounded-[10px] bg-[#FF2D8A] text-sm font-bold text-[#07060B] transition hover:brightness-110 disabled:opacity-[.45]"
                 style={{ padding: "9px 16px" }}
               >
                 {sending ? "Sending..." : "Send"}

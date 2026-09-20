@@ -92,7 +92,7 @@ function SetupForm() {
             value={username}
             onChange={(e) => setUsername(e.target.value)}
             placeholder="Username"
-            className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white outline-none focus:border-[#FF4D6D]/50"
+            className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white outline-none focus:border-[#FF2D8A]/50"
           />
           <input
             type="password"
@@ -100,7 +100,7 @@ function SetupForm() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder="Password (10+ characters)"
-            className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white outline-none focus:border-[#FF4D6D]/50"
+            className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white outline-none focus:border-[#FF2D8A]/50"
           />
           <input
             type="password"
@@ -108,7 +108,7 @@ function SetupForm() {
             value={confirm}
             onChange={(e) => setConfirm(e.target.value)}
             placeholder="Confirm password"
-            className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white outline-none focus:border-[#FF4D6D]/50"
+            className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white outline-none focus:border-[#FF2D8A]/50"
           />
           {password && confirm && password !== confirm ? (
             <p className="text-xs text-red-300">Passwords do not match.</p>
@@ -117,7 +117,7 @@ function SetupForm() {
           <button
             type="submit"
             disabled={busy || !canSubmitAccount}
-            className="w-full rounded-lg bg-[#FF4D6D] px-3 py-2 text-sm font-medium text-white disabled:opacity-60"
+            className="w-full rounded-lg bg-[#FF2D8A] px-3 py-2 text-sm font-medium text-[#07060B] disabled:opacity-60"
           >
             {busy ? "Creating…" : "Continue"}
           </button>
@@ -142,13 +142,13 @@ function SetupForm() {
             value={totp}
             onChange={(e) => setTotp(e.target.value)}
             placeholder="123456"
-            className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm tracking-widest text-white outline-none focus:border-[#FF4D6D]/50"
+            className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm tracking-widest text-white outline-none focus:border-[#FF2D8A]/50"
           />
           {error ? <p className="text-sm text-red-300">{error}</p> : null}
           <button
             type="submit"
             disabled={busy || totp.replace(/\s/g, "").length !== 6}
-            className="w-full rounded-lg bg-[#FF4D6D] px-3 py-2 text-sm font-medium text-white disabled:opacity-60"
+            className="w-full rounded-lg bg-[#FF2D8A] px-3 py-2 text-sm font-medium text-[#07060B] disabled:opacity-60"
           >
             {busy ? "Verifying…" : "Activate account"}
           </button>

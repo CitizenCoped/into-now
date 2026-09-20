@@ -40,7 +40,7 @@ export default function PushSettings({
           type="button"
           onClick={() => onEnable()}
           disabled={loading || permission === "denied"}
-          className="w-full rounded-lg border border-[#FF8A1E]/30 bg-[#FF8A1E]/10 py-2 text-sm font-semibold text-[#FF8A1E] transition hover:bg-[#FF8A1E]/20 disabled:opacity-50"
+          className="w-full rounded-lg border border-[#FF2D8A]/30 bg-[#FF2D8A]/10 py-2 text-sm font-semibold text-[#FF2D8A] transition hover:bg-[#FF2D8A]/20 disabled:opacity-50"
         >
           {loading ? "Enabling..." : "Enable push notifications"}
         </button>
@@ -69,7 +69,7 @@ export default function PushSettings({
               type="checkbox"
               checked={preferences.notifyMessages}
               onChange={(e) => onPreferencesChange({ notifyMessages: e.target.checked })}
-              className="h-4 w-4 accent-[#FF8A1E]"
+              className="h-4 w-4 accent-[#FF2D8A]"
             />
           </label>
           <label className="flex items-center justify-between gap-3 text-sm text-white/70">
@@ -78,13 +78,13 @@ export default function PushSettings({
               type="checkbox"
               checked={preferences.notifyPresence}
               onChange={(e) => onPreferencesChange({ notifyPresence: e.target.checked })}
-              className="h-4 w-4 accent-[#FF8A1E]"
+              className="h-4 w-4 accent-[#FF2D8A]"
             />
           </label>
         </div>
       )}
 
-      {error && <p className="text-xs text-[#FF4D6D]">{error}</p>}
+      {error && <p className="text-xs text-[#FF2D8A]">{error}</p>}
     </div>
   );
 }

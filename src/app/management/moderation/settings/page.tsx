@@ -131,7 +131,7 @@ export default function SensitivityPage() {
           type="button"
           disabled={busy}
           onClick={() => void save(false)}
-          className="rounded-lg bg-[#FF4D6D] px-4 py-2 text-sm font-medium text-white disabled:opacity-60"
+          className="rounded-lg bg-[#FF2D8A] px-4 py-2 text-sm font-medium text-[#07060B] disabled:opacity-60"
         >
           Save thresholds
         </button>

@@ -4,7 +4,7 @@
  * language before public launch.
  */
 export const metadata = {
-  title: "Terms of Use — into.now",
+  title: "Terms of Use — The Best Drug",
 };
 
 export default function TermsPage() {
@@ -17,17 +17,17 @@ export default function TermsPage() {
 
       <section className="mt-8 space-y-6 text-sm leading-relaxed">
         <div>
-          <h2 className="mb-1 font-semibold text-[#FF8A1E]">Adults only</h2>
+          <h2 className="mb-1 font-semibold text-[#FF2D8A]">Adults only</h2>
           <p>
-            into.now is for adults 18 and older, without exception. Providing a
+            The Best Drug is for adults 18 and older, without exception. Providing a
             false birth date is grounds for immediate and permanent removal.
           </p>
         </div>
 
         <div>
-          <h2 className="mb-1 font-semibold text-[#FF8A1E]">Non-commercial, always</h2>
+          <h2 className="mb-1 font-semibold text-[#FF2D8A]">Non-commercial, always</h2>
           <p>
-            into.now exists for real, non-commercial connection between
+            The Best Drug exists for real, non-commercial connection between
             consenting adults. Offering or requesting paid services of any kind
             — including through coded language — is prohibited and enforced by
             automated screening and human review. Violations result in removal
@@ -36,7 +36,7 @@ export default function TermsPage() {
         </div>
 
         <div>
-          <h2 className="mb-1 font-semibold text-[#FF8A1E]">Consent and respect</h2>
+          <h2 className="mb-1 font-semibold text-[#FF2D8A]">Consent and respect</h2>
           <p>
             Everyone here chose to be here; nobody chose to be harassed. No
             targeted harassment, no contacting people who have blocked you, no
@@ -46,7 +46,7 @@ export default function TermsPage() {
         </div>
 
         <div>
-          <h2 className="mb-1 font-semibold text-[#FF8A1E]">
+          <h2 className="mb-1 font-semibold text-[#FF2D8A]">
             Nonconsensual intimate imagery
           </h2>
           <p>
@@ -57,7 +57,7 @@ export default function TermsPage() {
         </div>
 
         <div>
-          <h2 className="mb-1 font-semibold text-[#FF8A1E]">Moderation</h2>
+          <h2 className="mb-1 font-semibold text-[#FF2D8A]">Moderation</h2>
           <p>
             We may remove content or accounts that violate these terms. Posts
             expire automatically after 24 hours. Moderation actions are logged.

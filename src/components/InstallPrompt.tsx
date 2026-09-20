@@ -28,7 +28,7 @@ export default function InstallPrompt() {
   useEffect(() => {
     if (isStandalone()) return;
 
-    const stored = sessionStorage.getItem("intonow_install_dismissed");
+    const stored = sessionStorage.getItem("tbd_install_dismissed");
     if (stored === "true") setDismissed(true);
 
     const onBeforeInstall = (event: Event) => {
@@ -48,24 +48,24 @@ export default function InstallPrompt() {
     await deferred.userChoice;
     setDeferred(null);
     setDismissed(true);
-    sessionStorage.setItem("intonow_install_dismissed", "true");
+    sessionStorage.setItem("tbd_install_dismissed", "true");
   }
 
   function handleDismiss() {
     setDismissed(true);
-    sessionStorage.setItem("intonow_install_dismissed", "true");
+    sessionStorage.setItem("tbd_install_dismissed", "true");
   }
 
   if (deferred) {
     return (
-      <div className="fixed left-1/2 top-[max(1rem,env(safe-area-inset-top))] z-30 w-[min(380px,calc(100vw-2rem))] -translate-x-1/2 rounded-xl border border-white/10 bg-[#0f0d18]/95 p-3 shadow-2xl backdrop-blur-xl">
-        <p className="text-sm font-semibold text-white">Install into.now</p>
+      <div className="fixed left-1/2 top-[max(1rem,env(safe-area-inset-top))] z-30 w-[min(380px,calc(100vw-2rem))] -translate-x-1/2 rounded-xl border border-white/10 bg-[#120A14]/95 p-3 shadow-2xl backdrop-blur-xl">
+        <p className="text-sm font-semibold text-white">Install The Best Drug</p>
         <p className="mt-1 text-xs text-white/50">Add to your home screen for the full app experience.</p>
         <div className="mt-3 flex gap-2">
           <button
             type="button"
             onClick={handleInstall}
-            className="flex-1 touch-manipulation rounded-lg bg-gradient-to-r from-[#FFB03A] to-[#F56A00] py-2 text-xs font-semibold text-[#06040c]"
+            className="flex-1 touch-manipulation rounded-lg bg-[#FF2D8A] py-2 text-xs font-semibold text-[#07060B]"
           >
             Install
           </button>
@@ -86,7 +86,7 @@ export default function InstallPrompt() {
       <button
         type="button"
         onClick={() => setShowIosHelp(true)}
-        className="fixed left-1/2 top-[max(1rem,env(safe-area-inset-top))] z-30 -translate-x-1/2 rounded-full border border-white/10 bg-[#0f0d18]/90 px-4 py-2 text-xs text-white/60 backdrop-blur-xl"
+        className="fixed left-1/2 top-[max(1rem,env(safe-area-inset-top))] z-30 -translate-x-1/2 rounded-full border border-white/10 bg-[#120A14]/90 px-4 py-2 text-xs text-white/60 backdrop-blur-xl"
       >
         Install on iPhone
       </button>
@@ -95,10 +95,10 @@ export default function InstallPrompt() {
 
   if (isIOS() && showIosHelp) {
     return (
-      <div className="fixed left-1/2 top-[max(1rem,env(safe-area-inset-top))] z-30 w-[min(380px,calc(100vw-2rem))] -translate-x-1/2 rounded-xl border border-white/10 bg-[#0f0d18]/95 p-3 shadow-2xl backdrop-blur-xl">
+      <div className="fixed left-1/2 top-[max(1rem,env(safe-area-inset-top))] z-30 w-[min(380px,calc(100vw-2rem))] -translate-x-1/2 rounded-xl border border-white/10 bg-[#120A14]/95 p-3 shadow-2xl backdrop-blur-xl">
         <p className="text-sm font-semibold text-white">Install on iPhone</p>
         <p className="mt-1 text-xs text-white/50">
-          Tap Share, then &quot;Add to Home Screen&quot; to install into.now and receive notifications.
+          Tap Share, then &quot;Add to Home Screen&quot; to install The Best Drug and receive notifications.
         </p>
         <button
           type="button"

@@ -35,14 +35,14 @@ export default function CornerControl({
   onClick,
   ariaLabel,
   icon,
-  accentColor = "#FF4D6D",
+  accentColor = "#FF2D8A",
   badge,
   statusDot,
 }: Props) {
   const style: CSSProperties = {
     width: CORNER_BUTTON_SIZE,
     height: CORNER_BUTTON_SIZE,
-    ["--intonow-corner-accent" as string]: accentColor,
+    ["--tbd-corner-accent" as string]: accentColor,
   };
 
   return (
@@ -51,7 +51,7 @@ export default function CornerControl({
       onClick={onClick}
       aria-label={ariaLabel}
       style={style}
-      className={`intonow-corner-btn fixed z-40 ${CORNER_POSITION_CLASSES[position]} flex items-center justify-center rounded-full border border-white/10 bg-[#0f0d18]/90 text-white/80 shadow-2xl backdrop-blur-xl transition hover:border-[var(--intonow-corner-accent)]/50 hover:text-white`}
+      className={`tbd-corner-btn fixed z-40 ${CORNER_POSITION_CLASSES[position]} flex items-center justify-center rounded-full border border-white/10 bg-[#120A14]/90 text-white/80 shadow-2xl backdrop-blur-xl transition hover:border-[var(--tbd-corner-accent)]/50 hover:text-white`}
     >
       <span className="relative flex items-center justify-center">
         {icon}

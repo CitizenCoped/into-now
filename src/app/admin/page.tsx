@@ -52,7 +52,7 @@ export default function AdminPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const stored = sessionStorage.getItem("intonow_admin_secret");
+    const stored = sessionStorage.getItem("tbd_admin_secret");
     if (stored) setSecret(stored);
   }, []);
 
@@ -87,13 +87,13 @@ export default function AdminPage() {
     event.preventDefault();
     const trimmed = inputSecret.trim();
     if (!trimmed) return;
-    sessionStorage.setItem("intonow_admin_secret", trimmed);
+    sessionStorage.setItem("tbd_admin_secret", trimmed);
     setSecret(trimmed);
     setInputSecret("");
   }
 
   function handleLogout() {
-    sessionStorage.removeItem("intonow_admin_secret");
+    sessionStorage.removeItem("tbd_admin_secret");
     setSecret("");
     setActivities([]);
   }
@@ -101,7 +101,7 @@ export default function AdminPage() {
   if (!secret) {
     return (
       <main className="mx-auto flex min-h-screen max-w-md flex-col justify-center px-6">
-        <h1 className="text-xl font-semibold text-white">into.now activity</h1>
+        <h1 className="text-xl font-semibold text-white">The Best Drug activity</h1>
         <p className="mt-2 text-sm text-white/50">
           Enter your admin secret to view what users are doing.
         </p>
@@ -111,11 +111,11 @@ export default function AdminPage() {
             value={inputSecret}
             onChange={(e) => setInputSecret(e.target.value)}
             placeholder="Admin secret"
-            className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white outline-none focus:border-[#FF4D6D]/50"
+            className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white outline-none focus:border-[#FF2D8A]/50"
           />
           <button
             type="submit"
-            className="w-full rounded-lg bg-[#FF4D6D] px-3 py-2 text-sm font-medium text-white"
+            className="w-full rounded-lg bg-[#FF2D8A] px-3 py-2 text-sm font-medium text-[#07060B]"
           >
             View activity
           </button>
@@ -184,7 +184,7 @@ export default function AdminPage() {
                   <td className="whitespace-nowrap px-4 py-3 font-medium text-white">
                     {formatAction(row.action)}
                   </td>
-                  <td className="whitespace-nowrap px-4 py-3 text-[#ff8a1e]">
+                  <td className="whitespace-nowrap px-4 py-3 text-[#FF2D8A]">
                     {row.phone ?? "—"}
                   </td>
                   <td className="px-4 py-3 text-white/50">{formatMetadata(row.metadata)}</td>

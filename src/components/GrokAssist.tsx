@@ -51,14 +51,14 @@ export default function GrokAssist({ posterIs, lookingFor, title, description, o
   }
 
   return (
-    <div className="mt-3 rounded-xl border border-[#FF8A1E]/20 bg-[#FF8A1E]/5 p-3">
+    <div className="mt-3 rounded-xl border border-[#FF2D8A]/20 bg-[#FF2D8A]/5 p-3">
       <div className="flex items-center justify-between gap-2">
-        <p className="text-xs font-semibold text-[#FF8A1E]">Grok Post Coach</p>
+        <p className="text-xs font-semibold text-[#FF2D8A]">Grok Post Coach</p>
         <button
           type="button"
           onClick={getHelp}
           disabled={loading}
-          className="rounded-lg bg-[#FF8A1E]/20 px-3 py-1 text-xs font-medium text-[#FF8A1E] transition hover:bg-[#FF8A1E]/30 disabled:opacity-50"
+          className="rounded-lg bg-[#FF2D8A]/20 px-3 py-1 text-xs font-medium text-[#FF2D8A] transition hover:bg-[#FF2D8A]/30 disabled:opacity-50"
         >
           {loading ? "Thinking..." : "Help me post"}
         </button>
@@ -92,7 +92,7 @@ export default function GrokAssist({ posterIs, lookingFor, title, description, o
             onClick={() =>
               onApply(suggestion.suggestedTitle, suggestion.suggestedDescription)
             }
-            className="w-full rounded-lg bg-[#FF8A1E] py-1.5 text-xs font-semibold text-[#06040c] transition hover:brightness-110"
+            className="w-full rounded-lg bg-[#FF2D8A] py-1.5 text-xs font-semibold text-[#07060B] transition hover:brightness-110"
           >
             Use suggestion
           </button>

@@ -42,9 +42,9 @@ export default function ManagementDashboardPage() {
           {data.pendingCount > 0 ? (
             <Link
               href="/management/moderation"
-              className="block rounded-2xl border border-[#FF4D6D]/40 bg-[#FF4D6D]/10 px-4 py-4"
+              className="block rounded-2xl border border-[#FF2D8A]/40 bg-[#FF2D8A]/10 px-4 py-4"
             >
-              <p className="text-sm font-medium text-[#FF4D6D]">Photo rejections waiting</p>
+              <p className="text-sm font-medium text-[#FF2D8A]">Photo rejections waiting</p>
               <p className="mt-1 text-2xl font-semibold text-white">
                 {data.pendingCount} photo{data.pendingCount === 1 ? "" : "s"} to review
               </p>
@@ -72,7 +72,7 @@ export default function ManagementDashboardPage() {
             ))}
           </div>
 
-          <p className={`text-xs ${data.sightengineConfigured ? "text-emerald-300/80" : "text-[#ff8a1e]"}`}>
+          <p className={`text-xs ${data.sightengineConfigured ? "text-emerald-300/80" : "text-[#FF2D8A]"}`}>
             Sightengine {data.sightengineConfigured ? "is configured" : "is not configured — uploads pass unscanned"}
           </p>
         </div>

@@ -59,13 +59,13 @@ export default function ReviewCard({
                 <div key={entry.path}>
                   <div className="mb-1 flex justify-between text-[11px] text-white/50">
                     <span>{entry.label}</span>
-                    <span className={tripped ? "text-[#FF4D6D]" : ""}>
+                    <span className={tripped ? "text-[#FF2D8A]" : ""}>
                       {score.toFixed(2)} / {threshold.toFixed(2)}
                     </span>
                   </div>
                   <div className="relative h-1.5 overflow-hidden rounded-full bg-white/10">
                     <div
-                      className={`h-full ${tripped ? "bg-[#FF4D6D]" : "bg-[#ff8a1e]"}`}
+                      className={`h-full ${tripped ? "bg-[#FF2D8A]" : "bg-[#FF2D8A]"}`}
                       style={{ width: `${Math.min(100, score * 100)}%` }}
                     />
                     <div
