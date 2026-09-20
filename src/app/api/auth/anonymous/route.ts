@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
   }
 
   if (!isAdult(parsed.data.birthDate)) {
-    return NextResponse.json({ error: "You must be 18 or older to use Into Now" }, { status: 403 });
+    return NextResponse.json({ error: "You must be 18 or older to use The Best Drug" }, { status: 403 });
   }
 
   const now = new Date();

@@ -63,7 +63,7 @@ export async function POST(request: NextRequest) {
   const birthDate = "birthDate" in parsed.data ? parsed.data.birthDate : undefined;
 
   if (birthDate && !isAdult(birthDate)) {
-    return NextResponse.json({ error: "You must be 18 or older to use Into Now" }, { status: 403 });
+    return NextResponse.json({ error: "You must be 18 or older to use The Best Drug" }, { status: 403 });
   }
 
   const db = getDb();

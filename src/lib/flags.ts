@@ -1,5 +1,5 @@
 /**
- * Central feature flags for into.now.
+ * Central feature flags for The Best Drug.
  *
  * PHOTO BLUR IS INTENTIONALLY DEACTIVATED. The blur-to-reveal module
  * (src/components/BlurredPhoto.tsx, src/lib/blur.ts) is built and ready but

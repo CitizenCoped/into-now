@@ -17,7 +17,7 @@ function ensureConfigured() {
 
   const publicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
   const privateKey = process.env.VAPID_PRIVATE_KEY;
-  const subject = process.env.VAPID_SUBJECT ?? "mailto:support@intonow.app";
+  const subject = process.env.VAPID_SUBJECT ?? "mailto:support@thebestdrug.com";
 
   if (!publicKey || !privateKey) return false;
 
@@ -68,7 +68,7 @@ export async function sendPushToUser(userId: string, payload: PushPayload) {
             body: payload.body,
             url: payload.url ?? "/",
             tag: payload.tag,
-            icon: "/logo.svg",
+            icon: "/icon-192.png",
           })
         );
         sent += 1;

@@ -1,6 +1,6 @@
 import { SignJWT, jwtVerify } from "jose";
 
-export const MANAGEMENT_COOKIE = "intonow_management";
+export const MANAGEMENT_COOKIE = "tbd_management";
 export const MANAGEMENT_MAX_AGE_SEC = 60 * 60 * 24;
 export const PENDING_LOGIN_TTL_SEC = 5 * 60;
 

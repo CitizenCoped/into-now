@@ -43,7 +43,7 @@ export function findSolicitationSignal(text: string): string | null {
 
 /** Message shown to the poster when the screen trips. */
 export const SOLICITATION_REJECTION_MESSAGE =
-  "This post looks like it offers or requests paid services, which isn't allowed here. into.now is for real, non-commercial connection — reword and try again.";
+  "This post looks like it offers or requests paid services, which isn't allowed here. The Best Drug is for real, non-commercial connection — reword and try again.";
 
 const PHONE_PATTERNS: RegExp[] = [
   // E.164-ish: +15558675309

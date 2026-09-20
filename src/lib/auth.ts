@@ -5,7 +5,7 @@ import { eq, lt } from "drizzle-orm";
 import { getDb } from "@/lib/db";
 import { users, type User } from "@/lib/schema";
 
-export const AUTH_COOKIE = "intonow_auth";
+export const AUTH_COOKIE = "tbd_auth";
 export const AUTH_MAX_AGE_SEC = 60 * 60 * 24;
 export const AUTH_ANON_MAX_AGE_SEC = 60 * 60 * 4;
 

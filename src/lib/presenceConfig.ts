@@ -1,6 +1,6 @@
 // Shared presence tuning. Client-safe: no server-only imports.
 
-export const PRESENCE_CHANNEL = "presence-into-now";
+export const PRESENCE_CHANNEL = "presence-the-best-drug";
 export const PRESENCE_EVENT = "presence-update";
 
 // Liveness floor while stationary.
