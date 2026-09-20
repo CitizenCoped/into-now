@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Anton&display=swap" rel="stylesheet">
+<link rel="icon" href="assets/favicon.svg">
+<style>
+body{margin:0;background:#0A070D;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#F5F5F0}
+a{color:#FF2D8A}a:hover{color:#00F0FF}
+</style>
+</helmet>
+<div style="max-width:1280px;margin:0 auto;padding:40px 32px 80px;display:flex;flex-direction:column;gap:48px">
+  <div style="display:flex;flex-direction:column;gap:6px">
+    <p style="margin:0;font-family:Anton,Impact,sans-serif;font-style:italic;font-size:34px;letter-spacing:.04em;text-transform:uppercase">The Best <span style="color:#FF2D8A">Drug</span> — brand kit</p>
+    <p style="margin:0;font-size:14px;color:rgba(245,245,240,.6)">Mark · favicon · app icon · link preview (OG / iMessage / SMS-RCS / email)</p>
+  </div>
+
+  <!-- MARK -->
+  <section style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:24px">
+    <div style="border-radius:20px;border:1px solid rgba(245,245,240,.1);background:#07060B;padding:32px;display:flex;flex-direction:column;align-items:center;gap:20px">
+      <img src="assets/tbd-mark.svg" alt="The Best Drug mark" style="width:180px;height:194px">
+      <p style="margin:0;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:rgba(245,245,240,.5)">Primary mark · on void</p>
+    </div>
+    <div style="border-radius:20px;border:1px solid rgba(245,245,240,.1);background:#F5F5F0;padding:32px;display:flex;flex-direction:column;align-items:center;gap:20px">
+      <img src="assets/tbd-mark.svg" alt="The Best Drug mark on bone" style="width:180px;height:194px">
+      <p style="margin:0;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:rgba(7,6,11,.55)">Primary mark · on bone</p>
+    </div>
+    <div style="border-radius:20px;border:1px solid rgba(245,245,240,.1);background:#FF2D8A;padding:32px;display:flex;flex-direction:column;align-items:center;gap:20px">
+      <svg viewBox="0 0 100 108" fill="none" stroke-linecap="round" stroke-linejoin="round" style="width:180px;height:194px"><path d="M50 80C31 67 19 55 19 41c0-10 8-17 17-17 6 0 11 4 14 9 3-5 8-9 14-9 9 0 17 7 17 17 0 14-12 26-31 39Z" stroke="#07060B" stroke-width="7"></path><path d="M69 31 88 12M88 12H75M88 12v13" stroke="#07060B" stroke-width="6"></path><path d="M50 82v20M41 94h18" stroke="#07060B" stroke-width="6"></path></svg>
+      <p style="margin:0;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:rgba(7,6,11,.7)">Mono · on pink</p>
+    </div>
+  </section>
+
+  <!-- FAVICON + TAB -->
+  <section style="display:flex;flex-wrap:wrap;gap:24px;align-items:stretch">
+    <div style="flex:1 1 320px;border-radius:20px;border:1px solid rgba(245,245,240,.1);background:#120A14;padding:28px;display:flex;flex-direction:column;gap:20px">
+      <p style="margin:0;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:rgba(245,245,240,.5)">Favicon · favicon.svg</p>
+      <div style="display:flex;align-items:flex-end;gap:28px">
+        <div style="display:flex;flex-direction:column;align-items:center;gap:8px"><img src="assets/favicon.svg" alt="" style="width:16px;height:16px"><span style="font-size:11px;color:rgba(245,245,240,.45)">16</span></div>
+        <div style="display:flex;flex-direction:column;align-items:center;gap:8px"><img src="assets/favicon.svg" alt="" style="width:32px;height:32px"><span style="font-size:11px;color:rgba(245,245,240,.45)">32</span></div>
+        <div style="display:flex;flex-direction:column;align-items:center;gap:8px"><img src="assets/favicon.svg" alt="" style="width:48px;height:48px"><span style="font-size:11px;color:rgba(245,245,240,.45)">48</span></div>
+        <div style="display:flex;flex-direction:column;align-items:center;gap:8px"><img src="assets/favicon.svg" alt="" style="width:64px;height:64px"><span style="font-size:11px;color:rgba(245,245,240,.45)">64</span></div>
+      </div>
+      <!-- browser tab mock -->
+      <div style="border-radius:12px;overflow:hidden;border:1px solid rgba(245,245,240,.1);background:#1a1420">
+        <div style="display:flex;align-items:flex-end;gap:6px;padding:8px 10px 0;background:#0e0a12">
+          <div style="display:flex;align-items:center;gap:8px;padding:8px 14px;border-radius:10px 10px 0 0;background:#1a1420;max-width:220px"><img src="assets/favicon.svg" alt="" style="width:16px;height:16px;flex:none"><span style="font-size:12px;color:#F5F5F0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">The Best Drug — Get On Then Get Off</span></div>
+          <div style="display:flex;align-items:center;gap:8px;padding:8px 14px;opacity:.5"><span style="width:16px;height:16px;border-radius:4px;background:rgba(245,245,240,.2)"></span><span style="font-size:12px;color:rgba(245,245,240,.6)">New tab</span></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;padding:8px 12px"><span style="flex:1;display:flex;align-items:center;gap:8px;border-radius:9999px;background:rgba(245,245,240,.08);padding:7px 14px;font-size:12px;color:rgba(245,245,240,.8)"><img src="assets/favicon.svg" alt="" style="width:14px;height:14px">thebestdrug.com</span></div>
+      </div>
+    </div>
+    <!-- APP ICON -->
+    <div style="flex:0 1 320px;border-radius:20px;border:1px solid rgba(245,245,240,.1);background:#120A14;padding:28px;display:flex;flex-direction:column;gap:20px;align-items:flex-start">
+      <p style="margin:0;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:rgba(245,245,240,.5)">App icon · 512 (maskable-safe)</p>
+      <div id="icon" style="width:256px;height:256px;border-radius:56px;background:#07060B;display:flex;align-items:center;justify-content:center;box-shadow:0 20px 50px -20px rgba(255,45,138,.5)">
+        <svg viewBox="0 0 100 108" fill="none" stroke-linecap="round" stroke-linejoin="round" style="width:160px;height:173px"><path d="M50 80C31 67 19 55 19 41c0-10 8-17 17-17 6 0 11 4 14 9 3-5 8-9 14-9 9 0 17 7 17 17 0 14-12 26-31 39Z" stroke="#FF2D8A" stroke-width="8"></path><path d="M69 31 88 12M88 12H75M88 12v13" stroke="#00F0FF" stroke-width="7"></path><path d="M50 82v20M41 94h18" stroke="#00F0FF" stroke-width="7"></path></svg>
+      </div>
+    </div>
+  </section>
+
+  <!-- OG IMAGE 1200x630 -->
+  <section style="display:flex;flex-direction:column;gap:14px">
+    <p style="margin:0;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:rgba(245,245,240,.5)">Link preview image · og:image 1200×630 (shown at 50%)</p>
+    <div style="width:600px;height:315px;overflow:hidden;border-radius:12px;border:1px solid rgba(245,245,240,.1)">
+      <div id="og" style="width:1200px;height:630px;transform:scale(.5);transform-origin:0 0;position:relative;overflow:hidden;background:#07060B;display:flex;align-items:center;gap:72px;padding:0 110px;box-sizing:border-box">
+        <div style="position:absolute;left:-10%;top:-30%;width:55%;height:120%;border-radius:9999px;background:rgba(255,45,138,.16);filter:blur(120px)"></div>
+        <div style="position:absolute;right:-10%;bottom:-40%;width:45%;height:110%;border-radius:9999px;background:rgba(0,240,255,.09);filter:blur(120px)"></div>
+        <svg viewBox="0 0 100 108" fill="none" stroke-linecap="round" stroke-linejoin="round" style="position:relative;width:330px;height:356px;flex:none"><path d="M50 80C31 67 19 55 19 41c0-10 8-17 17-17 6 0 11 4 14 9 3-5 8-9 14-9 9 0 17 7 17 17 0 14-12 26-31 39Z" stroke="#FF2D8A" stroke-width="7"></path><path d="M69 31 88 12M88 12H75M88 12v13" stroke="#00F0FF" stroke-width="6"></path><path d="M50 82v20M41 94h18" stroke="#00F0FF" stroke-width="6"></path></svg>
+        <div style="position:relative;display:flex;flex-direction:column;gap:18px;min-width:0">
+          <p style="margin:0;font-family:Anton,Impact,sans-serif;font-style:italic;font-size:120px;line-height:.95;letter-spacing:.03em;text-transform:uppercase;color:#F5F5F0">The Best<br><span style="color:#FF2D8A">Drug</span></p>
+          <p style="margin:6px 0 0;font-family:Anton,Impact,sans-serif;font-style:italic;font-size:40px;line-height:1;letter-spacing:.18em;text-transform:uppercase;color:#FF2D8A">Get on <span style="color:#F5F5F0">then get</span> <span style="color:#00F0FF">off</span></p>
+          <p style="margin:10px 0 0;font-size:24px;letter-spacing:.2em;text-transform:uppercase;color:rgba(245,245,240,.6)">thebestdrug.com · 18+</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- iMESSAGE + EMAIL PREVIEWS -->
+  <section style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:24px">
+    <div style="border-radius:20px;border:1px solid rgba(245,245,240,.1);background:#120A14;padding:28px;display:flex;flex-direction:column;gap:20px">
+      <p style="margin:0;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:rgba(245,245,240,.5)">iMessage / RCS link card</p>
+      <div style="align-self:flex-end;width:280px;border-radius:20px;overflow:hidden;background:#2a2a2e">
+        <img src="assets/og-image.png" alt="link preview" style="display:block;width:100%;aspect-ratio:1200/630;object-fit:cover;background:#07060B">
+        <div style="padding:10px 14px 12px;display:flex;flex-direction:column;gap:2px">
+          <p style="margin:0;font-size:14px;font-weight:600;color:#fff">The Best Drug — Get On Then Get Off</p>
+          <p style="margin:0;font-size:12px;color:rgba(255,255,255,.55)">thebestdrug.com</p>
+        </div>
+      </div>
+    </div>
+    <div style="border-radius:20px;border:1px solid rgba(245,245,240,.1);background:#120A14;padding:28px;display:flex;flex-direction:column;gap:20px">
+      <p style="margin:0;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:rgba(245,245,240,.5)">Email / social (Open Graph) card</p>
+      <div style="border-radius:14px;overflow:hidden;border:1px solid rgba(245,245,240,.12);background:#fff;color:#111">
+        <img src="assets/og-image.png" alt="link preview" style="display:block;width:100%;aspect-ratio:1200/630;object-fit:cover;background:#07060B">
+        <div style="padding:12px 14px 14px;display:flex;flex-direction:column;gap:3px">
+          <p style="margin:0;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:#777">thebestdrug.com</p>
+          <p style="margin:0;font-size:15px;font-weight:600">The Best Drug — Get On Then Get Off</p>
+          <p style="margin:0;font-size:13px;color:#555">See who's nearby, share what you're into, and connect in the moment. 18+.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+</x-dc>
+</body>
+</html>

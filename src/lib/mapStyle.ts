@@ -3,18 +3,19 @@ import type { Map as MapLibreMap } from "maplibre-gl";
 export const BASE_MAP_STYLE =
   "https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json";
 
+// Pink-tinted darks over Carto dark-matter (The Best Drug basemap tint).
 const PALETTE = {
-  void: "#06040c",
-  water: "#0a2f3a",
-  land: "#0f0d18",
-  park: "#141a0d",
-  road: "#241a10",
-  roadMajor: "#3a2a12",
-  building: "#1c140f",
-  label: "#d8cbb8",
+  void: "#07060b",
+  water: "#0a2a33",
+  land: "#22121e",
+  park: "#161018",
+  road: "#3a1a30",
+  roadMajor: "#4a2240",
+  building: "#1a0f18",
+  label: "#d8c8d2",
 };
 
-export function applyIntoNowMapStyle(map: MapLibreMap) {
+export function applyBrandMapStyle(map: MapLibreMap) {
   const set = (layer: string, prop: string, value: unknown) => {
     if (map.getLayer(layer)) map.setPaintProperty(layer, prop, value);
   };
