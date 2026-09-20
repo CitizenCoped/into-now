@@ -58,7 +58,7 @@ export default function BlurredPhoto({
 
   return (
     <div
-      className="relative w-full overflow-hidden rounded-xl border border-white/10 bg-[#0f0d18]"
+      className="relative w-full overflow-hidden rounded-xl border border-white/10 bg-[#120A14]"
       style={{ aspectRatio }}
     >
       {/* Placeholder layer: upscaled micro-image + heavy blur. Always mounted
@@ -92,7 +92,7 @@ export default function BlurredPhoto({
             height="22"
             viewBox="0 0 24 24"
             fill="none"
-            stroke="#FF8A1E"
+            stroke="#FF2D8A"
             strokeWidth={1.8}
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -110,7 +110,7 @@ export default function BlurredPhoto({
               <button
                 type="button"
                 onClick={onRequestReveal}
-                className="rounded-full border border-[#FF8A1E]/40 bg-[#FF8A1E]/15 px-3 py-1.5 text-[11px] font-semibold text-[#FF8A1E] transition hover:bg-[#FF8A1E]/25"
+                className="rounded-full border border-[#FF2D8A]/40 bg-[#FF2D8A]/15 px-3 py-1.5 text-[11px] font-semibold text-[#FF2D8A] transition hover:bg-[#FF2D8A]/25"
               >
                 Ask to reveal
               </button>
@@ -121,12 +121,12 @@ export default function BlurredPhoto({
       {/* LIVE badge — camera-only capture, matches the presence glow. */}
       {isLive && (
         <span
-          className="absolute left-2 top-2 flex items-center gap-1 rounded-full bg-black/60 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[#FF9E2C]"
-          style={{ textShadow: "0 0 6px #FF9E2C" }}
+          className="absolute left-2 top-2 flex items-center gap-1 rounded-full bg-black/60 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[#00F0FF]"
+          style={{ textShadow: "0 0 6px #00F0FF" }}
         >
           <span
-            className="h-1.5 w-1.5 rounded-full bg-[#FF9E2C]"
-            style={{ boxShadow: "0 0 6px #FF9E2C" }}
+            className="h-1.5 w-1.5 rounded-full bg-[#00F0FF]"
+            style={{ boxShadow: "0 0 6px #00F0FF" }}
           />
           Live
         </span>

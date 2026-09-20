@@ -94,7 +94,7 @@ export default function MessagePanel({
       position="bottom-left"
       onClick={() => (expanded ? closePanel() : onExpandedChange(true))}
       ariaLabel={expanded ? "Close messages panel" : "Open messages panel"}
-        accentColor="#FF8A1E"
+        accentColor="#FF2D8A"
         icon={
           <svg
             width="22"
@@ -112,7 +112,7 @@ export default function MessagePanel({
         }
         badge={
           unreadCount > 0 ? (
-            <span className="absolute -top-1.5 -right-1.5 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-[#FF8A1E] px-1 text-[10px] font-bold text-[#06040c]">
+            <span className="absolute -top-1.5 -right-1.5 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-[#FF2D8A] px-1 text-[10px] font-bold text-[#07060B]">
               {unreadCount > 99 ? "99+" : unreadCount}
             </span>
           ) : undefined
@@ -128,7 +128,7 @@ export default function MessagePanel({
     <>
     {fab}
     <aside
-      className="intonow-messages-panel fixed inset-0 z-30 flex flex-col overflow-hidden bg-[#0f0d18]/95 backdrop-blur-xl"
+      className="tbd-messages-panel fixed inset-0 z-30 flex flex-col overflow-hidden bg-[#120A14]/95 backdrop-blur-xl"
       data-messages-panel-expanded="true"
     >
       <header
@@ -138,7 +138,7 @@ export default function MessagePanel({
         <span className="mx-auto mb-2.5 h-[5px] w-11 rounded-full bg-white/20" />
         <div className="flex items-center justify-between gap-2">
           <div className="min-w-0">
-            <p className="text-sm font-semibold text-[#FF8A1E]">Messages</p>
+            <p className="font-display italic uppercase text-[17px] leading-none tracking-[.05em] text-[#FF2D8A]">Messages</p>
             <p className="mt-0.5 truncate text-[11px] text-white/40">
               {user ? sessionLabel(user) : "Sign in to chat"}
             </p>

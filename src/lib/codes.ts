@@ -28,18 +28,18 @@ export const TOKEN_LABELS: Record<LookingForToken, string> = {
 
 /**
  * Post accent colors, keyed by who is posting (6 colors keeps the map
- * readable; the badge text carries the full code). Sunset Pop palette.
+ * readable; the badge text carries the full code). The Best Drug palette.
  */
 export const CODE_COLORS: Record<IdentityToken, string> = {
-  M: "#FFB03A",
-  W: "#FF4D6D",
-  T: "#A78BFA",
-  MW: "#FF8A1E",
-  MM: "#F56A00",
-  WW: "#EC4899",
+  M: "#FF2D8A",
+  W: "#00F0FF",
+  T: "#B48CFF",
+  MW: "#F5F5F0",
+  MM: "#FF8AC2",
+  WW: "#7DF9FF",
 };
 
-const FALLBACK_COLOR = "#FF8A1E";
+const FALLBACK_COLOR = "#FF2D8A";
 
 export function isIdentityToken(value: string): value is IdentityToken {
   return (IDENTITY_TOKENS as readonly string[]).includes(value);

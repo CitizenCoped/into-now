@@ -5,7 +5,7 @@
  * composer (design_handoff_photo_messaging/, prototype panel).
  *
  * - 5-column grid, `n/10` library count, `n/5 selected`.
- * - Selection = 2px #FF8A1E border + ordered number badge (send order).
+ * - Selection = 2px #FF2D8A border + ordered number badge (send order).
  * - Dashed add-tile → file picker; dashed orange camera-tile →
  *   getUserMedia capture (marks the photo LIVE). At 10/10 the add tile
  *   goes inert and shows "10/10" until a photo is removed.
@@ -104,8 +104,8 @@ function LibraryTile({
         aspectRatio: 1,
         borderRadius: 9,
         border: rejected
-          ? "1px solid rgba(255,77,109,.35)"
-          : `2px solid ${selected ? "#FF8A1E" : "rgba(255,255,255,.12)"}`,
+          ? "1px solid rgba(255,45,138,.35)"
+          : `2px solid ${selected ? "#FF2D8A" : "rgba(255,255,255,.12)"}`,
         cursor: photo.status === "ready" ? "pointer" : "default",
         touchAction: "none",
       }}
@@ -131,7 +131,7 @@ function LibraryTile({
               height: "36%",
               top: "-40%",
               background:
-                "linear-gradient(180deg,transparent,rgba(255,138,30,.5),transparent)",
+                "linear-gradient(180deg,transparent,rgba(255,45,138,.5),transparent)",
               animation: "scanSweep .45s linear infinite",
             }}
           />
@@ -142,14 +142,14 @@ function LibraryTile({
       {rejected && (
         <div
           className="absolute inset-0 flex flex-col items-center justify-center"
-          style={{ gap: 6, background: "rgba(255,77,109,.06)" }}
+          style={{ gap: 6, background: "rgba(255,45,138,.06)" }}
         >
           <svg
             width="20"
             height="20"
             viewBox="0 0 24 24"
             fill="none"
-            stroke="#FF4D6D"
+            stroke="#FF2D8A"
             strokeWidth={1.8}
             strokeLinecap="round"
             aria-hidden
@@ -157,22 +157,22 @@ function LibraryTile({
             <circle cx="12" cy="12" r="9" />
             <line x1="6" y1="6" x2="18" y2="18" />
           </svg>
-          <span style={{ fontSize: 9, color: "#FF4D6D" }}>Can&apos;t be shared</span>
+          <span style={{ fontSize: 9, color: "#FF2D8A" }}>Can&apos;t be shared</span>
         </div>
       )}
 
       {/* LIVE dot — camera captures. */}
       {photo.isLive && !rejected && (
         <span
-          className="absolute rounded-full bg-[#FF9E2C]"
-          style={{ left: 4, top: 4, width: 6, height: 6, boxShadow: "0 0 6px #FF9E2C" }}
+          className="absolute rounded-full bg-[#00F0FF]"
+          style={{ left: 4, top: 4, width: 6, height: 6, boxShadow: "0 0 6px #00F0FF" }}
         />
       )}
 
       {/* Ordered selection badge. */}
       {selected && (
         <span
-          className="absolute flex items-center justify-center rounded-full bg-[#FF8A1E] text-[#06040c]"
+          className="absolute flex items-center justify-center rounded-full bg-[#FF2D8A] text-[#07060B]"
           style={{ right: 4, top: 4, width: 16, height: 16, fontSize: 9, fontWeight: 800 }}
         >
           {selectionIndex + 1}
@@ -276,9 +276,9 @@ function CameraCapture({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-      <div className="w-full max-w-sm overflow-hidden rounded-2xl border border-white/10 bg-[#0f0d18] shadow-2xl">
+      <div className="w-full max-w-sm overflow-hidden rounded-2xl border border-white/10 bg-[#120A14] shadow-2xl">
         {cameraError ? (
-          <p className="p-5 text-sm text-[#FF4D6D]">{cameraError}</p>
+          <p className="p-5 text-sm text-[#FF2D8A]">{cameraError}</p>
         ) : (
           <video
             ref={videoRef}
@@ -292,7 +292,7 @@ function CameraCapture({
             type="button"
             onClick={capture}
             disabled={Boolean(cameraError)}
-            className="flex-1 rounded-lg bg-gradient-to-r from-[#FFB03A] to-[#F56A00] py-2 text-sm font-semibold text-[#06040c] transition hover:brightness-110 disabled:opacity-50"
+            className="flex-1 rounded-lg bg-[#FF2D8A] py-2 text-sm font-semibold text-[#07060B] transition hover:brightness-110 disabled:opacity-50"
           >
             Capture
           </button>
@@ -403,11 +403,11 @@ export default function PhotoSheet({
             title="Live camera capture"
             disabled={preparing}
             onClick={() => setCameraOpen(true)}
-            className="flex items-center justify-center bg-transparent text-[#FF9E2C] disabled:opacity-40"
+            className="flex items-center justify-center bg-transparent text-[#00F0FF] disabled:opacity-40"
             style={{
               aspectRatio: 1,
               borderRadius: 9,
-              border: "1px dashed rgba(255,158,44,.35)",
+              border: "1px dashed rgba(0,240,255,.35)",
               cursor: preparing ? "default" : "pointer",
             }}
           >
@@ -429,7 +429,7 @@ export default function PhotoSheet({
       </div>
 
       {error ? (
-        <p className="mt-2" style={{ fontSize: 10, color: "#FF4D6D" }}>
+        <p className="mt-2" style={{ fontSize: 10, color: "#FF2D8A" }}>
           {error}
         </p>
       ) : preparing ? (

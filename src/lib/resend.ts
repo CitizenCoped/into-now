@@ -19,7 +19,7 @@ export async function sendEmailCode(email: string, code: string) {
   await resend.emails.send({
     from,
     to: email,
-    subject: "Your Into Now verification code",
+    subject: "Your verification code for The Best Drug",
     text: `Your verification code is ${code}. It expires in 10 minutes.`,
     html: `<p>Your verification code is <strong>${code}</strong>.</p><p>It expires in 10 minutes.</p>`,
   });

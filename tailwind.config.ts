@@ -12,6 +12,10 @@ const config: Config = {
         background: "var(--background)",
         foreground: "var(--foreground)",
       },
+      fontFamily: {
+        /** Anton (next/font/google) — italic uppercase display face for wordmark, titles, CTAs. */
+        display: ["var(--font-display)", "Impact", "sans-serif"],
+      },
     },
   },
   plugins: [],

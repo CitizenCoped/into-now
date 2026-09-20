@@ -15,6 +15,7 @@ import InstallPrompt from "./InstallPrompt";
 import MessagePanel from "./MessagePanel";
 import PostPanel from "./PostPanel";
 import ProfilePanel from "./ProfilePanel";
+import Wordmark from "./Wordmark";
 
 const MapView = dynamic(() => import("./MapView"), { ssr: false });
 
@@ -164,11 +165,11 @@ export default function HomePage() {
   }, [unlitUsers, userFilters, myLocation, isRegistered]);
 
   useEffect(() => {
-    document.body.classList.toggle("intonow-panel-open", openPanel === "posts");
-    document.body.classList.toggle("intonow-messages-panel-open", openPanel === "messages");
+    document.body.classList.toggle("tbd-panel-open", openPanel === "posts");
+    document.body.classList.toggle("tbd-messages-panel-open", openPanel === "messages");
     return () => {
-      document.body.classList.remove("intonow-panel-open");
-      document.body.classList.remove("intonow-messages-panel-open");
+      document.body.classList.remove("tbd-panel-open");
+      document.body.classList.remove("tbd-messages-panel-open");
     };
   }, [openPanel]);
 
@@ -296,7 +297,7 @@ export default function HomePage() {
   const postLng = myLocation?.lng ?? center.lng;
 
   return (
-    <main className="relative h-dvh w-full overflow-hidden bg-[#06040c]">
+    <main className="relative h-dvh w-full overflow-hidden bg-[#07060B]">
       {/*
         Fixed top-center wordmark. The wrapper below establishes a new
         containing block (via `transform`) for InstallPrompt's own
@@ -304,14 +305,10 @@ export default function HomePage() {
         they stack under the logo instead of covering it.
       */}
       <div className="pointer-events-none fixed inset-0 z-20 flex justify-center">
-        <img
-          src="/logo.svg"
-          alt="into.now"
-          className="mt-[max(0.75rem,env(safe-area-inset-top))] h-7 w-auto drop-shadow-[0_2px_8px_rgba(0,0,0,0.6)] sm:h-8"
-        />
+        <Wordmark className="mt-[max(0.75rem,env(safe-area-inset-top))] text-[22px] drop-shadow-[0_2px_8px_rgba(0,0,0,0.6)] sm:text-[24px]" />
       </div>
       <div
-        className="intonow-install-anchor pointer-events-none fixed inset-x-0 top-0 z-30"
+        className="tbd-install-anchor pointer-events-none fixed inset-x-0 top-0 z-30"
         style={{
           transform: "translateZ(0)",
           paddingTop: "calc(max(0.75rem, env(safe-area-inset-top)) + 2.5rem)",
@@ -320,8 +317,8 @@ export default function HomePage() {
         <InstallPrompt />
       </div>
       {presenceReady && locationDenied && (
-        <div className="absolute left-1/2 top-[calc(max(1rem,env(safe-area-inset-top))+3rem)] z-30 w-[calc(100%-2rem)] max-w-md -translate-x-1/2 rounded-xl border border-[#FF4D6D]/40 bg-[#170a12]/90 px-4 py-2.5 text-center text-xs text-white/80 shadow-lg backdrop-blur">
-          <span className="font-semibold text-[#FF4D6D]">Your light is off.</span>{" "}
+        <div className="absolute left-1/2 top-[calc(max(1rem,env(safe-area-inset-top))+3rem)] z-30 w-[calc(100%-2rem)] max-w-md -translate-x-1/2 rounded-xl border border-[#FF2D8A]/40 bg-[#1a0a14]/90 px-4 py-2.5 text-center text-xs text-white/80 shadow-lg backdrop-blur">
+          <span className="font-semibold text-[#FF2D8A]">Your light is off.</span>{" "}
           Allow location access in your browser settings to appear live on the map.
         </div>
       )}

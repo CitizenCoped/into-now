@@ -99,8 +99,8 @@ export default function Harness() {
       </div>
 
       {sourceName && <p className="mb-2 text-white/60">Source: {sourceName}</p>}
-      {busy && <p className="text-[#FF8A1E]">Preparing…</p>}
-      {error && <p className="text-[#FF4D6D]">{error}</p>}
+      {busy && <p className="text-[#FF2D8A]">Preparing…</p>}
+      {error && <p className="text-[#FF2D8A]">{error}</p>}
 
       {result && outUrl && (
         <div className="space-y-3">

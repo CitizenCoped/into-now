@@ -46,14 +46,14 @@ export default function FilterPanel({
   const [pickingIdentity, setPickingIdentity] = useState(false);
   const [savingIdentity, setSavingIdentity] = useState(false);
   const panelPosition =
-    "intonow-filter-panel fixed z-20 top-[max(1rem,env(safe-area-inset-top))] left-[max(1rem,env(safe-area-inset-left))]";
+    "tbd-filter-panel fixed z-20 top-[max(1rem,env(safe-area-inset-top))] left-[max(1rem,env(safe-area-inset-left))]";
 
   const fab = (
       <CornerControl
         position="top-left"
         onClick={() => onExpandedChange(!expanded)}
         ariaLabel={expanded ? "Close filters" : "Open filters"}
-        accentColor="#FF4D6D"
+        accentColor="#FF2D8A"
         icon={
           <svg
             width="22"
@@ -67,11 +67,11 @@ export default function FilterPanel({
             aria-hidden
           >
             <line x1="4" y1="6" x2="20" y2="6" />
-            <circle cx="9" cy="6" r="2" fill="#0f0d18" />
+            <circle cx="9" cy="6" r="2" fill="#120A14" />
             <line x1="4" y1="12" x2="20" y2="12" />
-            <circle cx="15" cy="12" r="2" fill="#0f0d18" />
+            <circle cx="15" cy="12" r="2" fill="#120A14" />
             <line x1="4" y1="18" x2="20" y2="18" />
-            <circle cx="11" cy="18" r="2" fill="#0f0d18" />
+            <circle cx="11" cy="18" r="2" fill="#120A14" />
           </svg>
         }
       />
@@ -85,10 +85,10 @@ export default function FilterPanel({
     <>
     {fab}
     <aside
-      className={`${panelPosition} flex max-h-[min(60vh,520px)] w-[min(340px,calc(100vw-2rem))] flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#0f0d18]/90 shadow-2xl backdrop-blur-xl`}
+      className={`${panelPosition} flex max-h-[min(60vh,520px)] w-[min(340px,calc(100vw-2rem))] flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#120A14]/90 shadow-2xl backdrop-blur-xl`}
     >
       <header className="flex shrink-0 items-center justify-between border-b border-white/5 px-4 py-3">
-        <p className="text-sm font-semibold text-[#FF4D6D]">Filters</p>
+        <p className="font-display italic uppercase text-[17px] leading-none tracking-[.05em] text-[#FF2D8A]">Filters</p>
         <button
           type="button"
           onClick={() => onExpandedChange(false)}
@@ -108,7 +108,7 @@ export default function FilterPanel({
             <button
               type="button"
               onClick={onUpgradeClick}
-              className="w-full rounded-lg bg-gradient-to-r from-[#FFB03A] to-[#F56A00] py-2.5 text-sm font-semibold text-[#06040c]"
+              className="w-full rounded-lg bg-[#FF2D8A] py-2.5 font-display italic uppercase text-[15px] tracking-[.05em] text-[#07060B] transition hover:brightness-110"
             >
               Sign up free
             </button>
@@ -138,7 +138,7 @@ export default function FilterPanel({
                     }
                   }}
                   className={`relative h-6 w-11 shrink-0 rounded-full transition ${
-                    forMe ? "bg-[#FF8A1E]" : "bg-white/10"
+                    forMe ? "bg-[#FF2D8A]" : "bg-white/10"
                   }`}
                   aria-label="Show posts looking for me"
                 >
@@ -156,8 +156,8 @@ export default function FilterPanel({
               </p>
 
               {pickingIdentity && !user?.identity && (
-                <div className="mt-2 rounded-xl border border-[#FF8A1E]/20 bg-[#FF8A1E]/5 p-3">
-                  <p className="mb-2 text-[11px] font-semibold text-[#FF8A1E]">
+                <div className="mt-2 rounded-xl border border-[#FF2D8A]/20 bg-[#FF2D8A]/5 p-3">
+                  <p className="mb-2 text-[11px] font-semibold text-[#FF2D8A]">
                     First — you are:
                   </p>
                   <div className="flex flex-wrap gap-1.5">
@@ -286,7 +286,7 @@ export default function FilterPanel({
                     maxDistanceMiles: Number(e.target.value),
                   })
                 }
-                className="w-full"
+                className="w-full accent-[#FF2D8A]"
               />
               <p className="mt-1 text-xs text-white/40">Within {userFilters.maxDistanceMiles} mi</p>
             </div>

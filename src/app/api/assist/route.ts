@@ -13,7 +13,7 @@ const assistSchema = z.object({
   intent: z.string().optional(),
 });
 
-const SYSTEM_PROMPT = `You are Grok, the posting coach for into.now — a map-based personals app for adults. The tagline is "what are you into? NOW?" Every post carries a classic personals code (M4W, W4MM, MW4MW, T4ANY...) meaning "I am X, looking for Y" — the user has already picked theirs; your job is the headline and description.
+const SYSTEM_PROMPT = `You are Grok, the posting coach for The Best Drug — a map-based personals app for adults. The tagline is "Get On Then Get Off" Every post carries a classic personals code (M4W, W4MM, MW4MW, T4ANY...) meaning "I am X, looking for Y" — the user has already picked theirs; your job is the headline and description.
 
 Help users write a great personals post: a punchy, specific headline (under 60 chars) and an honest, inviting description (2-4 sentences) with right-now energy — what they're looking for, roughly where, and when. Warm, direct, confident, respectful. Specificity and personality beat generic thirst; suggestion beats exposure.
 
@@ -59,7 +59,7 @@ export async function POST(request: NextRequest) {
     titleDraft && `Headline draft: ${titleDraft}`,
     descriptionDraft && `Description draft: ${descriptionDraft}`,
     intent && `User intent: ${intent}`,
-    "Please suggest an improved headline and description for this into.now post.",
+    "Please suggest an improved headline and description for this post on The Best Drug.",
   ]
     .filter(Boolean)
     .join("\n");

@@ -130,7 +130,7 @@ export default function ActivityPage() {
                   <td className="whitespace-nowrap px-4 py-3 font-medium text-white">
                     {formatAction(row.action)}
                   </td>
-                  <td className="whitespace-nowrap px-4 py-3 text-[#ff8a1e]">{row.phone ?? "—"}</td>
+                  <td className="whitespace-nowrap px-4 py-3 text-[#FF2D8A]">{row.phone ?? "—"}</td>
                   <td className="px-4 py-3 text-white/50">{formatMetadata(row.metadata)}</td>
                 </tr>
               ))

@@ -57,7 +57,7 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
   });
 
   void pushoverAlert(
-    "into.now: Post reported",
+    "The Best Drug: Post reported",
     [
       `Post: [${post.category}] ${post.title}`,
       `Post id: ${post.id}`,

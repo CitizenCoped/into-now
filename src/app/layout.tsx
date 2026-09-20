@@ -1,57 +1,68 @@
 import type { Metadata, Viewport } from "next";
+import { Anton } from "next/font/google";
 import SerwistRegister from "@/components/SerwistRegister";
 import "./globals.css";
 
-const OG_IMAGE =
-  "https://res.cloudinary.com/dq2wjozdk/image/upload/v1781158468/IMG_1255_eg2rnc.jpg";
+/** Display face — italic uppercase wordmark, titles and CTA labels (see tailwind `font-display`). */
+const anton = Anton({
+  weight: "400",
+  subsets: ["latin"],
+  variable: "--font-display",
+  display: "swap",
+});
 
-const PWA_ICON =
-  "https://res.cloudinary.com/dq2wjozdk/image/upload/w_192,h_192,c_fill/IMG_1255_eg2rnc.jpg";
-
-const APP_URL = (process.env.NEXT_PUBLIC_APP_URL || "https://into-now.vercel.app").replace(
+const APP_URL = (process.env.NEXT_PUBLIC_APP_URL || "https://thebestdrug.com").replace(
   /\/$/,
   ""
 );
 
+/** 1200×630 link-preview card (iMessage / RCS / SMS / email / Slack), absolute via metadataBase. */
+const OG_IMAGE = "/og.png";
+
+const TAGLINE = "Get On Then Get Off";
+
 export const metadata: Metadata = {
   metadataBase: new URL(APP_URL),
   manifest: "/manifest.json",
-  title: "into.now — what are you into? NOW?",
-  description:
-    "Discover and share what you're into, right now. A map-first local discovery app.",
+  title: `The Best Drug — ${TAGLINE}`,
+  description: "See who's nearby, share what you're into, and connect in the moment. 18+.",
   openGraph: {
-    title: "into.now",
-    description: "what are you into? NOW?",
-    siteName: "into.now",
+    title: "The Best Drug",
+    description: TAGLINE,
+    siteName: "The Best Drug",
     type: "website",
     url: APP_URL,
     images: [
       {
         url: OG_IMAGE,
-        width: 720,
-        height: 1280,
-        alt: "into.now — what are you into? NOW?",
+        width: 1200,
+        height: 630,
+        alt: `The Best Drug — ${TAGLINE}`,
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "into.now",
-    description: "what are you into? NOW?",
+    title: "The Best Drug",
+    description: TAGLINE,
     images: [OG_IMAGE],
   },
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "into.now",
+    title: "The Best Drug",
   },
   icons: {
-    apple: PWA_ICON,
+    icon: [
+      { url: "/favicon.svg", type: "image/svg+xml" },
+      { url: "/favicon.ico", sizes: "48x48" },
+    ],
+    apple: "/apple-touch-icon.png",
   },
 };
 
 export const viewport: Viewport = {
-  themeColor: "#06040c",
+  themeColor: "#07060B",
   width: "device-width",
   initialScale: 1,
   // Map app: page-level zoom fights map pinch-zoom and double-tap on the
@@ -66,7 +77,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" className={anton.variable}>
       <body className="antialiased">
         <SerwistRegister />
         {children}

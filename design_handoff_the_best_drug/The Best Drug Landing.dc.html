@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Anton&display=swap" rel="stylesheet">
+<link rel="icon" href="assets/favicon.svg">
+<style>
+body{margin:0;background:#0A070D;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#F5F5F0}
+a{color:#FF2D8A}a:hover{color:#00F0FF}
+input::placeholder{color:rgba(245,245,240,.35)}
+select option{background:#120A14;color:#F5F5F0}
+@keyframes tbdPulse{0%,100%{opacity:1}50%{opacity:.35}}
+</style>
+</helmet>
+<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:32px;box-sizing:border-box;background:radial-gradient(ellipse at top,rgba(255,45,138,.08),transparent 55%),radial-gradient(ellipse at bottom,rgba(0,240,255,.05),transparent 45%),#0A070D">
+<x-import component-from-global-scope="IOSDevice" from="./ios-frame.jsx" dark="{{ true }}" hint-size="402px,874px">
+  <div style="position:relative;width:100%;height:874px;overflow:hidden;background:#07060B;display:flex;flex-direction:column">
+    <!-- backdrop: looping landing video, dimmed to ~30% -->
+    <div aria-hidden="true" style="position:absolute;inset:0;overflow:hidden;background:#07060B;pointer-events:none">
+      <sc-if value="{{ showVideo }}" hint-placeholder-val="{{ true }}">
+        <video src="https://thebestdrug.sfo3.cdn.digitaloceanspaces.com/Video/landing-loop.mp4" poster="https://thebestdrug.sfo3.cdn.digitaloceanspaces.com/images/landing-poster.jpg" autoPlay="{{ true }}" muted="{{ true }}" loop="{{ true }}" playsInline="{{ true }}" preload="auto" style="width:100%;height:100%;object-fit:cover;opacity:.55;display:block"></video>
+      </sc-if>
+      <div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(7,6,11,.45) 0%,rgba(7,6,11,0) 28%,rgba(7,6,11,0) 60%,rgba(7,6,11,.6) 100%)"></div>
+      <div style="position:absolute;left:-30%;top:-10%;width:80%;height:40%;border-radius:9999px;background:rgba(255,45,138,.14);filter:blur(110px)"></div>
+      <div style="position:absolute;right:-25%;bottom:-5%;width:65%;height:35%;border-radius:9999px;background:rgba(0,240,255,.08);filter:blur(100px)"></div>
+    </div>
+    <!-- hero -->
+    <div style="position:relative;flex:none;display:flex;flex-direction:column;align-items:center;padding:170px 24px 0;text-align:center;gap:6px">
+      <img src="assets/tbd-mark.svg" alt="" style="width:52px;height:56px;margin-bottom:6px;filter:drop-shadow(0 4px 18px rgba(255,45,138,.45))">
+      <h1 style="margin:0;font-family:Anton,Impact,sans-serif;font-style:italic;font-weight:400;font-size:40px;letter-spacing:.04em;line-height:1;color:#F5F5F0;text-shadow:0 3px 20px rgba(0,0,0,.7)">THE BEST <span style="color:#FF2D8A;text-shadow:0 4px 28px rgba(255,45,138,.45)">DRUG</span></h1>
+      <p style="margin:0;font-family:Anton,Impact,sans-serif;font-style:italic;font-size:14px;line-height:1;letter-spacing:.16em;text-transform:uppercase;color:#FF2D8A;text-shadow:0 2px 14px rgba(0,0,0,.6)">Get on <span style="color:#F5F5F0">then get</span> <span style="color:#00F0FF">off</span></p>
+      <p style="margin:2px 0 0;max-width:280px;font-size:12px;line-height:1.4;color:rgba(245,245,240,.72);text-shadow:0 1px 8px rgba(0,0,0,.7);text-wrap:pretty">See who's nearby, share what you're into, and connect in the moment.</p>
+    </div>
+    <!-- age gate / join / auth card -->
+    <div style="position:relative;flex:none;padding:16px 28px 0">
+      <div style="border-radius:22px;border:1px solid rgba(245,245,240,.1);background:rgba(18,10,20,.45);backdrop-filter:blur(18px);box-shadow:0 30px 60px -20px rgba(0,0,0,.8);padding:14px 16px 16px">
+        <div style="display:flex;align-items:center;justify-content:center;gap:6px;margin-bottom:2px">
+          <span style="width:22px;height:3px;border-radius:2px;background:{{ dot1 }}"></span>
+          <span style="width:22px;height:3px;border-radius:2px;background:{{ dot2 }}"></span>
+          <span style="width:22px;height:3px;border-radius:2px;background:{{ dot3 }}"></span>
+        </div>
+        <p style="margin:8px 0 0;text-align:center;font-family:Anton,Impact,sans-serif;font-style:italic;font-size:16px;letter-spacing:.04em;text-transform:uppercase;color:#F5F5F0">{{ cardTitle }}</p>
+        <!-- step 1 · birthday -->
+        <sc-if value="{{ isBirthday }}" hint-placeholder-val="{{ true }}">
+          <div style="margin-top:8px;display:flex;flex-direction:column;gap:10px">
+            <p style="margin:0;text-align:center;font-size:11px;color:rgba(245,245,240,.45)">You must be 18 or older to join.</p>
+            <div style="display:grid;grid-template-columns:1.4fr .8fr 1fr;gap:8px">
+              <div style="position:relative"><select aria-label="Birth month" value="{{ month }}" onChange="{{ setMonth }}" style="width:100%;appearance:none;-webkit-appearance:none;border-radius:14px;border:1px solid {{ monthBorder }};background:rgba(245,245,240,.06);padding:11px 26px 11px 12px;font-size:14px;color:#F5F5F0;outline:none;font-family:inherit"><option value="0" disabled="{{ true }}">Month</option><sc-for list="{{ months }}" as="m" hint-placeholder-count="12"><option value="{{ m.v }}">{{ m.label }}</option></sc-for></select><span style="position:absolute;right:12px;top:50%;transform:translateY(-50%);pointer-events:none;color:rgba(245,245,240,.4);font-size:11px">▾</span></div>
+              <div style="position:relative"><select aria-label="Birth day" value="{{ day }}" onChange="{{ setDay }}" style="width:100%;appearance:none;-webkit-appearance:none;border-radius:14px;border:1px solid {{ dayBorder }};background:rgba(245,245,240,.06);padding:11px 22px 11px 12px;font-size:14px;color:#F5F5F0;outline:none;font-family:inherit"><option value="0" disabled="{{ true }}">Day</option><sc-for list="{{ days }}" as="d" hint-placeholder-count="31"><option value="{{ d }}">{{ d }}</option></sc-for></select><span style="position:absolute;right:10px;top:50%;transform:translateY(-50%);pointer-events:none;color:rgba(245,245,240,.4);font-size:11px">▾</span></div>
+              <div style="position:relative"><select aria-label="Birth year" value="{{ year }}" onChange="{{ setYear }}" style="width:100%;appearance:none;-webkit-appearance:none;border-radius:14px;border:1px solid {{ yearBorder }};background:rgba(245,245,240,.06);padding:11px 22px 11px 12px;font-size:14px;color:#F5F5F0;outline:none;font-family:inherit"><option value="0" disabled="{{ true }}">Year</option><sc-for list="{{ years }}" as="y" hint-placeholder-count="10"><option value="{{ y }}">{{ y }}</option></sc-for></select><span style="position:absolute;right:10px;top:50%;transform:translateY(-50%);pointer-events:none;color:rgba(245,245,240,.4);font-size:11px">▾</span></div>
+            </div>
+            <sc-if value="{{ hasError }}" hint-placeholder-val="{{ false }}"><p style="margin:0;font-size:13px;color:#FF2D8A">{{ error }}</p></sc-if>
+            <button onClick="{{ submitBirthday }}" disabled="{{ birthdayDisabled }}" style="width:100%;border:none;border-radius:14px;background:#FF2D8A;padding:12px;font-family:Anton,Impact,sans-serif;font-style:italic;font-size:16px;letter-spacing:.06em;text-transform:uppercase;color:#07060B;cursor:pointer;opacity:{{ birthdayOpacity }};transition:opacity .15s,transform .1s,box-shadow .15s;box-shadow:0 10px 30px -8px rgba(255,45,138,.6)" style-hover="box-shadow:0 12px 34px -6px rgba(255,45,138,.8)" style-active="transform:scale(.99)">Continue</button>
+          </div>
+        </sc-if>
+        <!-- step 2 · join mode -->
+        <sc-if value="{{ isMode }}" hint-placeholder-val="{{ false }}">
+          <div style="margin-top:18px;display:flex;flex-direction:column;gap:10px">
+            <button onClick="{{ goAuth }}" style="width:100%;text-align:left;border-radius:14px;border:1px solid rgba(255,45,138,.45);background:rgba(255,45,138,.12);padding:14px 16px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:12px;transition:background .15s" style-hover="background:rgba(255,45,138,.2)">
+              <span><span style="display:block;font-family:Anton,Impact,sans-serif;font-style:italic;font-size:17px;letter-spacing:.04em;text-transform:uppercase;color:#FF2D8A">Sign up free</span><span style="display:block;margin-top:3px;font-size:12px;color:rgba(245,245,240,.55)">Verify with phone or email</span></span>
+              <span style="font-size:18px;color:#FF2D8A">→</span>
+            </button>
+            <button onClick="{{ goAnon }}" style="width:100%;text-align:left;border-radius:14px;border:1px solid rgba(245,245,240,.12);background:rgba(245,245,240,.05);padding:14px 16px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:12px;transition:background .15s" style-hover="background:rgba(245,245,240,.1)">
+              <span><span style="display:block;font-family:Anton,Impact,sans-serif;font-style:italic;font-size:17px;letter-spacing:.04em;text-transform:uppercase;color:#F5F5F0">Stay anonymous</span><span style="display:block;margin-top:3px;font-size:12px;color:rgba(245,245,240,.55)">4-hour session, no account needed</span></span>
+              <span style="font-size:18px;color:#00F0FF">→</span>
+            </button>
+            <button onClick="{{ goBirthday }}" style="margin-top:2px;background:none;border:none;font-size:12px;color:rgba(245,245,240,.45);cursor:pointer" style-hover="color:#F5F5F0">← Back</button>
+          </div>
+        </sc-if>
+        <!-- step 3 · auth -->
+        <sc-if value="{{ isAuth }}" hint-placeholder-val="{{ false }}">
+          <div style="margin-top:16px;display:flex;flex-direction:column;gap:12px">
+            <div style="display:flex;gap:6px;padding:4px;border-radius:12px;background:rgba(245,245,240,.06)">
+              <button onClick="{{ pickPhone }}" style="flex:1;border:none;border-radius:9px;padding:9px;font-size:13px;font-weight:600;cursor:pointer;background:{{ phoneTabBg }};color:{{ phoneTabFg }};transition:background .15s">Phone</button>
+              <button onClick="{{ pickEmail }}" style="flex:1;border:none;border-radius:9px;padding:9px;font-size:13px;font-weight:600;cursor:pointer;background:{{ emailTabBg }};color:{{ emailTabFg }};transition:background .15s">Email</button>
+            </div>
+            <sc-if value="{{ isInput }}" hint-placeholder-val="{{ true }}">
+              <input type="{{ inputType }}" value="{{ contact }}" onChange="{{ setContact }}" placeholder="{{ contactPlaceholder }}" style="width:100%;box-sizing:border-box;border-radius:12px;border:1px solid rgba(245,245,240,.12);background:rgba(245,245,240,.06);padding:11px 12px;font-size:14px;color:#F5F5F0;outline:none;font-family:inherit" style-focus="border-color:rgba(0,240,255,.6)">
+              <button onClick="{{ sendCode }}" disabled="{{ sendDisabled }}" style="width:100%;border:none;border-radius:14px;background:#FF2D8A;padding:12px;font-family:Anton,Impact,sans-serif;font-style:italic;font-size:16px;letter-spacing:.06em;text-transform:uppercase;color:#07060B;cursor:pointer;opacity:{{ sendOpacity }};box-shadow:0 10px 30px -8px rgba(255,45,138,.6)" style-active="transform:scale(.99)">Send code</button>
+            </sc-if>
+            <sc-if value="{{ isCode }}" hint-placeholder-val="{{ false }}">
+              <p style="margin:0;font-size:12px;color:rgba(245,245,240,.5)">Code sent to <span style="color:#00F0FF">{{ contact }}</span></p>
+              <input inputMode="numeric" value="{{ code }}" onChange="{{ setCode }}" placeholder="6-digit code" style="width:100%;box-sizing:border-box;border-radius:14px;border:1px solid rgba(245,245,240,.12);background:rgba(245,245,240,.06);padding:14px;font-size:22px;letter-spacing:.3em;text-align:center;color:#F5F5F0;outline:none;font-family:inherit" style-focus="border-color:rgba(0,240,255,.6)">
+              <button onClick="{{ verify }}" disabled="{{ verifyDisabled }}" style="width:100%;border:none;border-radius:14px;background:#FF2D8A;padding:12px;font-family:Anton,Impact,sans-serif;font-style:italic;font-size:16px;letter-spacing:.06em;text-transform:uppercase;color:#07060B;cursor:pointer;opacity:{{ verifyOpacity }};box-shadow:0 10px 30px -8px rgba(255,45,138,.6)" style-active="transform:scale(.99)">Verify &amp; get on</button>
+              <button onClick="{{ resetContact }}" style="background:none;border:none;font-size:12px;color:rgba(245,245,240,.45);cursor:pointer" style-hover="color:#F5F5F0">Use a different {{ channelNoun }}</button>
+            </sc-if>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding-top:4px">
+              <button onClick="{{ goMode }}" style="background:none;border:none;font-size:12px;color:rgba(245,245,240,.45);cursor:pointer;padding:0" style-hover="color:#F5F5F0">← Back</button>
+              <span style="font-size:11px;color:rgba(245,245,240,.35)">Free account · 24-hour sessions</span>
+            </div>
+          </div>
+        </sc-if>
+      </div>
+      <p style="margin:10px 0 0;text-align:center;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:rgba(245,245,240,.4)">18+ only · <a href="#" style="color:rgba(245,245,240,.55);text-decoration:none">Terms</a> · thebestdrug.com</p>
+      <p style="margin:8px 0 0;text-align:center;font-size:12px;color:rgba(245,245,240,.6)">Already a member? <a href="#" onClick="{{ signIn }}" style="color:#00F0FF;font-weight:600;text-decoration:none">Sign in</a></p>
+    </div>
+  </div>
+</x-import>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:520,&quot;height&quot;:960},&quot;step&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;default&quot;:&quot;birthday&quot;,&quot;options&quot;:[&quot;birthday&quot;,&quot;mode&quot;,&quot;auth&quot;],&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Flow&quot;},&quot;showVideo&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Backdrop&quot;}}">
+class Component extends DCLogic {
+  state = { step: null, month: 0, day: 0, year: 0, error: "", channel: "phone", contact: "", code: "", authStep: "input" };
+  MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+  dim(y, m) { return !y || !m ? 31 : new Date(y, m, 0).getDate(); }
+  isAdult(y, m, d) { const t = new Date(); const a = t.getFullYear() - y - ((t.getMonth() + 1 < m || (t.getMonth() + 1 === m && t.getDate() < d)) ? 1 : 0); return a >= 18; }
+  componentDidUpdate(prev) { if (prev.step !== this.props.step) this.setState({ step: null }); }
+  renderVals() {
+    const s = this.state;
+    const step = s.step ?? this.props.step ?? "birthday";
+    const nowY = new Date().getFullYear();
+    const years = []; for (let y = nowY - 18; y >= nowY - 100; y--) years.push(y);
+    const days = Array.from({ length: this.dim(s.year, s.month) }, (_, i) => i + 1);
+    const full = s.month && s.day && s.year;
+    const on = "#FF2D8A", off = "rgba(245,245,240,.18)";
+    const idx = step === "birthday" ? 1 : step === "mode" ? 2 : 3;
+    const bd = (v) => v ? "rgba(0,240,255,.5)" : "rgba(245,245,240,.12)";
+    const contactOk = s.channel === "phone" ? s.contact.replace(/\D/g, "").length >= 10 : /.+@.+\..+/.test(s.contact);
+    const codeOk = s.code.trim().length >= 4;
+    return {
+      showVideo: this.props.showVideo ?? true,
+      isBirthday: step === "birthday", isMode: step === "mode", isAuth: step === "auth",
+      dot1: idx >= 1 ? on : off, dot2: idx >= 2 ? on : off, dot3: idx >= 3 ? on : off,
+      cardTitle: step === "birthday" ? "When is your birthday?" : step === "mode" ? "How do you want to join?" : "Create your free account",
+      months: this.MONTHS.map((label, i) => ({ v: i + 1, label })), days, years,
+      month: s.month, day: s.day, year: s.year,
+      monthBorder: bd(s.month), dayBorder: bd(s.day), yearBorder: bd(s.year),
+      setMonth: (e) => { const m = +e.target.value; this.setState({ month: m, day: Math.min(s.day, this.dim(s.year, m)), error: "" }); },
+      setDay: (e) => this.setState({ day: +e.target.value, error: "" }),
+      setYear: (e) => { const y = +e.target.value; this.setState({ year: y, day: Math.min(s.day, this.dim(y, s.month)), error: "" }); },
+      birthdayDisabled: !full, birthdayOpacity: full ? 1 : .45,
+      hasError: !!s.error, error: s.error,
+      submitBirthday: () => {
+        if (!full) return this.setState({ error: "Please select your full birthday." });
+        if (!this.isAdult(s.year, s.month, s.day)) return this.setState({ error: "You must be 18 or older to use The Best Drug." });
+        this.setState({ step: "mode", error: "" });
+      },
+      goBirthday: () => this.setState({ step: "birthday" }),
+      goMode: () => this.setState({ step: "mode" }),
+      goAuth: () => this.setState({ step: "auth", authStep: "input" }),
+      goAnon: () => this.setState({ step: "birthday", month: 0, day: 0, year: 0 }),
+      pickPhone: () => this.setState({ channel: "phone", authStep: "input", contact: "", code: "" }),
+      pickEmail: () => this.setState({ channel: "email", authStep: "input", contact: "", code: "" }),
+      phoneTabBg: s.channel === "phone" ? "#FF2D8A" : "transparent", phoneTabFg: s.channel === "phone" ? "#07060B" : "rgba(245,245,240,.6)",
+      emailTabBg: s.channel === "email" ? "#FF2D8A" : "transparent", emailTabFg: s.channel === "email" ? "#07060B" : "rgba(245,245,240,.6)",
+      isInput: s.authStep === "input", isCode: s.authStep === "code",
+      inputType: s.channel === "phone" ? "tel" : "email",
+      contactPlaceholder: s.channel === "phone" ? "(555) 123-4567" : "you@example.com",
+      contact: s.contact, setContact: (e) => this.setState({ contact: e.target.value }),
+      sendDisabled: !contactOk, sendOpacity: contactOk ? 1 : .45,
+      sendCode: () => contactOk && this.setState({ authStep: "code" }),
+      code: s.code, setCode: (e) => this.setState({ code: e.target.value.replace(/\D/g, "").slice(0, 6) }),
+      verifyDisabled: !codeOk, verifyOpacity: codeOk ? 1 : .45,
+      verify: () => codeOk && this.setState({ step: "birthday", authStep: "input", code: "", contact: "" }),
+      resetContact: () => this.setState({ authStep: "input", code: "" }),
+      channelNoun: s.channel === "phone" ? "number" : "email",
+      signIn: (e) => { e.preventDefault(); this.setState({ step: "auth", authStep: "input" }); }
+    };
+  }
+}
+</script>
+</body>
+</html>

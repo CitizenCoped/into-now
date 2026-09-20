@@ -41,14 +41,14 @@ async function lookupUser(userId: string) {
 
 export function notifyAdminNewUser(contact: string) {
   pushoverAlert(
-    "into.now: New user",
+    "The Best Drug: New user",
     `A new user signed up for the first time.\n\nContact: ${contact}`
   );
 }
 
 export function notifyAdminReturningUser(contact: string) {
   pushoverAlert(
-    "into.now: Returning user",
+    "The Best Drug: Returning user",
     `A returning user logged in.\n\nContact: ${contact}`
   );
 }
@@ -65,7 +65,7 @@ export async function notifyAdminNewPost(params: {
     : "Author: (not logged in)";
 
   pushoverAlert(
-    "into.now: New post",
+    "The Best Drug: New post",
     `${authorLine}\nCategory: ${params.category}\nTitle: ${params.title}\n\n${params.description}`
   );
 }
@@ -111,7 +111,7 @@ export async function notifyAdminNewMessage(params: {
       : "unknown";
 
   pushoverAlert(
-    "into.now: New message",
+    "The Best Drug: New message",
     `Sender: ${senderLabel}\nRecipient(s): ${recipientLabels}\n\nMessage:\n${params.body}`
   );
 }

@@ -8,7 +8,7 @@ import { getMapChromePadding } from "@/lib/mapChrome";
 import AnimatedMarker from "./AnimatedMarker";
 import LiveUserMarker from "./LiveUserMarker";
 import ProfileAvatar from "./ProfileAvatar";
-import { BASE_MAP_STYLE, applyIntoNowMapStyle } from "@/lib/mapStyle";
+import { BASE_MAP_STYLE, applyBrandMapStyle } from "@/lib/mapStyle";
 import "maplibre-gl/dist/maplibre-gl.css";
 
 type Props = {
@@ -88,7 +88,7 @@ export default function MapView({
   const onLoad = useCallback(
     (evt: { target: import("maplibre-gl").Map }) => {
       mapRef.current = evt.target;
-      applyIntoNowMapStyle(evt.target);
+      applyBrandMapStyle(evt.target);
       applyChromePadding();
     },
     [applyChromePadding]
@@ -124,7 +124,7 @@ export default function MapView({
 
   return (
     <div className="absolute inset-0">
-      <div className="pointer-events-none absolute inset-0 z-10 bg-[radial-gradient(ellipse_at_top,rgba(255,77,109,0.08),transparent_50%),radial-gradient(ellipse_at_bottom_right,rgba(255,138,30,0.06),transparent_40%)]" />
+      <div className="pointer-events-none absolute inset-0 z-10 bg-[radial-gradient(ellipse_at_top,rgba(255,45,138,0.08),transparent_50%),radial-gradient(ellipse_at_bottom_right,rgba(255,45,138,0.06),transparent_40%)]" />
       <Map
         initialViewState={{ latitude: center.lat, longitude: center.lng, zoom }}
         minZoom={3}
@@ -225,7 +225,7 @@ export default function MapView({
             closeButton={false}
             closeOnClick={false}
             offset={14}
-            className="intonow-popup"
+            className="tbd-popup"
           >
             <div className="min-w-[180px]">
               <p
@@ -240,7 +240,7 @@ export default function MapView({
                 <button
                   type="button"
                   onClick={() => onMessageUser(selected.authorId!)}
-                  className="mt-3 w-full rounded-lg border border-[#FF8A1E]/30 bg-[#FF8A1E]/10 px-3 py-1.5 text-xs font-semibold text-[#FF8A1E] transition hover:bg-[#FF8A1E]/20"
+                  className="mt-3 w-full rounded-lg border border-[#00F0FF]/35 bg-[#00F0FF]/10 px-3 py-1.5 text-xs font-semibold text-[#00F0FF] transition hover:bg-[#00F0FF]/20"
                 >
                   Message author
                 </button>
@@ -256,7 +256,7 @@ export default function MapView({
             closeButton={false}
             closeOnClick={false}
             offset={14}
-            className="intonow-popup"
+            className="tbd-popup"
           >
             <div className="min-w-[200px]">
               <div className="flex items-center gap-2">
@@ -282,7 +282,7 @@ export default function MapView({
                 <button
                   type="button"
                   onClick={() => onMessageUser(selectedUser.userId)}
-                  className="mt-3 w-full rounded-lg border border-[#FF8A1E]/30 bg-[#FF8A1E]/10 px-3 py-1.5 text-xs font-semibold text-[#FF8A1E] transition hover:bg-[#FF8A1E]/20"
+                  className="mt-3 w-full rounded-lg border border-[#00F0FF]/35 bg-[#00F0FF]/10 px-3 py-1.5 text-xs font-semibold text-[#00F0FF] transition hover:bg-[#00F0FF]/20"
                 >
                   Message
                 </button>
@@ -298,7 +298,7 @@ export default function MapView({
         type="button"
         aria-label="Center map on my location"
         onClick={recenter}
-        className="absolute right-[18px] bottom-[118px] z-[15] flex h-12 w-12 touch-manipulation items-center justify-center rounded-full border-[1.5px] border-white/75 bg-[#0f0d18]/35 text-white/90 backdrop-blur transition hover:border-[#FF9E2C] hover:bg-[#0f0d18]/60"
+        className="absolute right-[18px] bottom-[118px] z-[15] flex h-12 w-12 touch-manipulation items-center justify-center rounded-full border-[1.5px] border-white/75 bg-[#120A14]/35 text-white/90 backdrop-blur transition hover:border-[#00F0FF] hover:bg-[#120A14]/60"
       >
         <svg
           width="24"

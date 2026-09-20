@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import type { AuthUser } from "@/hooks/useAuth";
 import type { PushPreferences } from "@/hooks/usePushNotifications";
@@ -64,7 +65,7 @@ export default function ProfilePanel({
   const [editing, setEditing] = useState(false);
 
   const panelPosition =
-    "intonow-profile-panel fixed z-20 top-[max(1rem,env(safe-area-inset-top))] right-[max(1rem,env(safe-area-inset-right))]";
+    "tbd-profile-panel fixed z-20 top-[max(1rem,env(safe-area-inset-top))] right-[max(1rem,env(safe-area-inset-right))]";
 
   const fab = (
       <CornerControl
@@ -78,7 +79,7 @@ export default function ProfilePanel({
           }
         }}
         ariaLabel={expanded ? "Close profile" : "Open profile"}
-        accentColor="#FF8A1E"
+        accentColor="#FF2D8A"
         icon={
           user ? (
             <ProfileAvatar
@@ -113,10 +114,10 @@ export default function ProfilePanel({
     <>
     {fab}
     <aside
-      className={`${panelPosition} flex max-h-[min(70vh,560px)] w-[min(380px,calc(100vw-2rem))] flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#0f0d18]/90 shadow-2xl backdrop-blur-xl`}
+      className={`${panelPosition} flex max-h-[min(70vh,560px)] w-[min(380px,calc(100vw-2rem))] flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#120A14]/90 shadow-2xl backdrop-blur-xl`}
     >
       <header className="flex shrink-0 items-center justify-between border-b border-white/5 px-4 py-3">
-        <p className="text-sm font-semibold text-[#FF8A1E]">Profile</p>
+        <p className="font-display italic uppercase text-[17px] leading-none tracking-[.05em] text-[#FF2D8A]">Profile</p>
         <button
           type="button"
           onClick={() => {
@@ -135,7 +136,6 @@ export default function ProfilePanel({
           <p className="py-6 text-center text-sm text-white/30">Checking session...</p>
         ) : showSignup || !user ? (
           <AuthForm
-            birthDate={birthDate}
             onSendPhoneCode={onSendPhoneCode}
             onSendEmailCode={onSendEmailCode}
             onVerifyPhoneCode={(phone, code) => onVerifyPhoneCode(phone, code, birthDate)}
@@ -192,10 +192,17 @@ export default function ProfilePanel({
             <button
               type="button"
               onClick={() => onLogout()}
-              className="w-full rounded-lg border border-white/10 px-3 py-2 text-sm text-white/50 transition hover:text-[#FF4D6D]"
+              className="w-full rounded-lg border border-white/10 px-3 py-2 text-sm text-white/50 transition hover:text-[#FF2D8A]"
             >
               Log out
             </button>
+
+            <Link
+              href="/policies"
+              className="block pt-1 text-center text-[11px] text-white/35 transition hover:text-[#FF2D8A]"
+            >
+              Terms &amp; policies
+            </Link>
           </div>
         )}
       </div>

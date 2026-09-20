@@ -1,22 +1,26 @@
 /**
- * Sunset Pop palette — single source of truth for accent colors.
+ * The Best Drug palette — single source of truth for accent colors.
  *
- * The v2 recolor (commit 33bc369) left hex literals scattered through
- * components; new and touched code should import from here so the next
- * recolor is a one-file change. Matches --intonow-* vars in globals.css.
+ * Hex literals still live in many components (the v2 recolor left them
+ * scattered); new and touched code should import from here so the next
+ * recolor is a one-file change. Matches the --tbd-* vars in globals.css.
+ *
+ * Contrast: void (#07060B) on pink (#FF2D8A) ≈ 6:1 — CTAs use dark text on
+ * pink, never white. Cyan on void ≈ 14:1, so cyan is safe as small text.
  */
 export const THEME = {
-  /** Primary accent (was cyan pre-recolor). */
-  accent: "#FF8A1E",
-  /** Brand coral — headers, active chips, alerts. */
-  coral: "#FF4D6D",
-  /** CTA gradient endpoints (from → to). */
-  ctaFrom: "#FFB03A",
-  ctaTo: "#F56A00",
-  /** Live-presence glow. */
-  liveGlow: "#FF9E2C",
+  /** Primary — CTAs, active states, titles, unread badges (dark text on it). */
+  accent: "#FF2D8A",
+  /** Contrast — live presence ring/badge, link hover, "Message author", focus rings. */
+  live: "#00F0FF",
+  /** Text / bone. */
+  ink: "#F5F5F0",
+  /** Soft accents for chips. */
+  accentSoft: "#FF8AC2",
+  liveSoft: "#7DF9FF",
+  violet: "#B48CFF",
   /** App background void. */
-  void: "#06040c",
-  /** Panel background. */
-  panel: "#0f0d18",
+  void: "#07060B",
+  /** Panel surface (pink-tinted). */
+  panel: "#120A14",
 } as const;

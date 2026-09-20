@@ -10,7 +10,7 @@ type Props = {
   userId?: string | null;
 };
 
-const GLOW_ORANGE = "#FF7A1A";
+const LIVE_CYAN = "#00F0FF";
 
 export default function LiveUserMarker({
   isSelf,
@@ -22,7 +22,7 @@ export default function LiveUserMarker({
   return (
     <div
       className={`relative flex items-center justify-center rounded-full ${isLit ? "" : "opacity-50 grayscale"}`}
-      style={isLit ? { boxShadow: `0 0 0 2px ${GLOW_ORANGE}` } : undefined}
+      style={isLit ? { boxShadow: `0 0 0 2px ${LIVE_CYAN}` } : undefined}
     >
       <ProfileAvatar
         photoUrl={photoUrl}
@@ -32,8 +32,8 @@ export default function LiveUserMarker({
       />
       {isSelf && (
         <span
-          className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-[#0f0d18]"
-          style={{ backgroundColor: GLOW_ORANGE }}
+          className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-[#120A14]"
+          style={{ backgroundColor: LIVE_CYAN }}
         />
       )}
     </div>

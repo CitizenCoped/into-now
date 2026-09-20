@@ -68,7 +68,7 @@ export default function ManagementShell({ children }: { children: React.ReactNod
               >
                 <span>{item.label}</span>
                 {showBadge ? (
-                  <span className="rounded-full bg-[#FF4D6D] px-2 py-0.5 text-[10px] font-semibold text-white">
+                  <span className="rounded-full bg-[#FF2D8A] px-2 py-0.5 text-[10px] font-semibold text-[#07060B]">
                     {pending}
                   </span>
                 ) : null}

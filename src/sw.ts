@@ -30,11 +30,11 @@ type PushPayload = {
 
 self.addEventListener("push", (event) => {
   const data = (event.data?.json() ?? {}) as PushPayload;
-  const title = data.title ?? "into.now";
+  const title = data.title ?? "The Best Drug";
   const options: NotificationOptions = {
     body: data.body ?? "You have a new update",
-    icon: data.icon ?? "/logo.svg",
-    badge: "/logo.svg",
+    icon: data.icon ?? "/icon-192.png",
+    badge: "/mark.svg",
     tag: data.tag,
     data: { url: data.url ?? "/" },
   };

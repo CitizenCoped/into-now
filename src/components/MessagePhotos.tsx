@@ -103,7 +103,7 @@ function PhotoTile({
             height="18"
             viewBox="0 0 24 24"
             fill="none"
-            stroke="#FF8A1E"
+            stroke="#FF2D8A"
             strokeWidth={1.8}
             strokeLinecap="round"
             aria-hidden
@@ -112,11 +112,11 @@ function PhotoTile({
             <path d="M8 11V8a4 4 0 0 1 8 0v3" />
           </svg>
           <span
-            className="font-semibold text-[#FF8A1E]"
+            className="font-semibold text-[#FF2D8A]"
             style={{
               fontSize: 10,
-              background: "rgba(255,138,30,.15)",
-              border: "1px solid rgba(255,138,30,.4)",
+              background: "rgba(255,45,138,.15)",
+              border: "1px solid rgba(255,45,138,.4)",
               borderRadius: 99,
               padding: "3px 9px",
             }}
@@ -155,7 +155,7 @@ function PhotoTile({
           to the recipient once revealed (the blur state stays anonymous). */}
       {photo.isLive && (isMine ? !hidden : showFull) && (
         <span
-          className="absolute flex items-center font-bold uppercase text-[#FF9E2C]"
+          className="absolute flex items-center font-bold uppercase text-[#00F0FF]"
           style={{
             left: 6,
             top: 6,
@@ -165,12 +165,12 @@ function PhotoTile({
             padding: "2px 7px",
             fontSize: 8,
             letterSpacing: ".08em",
-            textShadow: "0 0 6px #FF9E2C",
+            textShadow: "0 0 6px #00F0FF",
           }}
         >
           <span
-            className="rounded-full bg-[#FF9E2C]"
-            style={{ width: 5, height: 5, boxShadow: "0 0 6px #FF9E2C" }}
+            className="rounded-full bg-[#00F0FF]"
+            style={{ width: 5, height: 5, boxShadow: "0 0 6px #00F0FF" }}
           />
           Live
         </span>

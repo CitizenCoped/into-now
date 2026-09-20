@@ -62,7 +62,7 @@ export default function PlaygroundPage() {
           value={url}
           onChange={(e) => setUrl(e.target.value)}
           placeholder="https://… public image URL"
-          className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white outline-none focus:border-[#FF4D6D]/50"
+          className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white outline-none focus:border-[#FF2D8A]/50"
         />
         <input
           type="file"
@@ -74,7 +74,7 @@ export default function PlaygroundPage() {
         <button
           type="submit"
           disabled={busy || (!file && !url.trim())}
-          className="rounded-lg bg-[#FF4D6D] px-4 py-2 text-sm font-medium text-white disabled:opacity-60"
+          className="rounded-lg bg-[#FF2D8A] px-4 py-2 text-sm font-medium text-[#07060B] disabled:opacity-60"
         >
           {busy ? "Scanning…" : "Scan"}
         </button>
@@ -82,7 +82,7 @@ export default function PlaygroundPage() {
 
       {result ? (
         <div className="mt-6 space-y-3">
-          <p className={`text-sm font-medium ${result.ok ? "text-emerald-300" : "text-[#FF4D6D]"}`}>
+          <p className={`text-sm font-medium ${result.ok ? "text-emerald-300" : "text-[#FF2D8A]"}`}>
             {result.skipped ? "Skipped (no credentials)" : result.ok ? "Would pass" : "Would hold for review"}
           </p>
           {settings

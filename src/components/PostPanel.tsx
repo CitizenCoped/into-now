@@ -83,7 +83,7 @@ export default function PostPanel({
         position="bottom-right"
         onClick={() => (expanded ? closePanel() : onExpandedChange(true))}
         ariaLabel={expanded ? "Close posts panel" : "Open posts panel"}
-        accentColor="#FF4D6D"
+        accentColor="#FF2D8A"
         icon={
           <svg
             width="22"
@@ -104,15 +104,15 @@ export default function PostPanel({
         }
         statusDot={
           <span
-            className={`absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-[#0f0d18] ${
-              connected ? "bg-[#FF9E2C]" : "bg-white/30"
+            className={`absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-[#120A14] ${
+              connected ? "bg-[#00F0FF]" : "bg-white/30"
             }`}
-            style={connected ? { boxShadow: "0 0 6px #FF9E2C" } : undefined}
+            style={connected ? { boxShadow: "0 0 6px #00F0FF" } : undefined}
           />
         }
         badge={
           liveCount > 0 ? (
-            <span className="absolute -top-1.5 -right-1.5 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-[#FF4D6D] px-1 text-[10px] font-bold text-white">
+            <span className="absolute -top-1.5 -right-1.5 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-[#00F0FF] px-1 text-[10px] font-bold text-[#07060B]">
               {liveCount > 99 ? "99+" : liveCount}
             </span>
           ) : undefined
@@ -128,7 +128,7 @@ export default function PostPanel({
     <>
     {fab}
     <aside
-      className="intonow-panel fixed inset-0 z-30 flex flex-col overflow-hidden bg-[#0f0d18]/95 backdrop-blur-xl"
+      className="tbd-panel fixed inset-0 z-30 flex flex-col overflow-hidden bg-[#120A14]/95 backdrop-blur-xl"
       data-panel-expanded="true"
     >
       <header
@@ -137,9 +137,9 @@ export default function PostPanel({
       >
         <span className="mx-auto mb-2.5 h-[5px] w-11 rounded-full bg-white/20" />
         <div className="min-w-0">
-          <p className="text-sm font-semibold text-[#FF4D6D]">Posts</p>
+          <p className="font-display italic uppercase text-[17px] leading-none tracking-[.05em] text-[#FF2D8A]">Posts</p>
           <p className="mt-0.5 text-[11px] text-white/40">
-            what are you into? <span className="text-[#FF4D6D]">NOW?</span>
+            Get on. <span className="text-[#00F0FF]">Then get off.</span>
           </p>
         </div>
         <span className="text-[11px] text-white/45">▼ tap to close</span>
@@ -148,13 +148,13 @@ export default function PostPanel({
       <div className="flex shrink-0 items-center gap-3 border-b border-white/5 px-4 py-2 text-xs text-white/50">
         <span className="flex items-center gap-1.5">
           <span
-            className={`h-2 w-2 rounded-full ${connected ? "bg-[#FF9E2C]" : "bg-white/20"}`}
-            style={connected ? { boxShadow: "0 0 6px #FF9E2C" } : undefined}
+            className={`h-2 w-2 rounded-full ${connected ? "bg-[#00F0FF]" : "bg-white/20"}`}
+            style={connected ? { boxShadow: "0 0 6px #00F0FF" } : undefined}
           />
           {connected ? "Live" : "Connecting..."}
         </span>
         <span>{liveCount} nearby now</span>
-        {!sharing && <span className="text-amber-400/80">Location off</span>}
+        {!sharing && <span className="text-[#FF2D8A]/80">Location off</span>}
       </div>
 
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden p-4 pt-3 pb-28">
@@ -173,7 +173,7 @@ export default function PostPanel({
               value={search}
               onChange={(e) => onSearchChange(e.target.value)}
               placeholder="Search posts..."
-              className="mb-3 w-full shrink-0 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/30 outline-none focus:border-[#FF4D6D]/50"
+              className="mb-3 w-full shrink-0 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/30 outline-none focus:border-[#FF2D8A]/50"
             />
 
             <h3 className="mb-2 shrink-0 text-xs font-semibold uppercase tracking-wider text-white/40">
@@ -194,13 +194,13 @@ export default function PostPanel({
                     key={post.id}
                     className={`w-full rounded-xl border p-3 text-left transition ${
                       active
-                        ? "border-[#FF4D6D]/40 bg-white/10"
+                        ? "border-[#FF2D8A]/40 bg-white/10"
                         : "border-white/5 bg-white/5 hover:border-white/15 hover:bg-white/8"
                     }`}
                   >
                     <button type="button" onClick={() => onPostClick(post)} className="w-full text-left">
                       <span
-                        className="inline-block rounded-full px-2 py-0.5 text-[10px] font-black uppercase tracking-widest text-[#06040c]"
+                        className="inline-block rounded-full px-2 py-0.5 text-[10px] font-black uppercase tracking-widest text-[#07060B]"
                         style={{ backgroundColor: color, boxShadow: `0 0 8px ${color}55` }}
                       >
                         {post.category}
@@ -216,7 +216,7 @@ export default function PostPanel({
                       <button
                         type="button"
                         onClick={() => onMessageAuthor(post.authorId!)}
-                        className="mt-2 w-full rounded-lg border border-[#FF8A1E]/30 bg-[#FF8A1E]/10 px-3 py-1.5 text-xs font-semibold text-[#FF8A1E] transition hover:bg-[#FF8A1E]/20"
+                        className="mt-2 w-full rounded-lg border border-[#00F0FF]/35 bg-[#00F0FF]/10 px-3 py-1.5 text-xs font-semibold text-[#00F0FF] transition hover:bg-[#00F0FF]/20"
                       >
                         Message author
                       </button>
@@ -226,7 +226,7 @@ export default function PostPanel({
                         type="button"
                         onClick={() => handleReport(post.id)}
                         disabled={reportedIds.has(post.id)}
-                        className="mt-1.5 w-full text-center text-[10px] text-white/25 transition hover:text-[#FF4D6D] disabled:text-white/40"
+                        className="mt-1.5 w-full text-center text-[10px] text-white/25 transition hover:text-[#FF2D8A] disabled:text-white/40"
                       >
                         {reportedIds.has(post.id) ? "Reported — thank you" : "Report post"}
                       </button>
@@ -240,7 +240,7 @@ export default function PostPanel({
               <button
                 type="button"
                 onClick={() => onViewChange("create")}
-                className="w-full rounded-lg bg-gradient-to-r from-[#FF4D6D] to-[#FF6B8A] py-2.5 text-sm font-semibold text-white shadow-lg shadow-[#FF4D6D]/20 transition hover:brightness-110"
+                className="w-full rounded-lg bg-[#FF2D8A] py-2.5 font-display italic uppercase text-[15px] tracking-[.05em] text-[#07060B] shadow-lg shadow-[#FF2D8A]/20 transition hover:brightness-110"
               >
                 + New Post
               </button>
