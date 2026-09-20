@@ -36,23 +36,19 @@ export default function LandingVideoBackdrop() {
 
     let disposed = false;
 
-    const removeGestureListeners = () => {
-      for (const type of GESTURE_EVENTS) document.removeEventListener(type, tryPlay);
-    };
-
+    // Listeners stay attached for the life of the landing: they are passive,
+    // return immediately while the video is playing, and cover a later pause
+    // (e.g. Safari suspending media after an app switch) as well as the
+    // initial refusal.
     const tryPlay = () => {
       if (disposed || !video.paused) return;
       const attempt = video.play();
-      if (!attempt) return;
-      attempt
-        .then(() => {
-          // Playing — the gesture fallbacks are no longer needed.
-          removeGestureListeners();
-        })
-        .catch(() => {
+      if (attempt) {
+        attempt.catch(() => {
           // Autoplay refused (no gesture yet, Low Power Mode, etc.); keep the
           // poster and wait for a gesture or visibility change.
         });
+      }
     };
 
     const onVisibility = () => {
@@ -74,7 +70,7 @@ export default function LandingVideoBackdrop() {
 
     return () => {
       disposed = true;
-      removeGestureListeners();
+      for (const type of GESTURE_EVENTS) document.removeEventListener(type, tryPlay);
       document.removeEventListener("visibilitychange", onVisibility);
       video.removeEventListener("ended", onEnded);
     };
