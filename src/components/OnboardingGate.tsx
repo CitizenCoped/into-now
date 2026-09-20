@@ -358,10 +358,14 @@ export default function OnboardingGate({
             )}
           </div>
 
-          <p className="mt-2.5 text-center text-[10px] uppercase tracking-[.14em] text-[#F5F5F0]/40">
+          <p className="mt-2.5 text-center text-[10px] uppercase leading-[1.9] tracking-[.14em] text-[#F5F5F0]/40">
             18+ only ·{" "}
-            <Link href="/terms" className="text-[#F5F5F0]/55 transition hover:text-[#F5F5F0]">
+            <Link href="/policies/terms-of-service" className="text-[#F5F5F0]/55 transition hover:text-[#F5F5F0]">
               Terms
+            </Link>{" "}
+            ·{" "}
+            <Link href="/policies/take-it-down" className="text-[#F5F5F0]/55 transition hover:text-[#F5F5F0]">
+              Report content
             </Link>{" "}
             · thebestdrug.com
           </p>

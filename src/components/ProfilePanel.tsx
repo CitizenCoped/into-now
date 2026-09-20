@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import type { AuthUser } from "@/hooks/useAuth";
 import type { PushPreferences } from "@/hooks/usePushNotifications";
@@ -196,6 +197,13 @@ export default function ProfilePanel({
             >
               Log out
             </button>
+
+            <Link
+              href="/policies"
+              className="block pt-1 text-center text-[11px] text-white/35 transition hover:text-[#FF2D8A]"
+            >
+              Terms &amp; policies
+            </Link>
           </div>
         )}
       </div>
