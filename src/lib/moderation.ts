@@ -84,9 +84,27 @@ export async function fetchSightengineByBytes(
   return parseSightengineResponse(res);
 }
 
+/** Sightengine's "feature not on your plan" error (code 3701). Video
+ *  analysis is a paid add-on; while it's off, video scans fail closed. */
+const SIGHTENGINE_USAGE_LIMIT_CODE = 3701;
+
+/** Thrown when the moderation provider can't screen this media on the
+ *  current plan. Callers should refuse the media with a clear message
+ *  rather than retrying. */
+export class ModerationUnavailableError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "ModerationUnavailableError";
+  }
+}
+
 async function parseSightengineResponse(res: Response): Promise<Record<string, unknown>> {
   const data = (await res.json()) as Record<string, unknown>;
   if (!res.ok) {
+    const error = data.error as { code?: number; message?: string } | undefined;
+    if (error?.code === SIGHTENGINE_USAGE_LIMIT_CODE) {
+      throw new ModerationUnavailableError(error.message ?? "Feature not available on this plan");
+    }
     throw new Error(`Sightengine HTTP ${res.status}`);
   }
   if (data.status !== "success") {

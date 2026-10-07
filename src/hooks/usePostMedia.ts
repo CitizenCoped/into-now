@@ -243,8 +243,14 @@ export function usePostMedia() {
 
         patch(photoId, { status: "ready" });
         return photoId;
-      } catch {
-        setError("Screening failed. Try adding it again.");
+      } catch (err) {
+        // The scan route's own message (e.g. "Video screening isn't
+        // available yet") beats the generic retry hint.
+        setError(
+          err instanceof Error && err.message && err.message !== "Scan failed"
+            ? err.message
+            : "Screening failed. Try adding it again."
+        );
         discard(photoId, "scan_failed");
         return null;
       }
