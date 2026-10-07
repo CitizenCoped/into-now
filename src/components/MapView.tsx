@@ -2,17 +2,19 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Map, { Marker, Popup } from "react-map-gl/maplibre";
-import type { MapUser, Post } from "@/lib/schema";
+import type { MapUser } from "@/lib/schema";
+import type { PostWithMedia } from "@/lib/photoTypes";
 import { getCodeColor } from "@/lib/codes";
 import { getMapChromePadding } from "@/lib/mapChrome";
 import AnimatedMarker from "./AnimatedMarker";
 import LiveUserMarker from "./LiveUserMarker";
+import PostMediaStrip from "./PostMediaStrip";
 import ProfileAvatar from "./ProfileAvatar";
 import { BASE_MAP_STYLE, applyBrandMapStyle } from "@/lib/mapStyle";
 import "maplibre-gl/dist/maplibre-gl.css";
 
 type Props = {
-  posts: Post[];
+  posts: PostWithMedia[];
   litUsers: MapUser[];
   unlitUsers: MapUser[];
   myLocation: { lat: number; lng: number } | null;
@@ -236,6 +238,7 @@ export default function MapView({
               </p>
               <p className="mt-1 font-semibold text-white">{selected.title}</p>
               <p className="mt-1 text-sm text-white/70 line-clamp-3">{selected.description}</p>
+              <PostMediaStrip media={selected.media} size={44} className="mt-2" />
               {selected.authorId && selected.authorId !== currentUserId && (
                 <button
                   type="button"

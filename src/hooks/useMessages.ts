@@ -10,6 +10,7 @@ import type {
   MessagePhotoView,
   MessageView,
   PhotoUpdatedPayload,
+  PostMediaView,
 } from "@/lib/photoTypes";
 import PusherClient from "pusher-js";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -27,6 +28,19 @@ export type ConversationSummary = {
     isAnonymous: boolean;
     isExpired: boolean;
     isOnline: boolean;
+    /** Their most recent non-expired post, or null. Shown as a reference
+     *  row at the top of the thread. */
+    latestPost: {
+      id: string;
+      title: string;
+      description: string;
+      category: string;
+      posterIs: string;
+      createdAt: string;
+      lat: number;
+      lng: number;
+      media: PostMediaView[];
+    } | null;
   } | null;
   lastMessage: {
     id: string;

@@ -2,10 +2,11 @@ import { logActivity } from "@/lib/activity";
 import { getAuthUserFromRequest } from "@/lib/auth";
 import { getDb } from "@/lib/db";
 import { FEATURES } from "@/lib/flags";
-import { MAX_PHOTO_BYTES } from "@/lib/photoTypes";
+import { MAX_PHOTO_BYTES, MAX_VIDEO_BYTES } from "@/lib/photoTypes";
 import { userPhotos } from "@/lib/schema";
 import {
   ALLOWED_PHOTO_CONTENT_TYPES,
+  ALLOWED_VIDEO_CONTENT_TYPES,
   isSpacesConfigured,
   putObject,
 } from "@/lib/spaces";
@@ -17,7 +18,8 @@ type RouteContext = {
 };
 
 /** PUT /api/photos/[id]/content — same-origin upload of the normalized
- *  JPEG. Avoids a browser PUT to Spaces (which needs CORS on the bucket). */
+ *  JPEG (or, for post media, the raw ≤10s video). Avoids a browser PUT to
+ *  Spaces (which needs CORS on the bucket). */
 export async function PUT(request: NextRequest, { params }: RouteContext) {
   if (!FEATURES.photoBlur) {
     return NextResponse.json({ error: "Photos are not enabled" }, { status: 403 });
@@ -35,20 +37,13 @@ export async function PUT(request: NextRequest, { params }: RouteContext) {
     );
   }
 
-  const contentType = (request.headers.get("content-type") ?? "image/jpeg")
-    .split(";")[0]
-    .trim()
-    .toLowerCase();
-  if (!ALLOWED_PHOTO_CONTENT_TYPES.includes(contentType)) {
-    return NextResponse.json({ error: "Unsupported image type" }, { status: 400 });
-  }
-
   const db = getDb();
   const [photo] = await db
     .select({
       id: userPhotos.id,
       objectKey: userPhotos.objectKey,
       status: userPhotos.status,
+      kind: userPhotos.kind,
     })
     .from(userPhotos)
     .where(and(eq(userPhotos.id, params.id), eq(userPhotos.userId, user.id)))
@@ -61,12 +56,28 @@ export async function PUT(request: NextRequest, { params }: RouteContext) {
     return NextResponse.json({ error: "Photo is not awaiting upload" }, { status: 409 });
   }
 
+  const isVideo = photo.kind === "video";
+  const contentType = (request.headers.get("content-type") ?? "image/jpeg")
+    .split(";")[0]
+    .trim()
+    .toLowerCase();
+  const allowedTypes = isVideo ? ALLOWED_VIDEO_CONTENT_TYPES : ALLOWED_PHOTO_CONTENT_TYPES;
+  if (!allowedTypes.includes(contentType)) {
+    return NextResponse.json(
+      { error: isVideo ? "Unsupported video type" : "Unsupported image type" },
+      { status: 400 }
+    );
+  }
+
   const bytes = new Uint8Array(await request.arrayBuffer());
   if (bytes.byteLength === 0) {
     return NextResponse.json({ error: "Empty upload" }, { status: 400 });
   }
-  if (bytes.byteLength > MAX_PHOTO_BYTES) {
-    return NextResponse.json({ error: "Photo is too large" }, { status: 413 });
+  if (bytes.byteLength > (isVideo ? MAX_VIDEO_BYTES : MAX_PHOTO_BYTES)) {
+    return NextResponse.json(
+      { error: isVideo ? "Video is too large" : "Photo is too large" },
+      { status: 413 }
+    );
   }
 
   try {
@@ -79,7 +90,7 @@ export async function PUT(request: NextRequest, { params }: RouteContext) {
   logActivity("photo.uploaded", {
     userId: user.id,
     phone: user.phone,
-    metadata: { photoId: photo.id, bytes: bytes.byteLength },
+    metadata: { photoId: photo.id, bytes: bytes.byteLength, kind: photo.kind },
   });
 
   return NextResponse.json({ ok: true });

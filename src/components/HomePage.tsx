@@ -8,11 +8,13 @@ import { useMessages } from "@/hooks/useMessages";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { ageFromBirthDate, haversineMiles } from "@/lib/geo";
 import { CORNER_BUFFER, CORNER_BUTTON_SIZE, CORNER_MARGIN } from "@/lib/mapChrome";
-import { isIdentityToken, type IdentityToken, type LookingForToken } from "@/lib/codes";
-import type { MapUser, Post } from "@/lib/schema";
+import { isIdentityToken } from "@/lib/codes";
+import type { PostWithMedia } from "@/lib/photoTypes";
+import type { MapUser } from "@/lib/schema";
 import FilterPanel, { type UserFilters } from "./FilterPanel";
 import InstallPrompt from "./InstallPrompt";
 import MessagePanel from "./MessagePanel";
+import type { PostSubmission } from "./PostCreateForm";
 import PostPanel from "./PostPanel";
 import ProfilePanel from "./ProfilePanel";
 import Wordmark from "./Wordmark";
@@ -83,7 +85,7 @@ function filterMapUsers(
 }
 
 export default function HomePage() {
-  const [posts, setPosts] = useState<Post[]>([]);
+  const [posts, setPosts] = useState<PostWithMedia[]>([]);
   const [search, setSearch] = useState("");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [openPanel, setOpenPanel] = useState<OpenPanel>(null);
@@ -236,20 +238,13 @@ export default function HomePage() {
     }
   }, [myLocation]);
 
-  function handlePostClick(post: Post) {
+  function handlePostClick(post: PostWithMedia) {
     setSelectedId(post.id);
     setCenter({ lat: post.lat, lng: post.lng });
     setZoom(15);
   }
 
-  async function handleCreatePost(data: {
-    title: string;
-    description: string;
-    posterIs: IdentityToken;
-    lookingFor: LookingForToken;
-    lat: number;
-    lng: number;
-  }) {
+  async function handleCreatePost(data: PostSubmission) {
     const res = await fetch("/api/posts", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -428,6 +423,7 @@ export default function HomePage() {
         onSendMessage={handleSendMessage}
         onRevealPhoto={revealPhoto}
         onToggleHidePhoto={toggleHidePhoto}
+        viewerLocation={myLocation}
         unreadCount={conversations.reduce((sum, convo) => sum + convo.unreadCount, 0)}
         pushPermission={pushPermission}
         pushSubscribed={pushSubscribed}

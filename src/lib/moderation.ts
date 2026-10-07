@@ -24,6 +24,9 @@ import {
 import { getModerationSettings } from "@/lib/moderationSettings";
 
 const SIGHTENGINE_ENDPOINT = "https://api.sightengine.com/1.0/check.json";
+/** Synchronous video check — Sightengine samples frames and returns one
+ *  score set per frame. Documented for clips up to ~60s; ours are ≤10s. */
+const SIGHTENGINE_VIDEO_ENDPOINT = "https://api.sightengine.com/1.0/video/check-sync.json";
 const DEFAULT_MODELS = "nudity-2.1,gore-2.0,offensive";
 
 export type ModerationResult = {
@@ -133,6 +136,42 @@ export async function scanImageUrl(imageUrl: string): Promise<ModerationResult> 
   }
   const raw = await fetchSightengineByUrl(imageUrl);
   return toResult(await decideFromRaw(raw), raw);
+}
+
+/**
+ * Scan a short video Sightengine can fetch. Each sampled frame is scored
+ * like an image; the clip's score per class is the max across frames, so
+ * one bad frame rejects the whole clip. Same throw semantics as images.
+ */
+export async function scanVideoUrl(videoUrl: string): Promise<ModerationResult> {
+  if (!isModerationConfigured()) {
+    console.warn("moderation: SIGHTENGINE_USER/SECRET not set — video scan skipped (passes)");
+    return skippedResult();
+  }
+  const { apiUser, apiSecret, models } = credentials();
+  const params = new URLSearchParams({
+    stream_url: videoUrl,
+    models,
+    api_user: apiUser,
+    api_secret: apiSecret,
+  });
+  const res = await fetch(`${SIGHTENGINE_VIDEO_ENDPOINT}?${params.toString()}`);
+  const raw = await parseSightengineResponse(res);
+
+  const frames = ((raw.data as { frames?: unknown } | undefined)?.frames ?? []) as Record<
+    string,
+    unknown
+  >[];
+  const merged: Partial<Record<ModerationClassPath, number>> = {};
+  for (const frame of frames) {
+    const frameScores = collectCatalogScores(frame);
+    for (const [path, score] of Object.entries(frameScores) as [ModerationClassPath, number][]) {
+      merged[path] = Math.max(merged[path] ?? 0, score);
+    }
+  }
+
+  const settings = await getModerationSettings();
+  return toResult(decide(merged, settings), raw);
 }
 
 export async function scanImageBytes(
