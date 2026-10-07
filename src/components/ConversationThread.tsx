@@ -12,6 +12,22 @@ import MessagePhotos from "./MessagePhotos";
 import PhotoSheet from "./PhotoSheet";
 import ProfileAvatar from "./ProfileAvatar";
 
+/**
+ * Whether the signed-in user has blocked `otherUserId`. Block state lives on
+ * the server; null means "couldn't tell" (offline, signed out), in which case
+ * the caller keeps what it had.
+ */
+async function fetchIsBlocked(otherUserId: string): Promise<boolean | null> {
+  try {
+    const res = await fetch("/api/blocks");
+    if (!res.ok) return null;
+    const data: { blockedIds?: unknown } = await res.json();
+    return Array.isArray(data.blockedIds) && data.blockedIds.includes(otherUserId);
+  } catch {
+    return null;
+  }
+}
+
 type Props = {
   messages: MessageView[];
   currentUserId: string;
@@ -43,6 +59,7 @@ export default function ConversationThread({
   const [showContactWarning, setShowContactWarning] = useState(false);
   const [blocked, setBlocked] = useState(false);
   const [blocking, setBlocking] = useState(false);
+  const [unblocking, setUnblocking] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -52,6 +69,22 @@ export default function ConversationThread({
   const library = usePhotoLibrary(photosEnabled);
 
   const expired = otherUser?.isExpired;
+
+  // Load the block state whenever the thread's other user changes, so a
+  // block made earlier (or on another device) shows as "Blocked" with an
+  // Unblock action instead of a composer the API will refuse.
+  const otherUserId = otherUser?.id;
+  useEffect(() => {
+    setBlocked(false);
+    if (!otherUserId) return;
+    let cancelled = false;
+    void fetchIsBlocked(otherUserId).then((value) => {
+      if (!cancelled && value !== null) setBlocked(value);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [otherUserId]);
 
   // Prune selections whose photo left the library (deleted / rejected).
   useEffect(() => {
@@ -125,6 +158,12 @@ export default function ConversationThread({
       setSheetOpen(false);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to send");
+      // A refused send may mean we blocked this user elsewhere; re-sync so
+      // the thread shows the Unblock state rather than a dead composer.
+      if (otherUserId && (await fetchIsBlocked(otherUserId))) {
+        setBlocked(true);
+        setError("");
+      }
     } finally {
       setSending(false);
     }
@@ -170,6 +209,25 @@ export default function ConversationThread({
     }
   }
 
+  async function handleUnblock() {
+    if (!otherUser?.id || unblocking) return;
+    setUnblocking(true);
+    setError("");
+    try {
+      const res = await fetch("/api/blocks", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: otherUser.id }),
+      });
+      if (!res.ok) throw new Error();
+      setBlocked(false);
+    } catch {
+      setError("Couldn't unblock right now. Try again.");
+    } finally {
+      setUnblocking(false);
+    }
+  }
+
   const attachActive = sheetOpen || selectedIds.length > 0;
   const sendDisabled = sending || (!draft.trim() && selectedIds.length === 0);
 
@@ -199,7 +257,19 @@ export default function ConversationThread({
             {blocking ? "Blocking..." : "Block"}
           </button>
         )}
-        {blocked && <span className="ml-auto text-[10px] text-[#FF2D8A]">Blocked</span>}
+        {blocked && (
+          <span className="ml-auto flex shrink-0 items-center gap-2 text-[10px]">
+            <span className="text-[#FF2D8A]">Blocked</span>
+            <button
+              type="button"
+              onClick={handleUnblock}
+              disabled={unblocking}
+              className="text-white/50 underline underline-offset-2 transition hover:text-[#00F0FF]"
+            >
+              {unblocking ? "Unblocking..." : "Unblock"}
+            </button>
+          </span>
+        )}
       </div>
 
       {otherUser?.statement && (
@@ -290,9 +360,20 @@ export default function ConversationThread({
       )}
 
       {blocked ? (
-        <p className="mt-3 shrink-0 text-center text-xs text-[#FF2D8A]">
-          You blocked this user. They can no longer message you.
-        </p>
+        <div className="mt-3 shrink-0 text-center">
+          <p className="text-xs text-[#FF2D8A]">
+            You blocked this user. Neither of you can message the other.
+          </p>
+          <button
+            type="button"
+            onClick={handleUnblock}
+            disabled={unblocking}
+            className="mt-2 rounded-lg border border-[#00F0FF]/35 bg-[#00F0FF]/10 px-4 py-1.5 text-xs font-semibold text-[#00F0FF] transition hover:bg-[#00F0FF]/20 disabled:opacity-50"
+          >
+            {unblocking ? "Unblocking..." : "Unblock"}
+          </button>
+          {error && <p className="mt-2 text-xs text-[#FF2D8A]">{error}</p>}
+        </div>
       ) : expired ? (
         <p className="mt-3 shrink-0 text-center text-xs text-[#FF2D8A]">
           This user&apos;s anonymous session has ended.

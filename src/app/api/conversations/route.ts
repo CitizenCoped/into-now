@@ -1,6 +1,6 @@
 import { logActivity } from "@/lib/activity";
 import { getAuthUserFromRequest, getDisplayLabel } from "@/lib/auth";
-import { isBlockedBetween } from "@/lib/blocks";
+import { getBlockRefusal } from "@/lib/blocks";
 import { findOrCreateConversation } from "@/lib/conversations";
 import { getDb } from "@/lib/db";
 import { previewMessage } from "@/lib/messagePreview";
@@ -194,8 +194,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "This user has expired" }, { status: 410 });
   }
 
-  if (await isBlockedBetween(user.id, parsed.data.participantId)) {
-    return NextResponse.json({ error: "You can't message this user" }, { status: 403 });
+  const refusal = await getBlockRefusal(user.id, parsed.data.participantId);
+  if (refusal) {
+    return NextResponse.json(refusal, { status: 403 });
   }
 
   const conversationId = await findOrCreateConversation(user.id, parsed.data.participantId);

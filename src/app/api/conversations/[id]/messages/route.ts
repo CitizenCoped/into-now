@@ -1,6 +1,6 @@
 import { logActivity } from "@/lib/activity";
 import { getAuthUserFromRequest } from "@/lib/auth";
-import { isBlockedBetween } from "@/lib/blocks";
+import { getBlockRefusal } from "@/lib/blocks";
 import { notifyAdminNewMessage } from "@/lib/adminNotify";
 import { notifyNewMessage } from "@/lib/messagePush";
 import { isConversationParticipant } from "@/lib/conversations";
@@ -92,8 +92,9 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
     .from(conversationParticipants)
     .where(eq(conversationParticipants.conversationId, params.id));
   const otherId = others.map((p) => p.userId).find((id) => id !== user.id);
-  if (otherId && (await isBlockedBetween(user.id, otherId))) {
-    return NextResponse.json({ error: "You can't message this user" }, { status: 403 });
+  const refusal = otherId ? await getBlockRefusal(user.id, otherId) : null;
+  if (refusal) {
+    return NextResponse.json(refusal, { status: 403 });
   }
 
   // Every attached photo must belong to the sender and be `ready`.
