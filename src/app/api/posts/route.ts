@@ -14,9 +14,15 @@ import {
   SOLICITATION_REJECTION_MESSAGE,
 } from "@/lib/contentScreens";
 import { getDb } from "@/lib/db";
+import {
+  MAX_POST_MEDIA,
+  MAX_POST_VIDEO_SECONDS,
+  MAX_POST_VIDEOS,
+} from "@/lib/photoTypes";
 import { POST_TTL_MS } from "@/lib/postConfig";
-import { posts } from "@/lib/schema";
-import { and, desc, eq, gt, ilike, isNull, notInArray, or } from "drizzle-orm";
+import { withMedia } from "@/lib/postMedia";
+import { postPhotos, posts, userPhotos } from "@/lib/schema";
+import { and, desc, eq, gt, ilike, inArray, isNull, notInArray, or } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
@@ -27,6 +33,8 @@ const createPostSchema = z.object({
   lookingFor: z.enum(LOOKING_FOR_TOKENS),
   lat: z.number(),
   lng: z.number(),
+  /** Ordered post media (user_photos ids, purpose = post). */
+  mediaIds: z.array(z.string().uuid()).max(MAX_POST_MEDIA).default([]),
 });
 
 export async function GET(request: NextRequest) {
@@ -67,7 +75,7 @@ export async function GET(request: NextRequest) {
     .from(posts)
     .where(and(...conditions))
     .orderBy(desc(posts.createdAt));
-  return NextResponse.json({ posts: results });
+  return NextResponse.json({ posts: await withMedia(results) });
 }
 
 export async function POST(request: NextRequest) {
@@ -96,17 +104,76 @@ export async function POST(request: NextRequest) {
   const code = composeCode(posterIs, lookingFor);
 
   const authUser = await getAuthUserFromRequest(request);
+  const { mediaIds, ...postFields } = parsed.data;
+  const uniqueMediaIds = Array.from(new Set(mediaIds));
+  const db = getDb();
 
-  let created;
+  // Every attached item must be the poster's own `ready` post media, and
+  // the mix must fit: ≤4 total, ≤2 videos, each video ≤10s. Anonymous
+  // (signed-out) posts can't carry media — there's no owner to check.
+  if (uniqueMediaIds.length > 0) {
+    if (!authUser) {
+      return NextResponse.json(
+        { error: "Sign in to add photos to a post" },
+        { status: 401 }
+      );
+    }
+    const owned = await db
+      .select({
+        id: userPhotos.id,
+        kind: userPhotos.kind,
+        durationMs: userPhotos.durationMs,
+      })
+      .from(userPhotos)
+      .where(
+        and(
+          inArray(userPhotos.id, uniqueMediaIds),
+          eq(userPhotos.userId, authUser.id),
+          eq(userPhotos.purpose, "post"),
+          eq(userPhotos.status, "ready")
+        )
+      );
+    if (owned.length !== uniqueMediaIds.length) {
+      return NextResponse.json(
+        { error: "One or more photos aren't available to post" },
+        { status: 400 }
+      );
+    }
+    const videos = owned.filter((m) => m.kind === "video");
+    if (videos.length > MAX_POST_VIDEOS) {
+      return NextResponse.json(
+        { error: `Up to ${MAX_POST_VIDEOS} videos per post` },
+        { status: 400 }
+      );
+    }
+    if (videos.some((v) => (v.durationMs ?? 0) > MAX_POST_VIDEO_SECONDS * 1000)) {
+      return NextResponse.json(
+        { error: `Videos must be ${MAX_POST_VIDEO_SECONDS} seconds or less` },
+        { status: 400 }
+      );
+    }
+  }
+
+  let created: typeof posts.$inferSelect;
   try {
-    [created] = await getDb()
+    [created] = await db
       .insert(posts)
       .values({
-        ...parsed.data,
+        ...postFields,
         category: code,
         authorId: authUser?.id ?? null,
       })
       .returning();
+
+    if (uniqueMediaIds.length > 0) {
+      await db.insert(postPhotos).values(
+        uniqueMediaIds.map((photoId, index) => ({
+          postId: created.id,
+          photoId,
+          position: index,
+        }))
+      );
+    }
   } catch (err) {
     console.error("post.create failed:", err);
     return NextResponse.json(
@@ -132,8 +199,10 @@ export async function POST(request: NextRequest) {
       posterIs: created.posterIs,
       lookingFor: created.lookingFor,
       anonymous: !authUser,
+      mediaCount: uniqueMediaIds.length,
     },
   });
 
-  return NextResponse.json({ post: created }, { status: 201 });
+  const [post] = await withMedia([created]);
+  return NextResponse.json({ post }, { status: 201 });
 }

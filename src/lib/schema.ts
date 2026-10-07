@@ -4,6 +4,7 @@ import {
   doublePrecision,
   foreignKey,
   index,
+  integer,
   jsonb,
   pgTable,
   primaryKey,
@@ -47,22 +48,28 @@ export const authCodes = pgTable("auth_codes", {
 
 export type AuthCode = typeof authCodes.$inferSelect;
 
-export const posts = pgTable("posts", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  title: text("title").notNull(),
-  description: text("description").notNull(),
-  /** Derived personals code, e.g. "M4W" (kept in the legacy column name so
-   *  admin notify / activity log / existing queries keep working). */
-  category: text("category").notNull(),
-  /** Who is posting: M | W | T | MW | MM | WW */
-  posterIs: text("poster_is").notNull(),
-  /** Who they seek: M | W | T | MW | MM | WW | ANY */
-  lookingFor: text("looking_for").notNull(),
-  lat: doublePrecision("lat").notNull(),
-  lng: doublePrecision("lng").notNull(),
-  authorId: uuid("author_id").references(() => users.id, { onDelete: "set null" }),
-  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-});
+export const posts = pgTable(
+  "posts",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    title: text("title").notNull(),
+    description: text("description").notNull(),
+    /** Derived personals code, e.g. "M4W" (kept in the legacy column name so
+     *  admin notify / activity log / existing queries keep working). */
+    category: text("category").notNull(),
+    /** Who is posting: M | W | T | MW | MM | WW */
+    posterIs: text("poster_is").notNull(),
+    /** Who they seek: M | W | T | MW | MM | WW | ANY */
+    lookingFor: text("looking_for").notNull(),
+    lat: doublePrecision("lat").notNull(),
+    lng: doublePrecision("lng").notNull(),
+    authorId: uuid("author_id").references(() => users.id, { onDelete: "set null" }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => ({
+    authorCreatedIdx: index("posts_author_created_idx").on(table.authorId, table.createdAt),
+  })
+);
 
 export type Post = typeof posts.$inferSelect;
 export type NewPost = typeof posts.$inferInsert;
@@ -231,6 +238,13 @@ export const userPhotos = pgTable(
     aspectRatio: doublePrecision("aspect_ratio").notNull().default(1),
     /** Camera-only capture — shows the LIVE badge. */
     isLive: boolean("is_live").notNull().default(false),
+    /** photo | video — videos are post media only (≤10s). */
+    kind: text("kind").notNull().default("photo"),
+    /** Video length; null for photos. */
+    durationMs: integer("duration_ms"),
+    /** library | post — `post` media never shows in the DM "My photos"
+     *  sheet and doesn't count toward its 10-slot cap. */
+    purpose: text("purpose").notNull().default("library"),
     /** scanning | ready | rejected | archived */
     status: text("status").notNull().default("scanning"),
     moderationScores: jsonb("moderation_scores").$type<Record<string, number> | null>(),

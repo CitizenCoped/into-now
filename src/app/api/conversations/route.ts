@@ -4,6 +4,7 @@ import { getBlockRefusal } from "@/lib/blocks";
 import { findOrCreateConversation } from "@/lib/conversations";
 import { getDb } from "@/lib/db";
 import { previewMessage } from "@/lib/messagePreview";
+import { latestPostsByAuthor } from "@/lib/postMedia";
 import { PRESENCE_TTL_MS } from "@/lib/pusher";
 import {
   conversationParticipants,
@@ -113,6 +114,9 @@ export async function GET(request: NextRequest) {
     onlineRows.map((row) => row.userId).filter((id): id is string => Boolean(id))
   );
 
+  // The thread header surfaces the other user's latest live post.
+  const latestPostByAuthor = await latestPostsByAuthor(otherUserIds);
+
   const now = new Date();
   const otherByConvo = new Map<string, (typeof participants)[number]>();
   for (const row of participants) {
@@ -126,6 +130,7 @@ export async function GET(request: NextRequest) {
     const lastMessage = lastMessageByConvo.get(convo.id);
     const preview = lastMessage ? previewMessage(lastMessage.body) : { preview: "", isTruncated: false };
     const isExpired = Boolean(other?.isAnonymous && other.expiresAt && other.expiresAt < now);
+    const latestPost = other ? latestPostByAuthor.get(other.userId) : undefined;
 
     return {
       id: convo.id,
@@ -141,6 +146,19 @@ export async function GET(request: NextRequest) {
             isAnonymous: other.isAnonymous,
             isExpired,
             isOnline: !isExpired && onlineUserIds.has(other.userId),
+            latestPost: latestPost
+              ? {
+                  id: latestPost.id,
+                  title: latestPost.title,
+                  description: latestPost.description,
+                  category: latestPost.category,
+                  posterIs: latestPost.posterIs,
+                  createdAt: latestPost.createdAt,
+                  lat: latestPost.lat,
+                  lng: latestPost.lng,
+                  media: latestPost.media,
+                }
+              : null,
           }
         : null,
       lastMessage: lastMessage

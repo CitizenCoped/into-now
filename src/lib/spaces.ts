@@ -68,17 +68,28 @@ function getPrefix(): string {
   return process.env.DO_SPACES_PREFIX ?? "intonow-photos";
 }
 
-const EXT_BY_CONTENT_TYPE: Record<string, string> = {
+const PHOTO_EXT_BY_CONTENT_TYPE: Record<string, string> = {
   "image/jpeg": "jpg",
   "image/png": "png",
   "image/webp": "webp",
 };
 
-export const ALLOWED_PHOTO_CONTENT_TYPES = Object.keys(EXT_BY_CONTENT_TYPE);
+/** Post videos are uploaded as the phone produced them (no transcode), so
+ *  this is whatever iOS/Android cameras and pickers hand over. */
+const VIDEO_EXT_BY_CONTENT_TYPE: Record<string, string> = {
+  "video/mp4": "mp4",
+  "video/quicktime": "mov",
+  "video/webm": "webm",
+};
 
-/** Key scheme: intonow-photos/photos/{userId}/{photoId}.{ext} */
+export const ALLOWED_PHOTO_CONTENT_TYPES = Object.keys(PHOTO_EXT_BY_CONTENT_TYPE);
+export const ALLOWED_VIDEO_CONTENT_TYPES = Object.keys(VIDEO_EXT_BY_CONTENT_TYPE);
+
+/** Key scheme: intonow-photos/photos/{userId}/{photoId}.{ext} — videos share
+ *  the prefix so the same row/object lifecycle applies to both. */
 export function photoObjectKey(userId: string, photoId: string, contentType: string): string {
-  const ext = EXT_BY_CONTENT_TYPE[contentType] ?? "jpg";
+  const ext =
+    PHOTO_EXT_BY_CONTENT_TYPE[contentType] ?? VIDEO_EXT_BY_CONTENT_TYPE[contentType] ?? "jpg";
   return `${getPrefix()}/photos/${userId}/${photoId}.${ext}`;
 }
 

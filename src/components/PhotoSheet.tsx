@@ -220,7 +220,9 @@ function LibraryTile({
   );
 }
 
-function CameraCapture({
+/** Live camera capture (getUserMedia → JPEG). Shared with the post media
+ *  step, which marks captures LIVE the same way the DM library does. */
+export function CameraCapture({
   onCapture,
   onClose,
 }: {

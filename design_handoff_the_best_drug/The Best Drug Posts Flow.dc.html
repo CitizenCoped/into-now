@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Anton&display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0A070D;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#F5F5F0}
+a{color:#FF2D8A}a:hover{color:#00F0FF}
+input::placeholder,textarea::placeholder{color:rgba(255,255,255,.3)}
+*::-webkit-scrollbar{display:none}
+</style>
+</helmet>
+<div style="min-height:100vh;padding:40px 32px;box-sizing:border-box;background:radial-gradient(ellipse at top,rgba(255,45,138,.06),transparent 55%),#0A070D">
+  <div style="max-width:1760px;margin:0 auto 28px">
+    <p style="margin:0;font-family:Anton,Impact,sans-serif;font-style:italic;font-size:28px;letter-spacing:.04em;text-transform:uppercase;color:#FF2D8A">Posts · media &amp; thread reference</p>
+    <p style="margin:6px 0 0;font-size:14px;color:rgba(255,255,255,.55)">Two-step post creation (Next → Add photos), and the author's latest post surfaced inside the message thread. Tap the headline row in frame 3 to open the post popup.</p>
+  </div>
+  <div style="display:flex;flex-wrap:wrap;gap:40px;justify-content:center;align-items:flex-start">
+
+    <!-- ═══ FRAME 1 · Step 1 of 2 ═══ -->
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <p style="margin:0;font-size:11px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:rgba(0,240,255,.85)">1 · New post — step 1 · "Post Now" → "Next"</p>
+      <x-import component-from-global-scope="IOSDevice" from="./ios-frame.jsx" dark="{{ true }}" hint-size="402px,874px">
+        <div data-screen-label="Create step 1" style="position:relative;width:100%;height:874px;overflow:hidden;background:#120A14;display:flex;flex-direction:column">
+          <button aria-label="Open filters" style="position:absolute;top:62px;left:16px;z-index:50;width:56px;height:56px;border-radius:9999px;border:1px solid rgba(255,255,255,.1);background:rgba(18,10,20,.9);color:rgba(255,255,255,.8);display:flex;align-items:center;justify-content:center;cursor:pointer">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><line x1="4" y1="6" x2="20" y2="6"></line><circle cx="9" cy="6" r="2" fill="#120A14"></circle><line x1="4" y1="12" x2="20" y2="12"></line><circle cx="15" cy="12" r="2" fill="#120A14"></circle><line x1="4" y1="18" x2="20" y2="18"></line><circle cx="11" cy="18" r="2" fill="#120A14"></circle></svg>
+          </button>
+          <button aria-label="Open profile" style="position:absolute;top:62px;right:16px;z-index:50;width:56px;height:56px;border-radius:9999px;border:1px solid rgba(255,255,255,.1);background:rgba(18,10,20,.9);display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0">
+            <span style="width:40px;height:40px;border-radius:9999px;background:linear-gradient(135deg,#3d1a2a,#241436);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:600;color:rgba(255,255,255,.9)">K</span>
+          </button>
+          <header style="flex:none;display:flex;flex-direction:column;border-bottom:1px solid rgba(255,255,255,.05);padding:62px 88px 12px;background:rgba(255,255,255,.02)">
+            <span style="align-self:center;width:44px;height:5px;border-radius:9999px;background:rgba(255,255,255,.2);margin-bottom:10px"></span>
+            <p style="margin:0;font-family:Anton,Impact,sans-serif;font-style:italic;font-size:17px;letter-spacing:.05em;text-transform:uppercase;color:#FF2D8A">Posts</p>
+            <p style="margin:2px 0 0;font-size:11px;color:rgba(255,255,255,.4)">Get on. <span style="color:#00F0FF">Then get off.</span></p>
+            <p style="margin:2px 0 0;font-size:11px;color:rgba(255,255,255,.45)">▼ tap to close</p>
+          </header>
+          <div style="flex:none;display:flex;align-items:center;gap:8px;padding:10px 16px;border-bottom:1px solid rgba(255,255,255,.05);font-size:12px;color:rgba(255,255,255,.5)"><span style="width:8px;height:8px;border-radius:9999px;background:#00F0FF;box-shadow:0 0 6px #00F0FF"></span><span>Live</span><span style="margin-left:6px">0 nearby now</span></div>
+          <div style="flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;scrollbar-width:none;padding:12px 16px 14px;display:flex;flex-direction:column">
+            <div style="display:flex;align-items:center;justify-content:space-between">
+              <button style="background:none;border:none;padding:0;font-size:12px;color:rgba(255,255,255,.5);cursor:pointer">← Back to posts</button>
+              <span style="font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.4)">Step <span style="color:#00F0FF">1</span> of 2</span>
+            </div>
+            <p style="margin:10px 0 0;font-size:16px;font-weight:600;color:#fff">New Post</p>
+            <p style="margin:2px 0 0;font-size:12px;color:rgba(255,255,255,.4)">Who are you looking for — <span style="color:#FF2D8A">right now?</span></p>
+            <div style="margin-top:12px;display:flex;justify-content:center;border-radius:12px;border:1px solid rgba(255,45,138,.4);background:rgba(255,45,138,.1);padding:10px"><span style="font-size:24px;font-weight:900;letter-spacing:.2em;color:#FF2D8A;text-shadow:0 0 12px rgba(255,45,138,.35)">MW4ANY</span></div>
+            <p style="margin:14px 0 6px;font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.4)">You are</p>
+            <div style="display:flex;flex-wrap:wrap;gap:6px">
+              <sc-for list="{{ youChips }}" as="c" hint-placeholder-count="6"><button style="border-radius:9999px;padding:7px 11px;font-size:11px;font-weight:600;cursor:pointer;border:1px solid {{ c.border }};background:{{ c.bg }};color:{{ c.fg }}">{{ c.label }}</button></sc-for>
+            </div>
+            <p style="margin:14px 0 6px;font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.4)">Looking for</p>
+            <div style="display:flex;flex-wrap:wrap;gap:6px">
+              <sc-for list="{{ lookChips }}" as="c" hint-placeholder-count="7"><button style="border-radius:9999px;padding:7px 11px;font-size:11px;font-weight:600;cursor:pointer;border:1px solid {{ c.border }};background:{{ c.bg }};color:{{ c.fg }}">{{ c.label }}</button></sc-for>
+            </div>
+            <input value="Patio drinks in the Mission" readOnly style="margin-top:14px;width:100%;box-sizing:border-box;border-radius:8px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.05);padding:10px 12px;font-size:14px;color:#fff;outline:none">
+            <textarea readOnly rows="3" style="margin-top:8px;width:100%;box-sizing:border-box;resize:none;border-radius:8px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.05);padding:10px 12px;font-size:14px;line-height:1.4;color:#fff;outline:none;font-family:inherit">Sunny table for two, margaritas ordered. Low pressure, good stories required.</textarea>
+          </div>
+          <div style="flex:none;padding:10px 16px 110px;border-top:1px solid rgba(255,255,255,.05);display:flex;gap:8px">
+            <button style="flex:1;border:none;border-radius:10px;background:#FF2D8A;padding:13px;font-size:15px;font-weight:700;color:#07060B;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px" style-hover="filter:brightness(1.08)">Next <span aria-hidden="true">→</span></button>
+            <button style="border-radius:10px;border:1px solid rgba(255,255,255,.1);background:none;padding:13px 18px;font-size:15px;color:rgba(255,255,255,.6);cursor:pointer">Cancel</button>
+          </div>
+          <button aria-label="Messages" style="position:absolute;bottom:34px;left:16px;z-index:50;width:56px;height:56px;border-radius:9999px;border:1px solid rgba(255,255,255,.1);background:rgba(18,10,20,.9);color:rgba(255,255,255,.8);display:flex;align-items:center;justify-content:center;cursor:pointer"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg></button>
+          <button aria-label="Posts" style="position:absolute;bottom:34px;right:16px;z-index:50;width:56px;height:56px;border-radius:9999px;border:1px solid rgba(255,255,255,.1);background:rgba(18,10,20,.9);color:rgba(255,255,255,.8);display:flex;align-items:center;justify-content:center;cursor:pointer"><span style="position:relative;display:flex"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16.5 19v-1.2a3.3 3.3 0 0 0-3.3-3.3H6.8a3.3 3.3 0 0 0-3.3 3.3V19"></path><circle cx="9.7" cy="8.3" r="2.8"></circle><path d="M20.5 19v-1.2a2.8 2.8 0 0 0-2-2.7"></path><path d="M14.9 5.2a2.8 2.8 0 0 1 0 5.5"></path></svg><span style="position:absolute;bottom:-2px;right:-2px;width:10px;height:10px;border-radius:9999px;border:2px solid #120A14;background:#00F0FF;box-shadow:0 0 6px #00F0FF"></span></span></button>
+        </div>
+      </x-import>
+    </div>
+
+    <!-- ═══ FRAME 2 · Step 2 of 2 · Add photos ═══ -->
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <p style="margin:0;font-size:11px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:rgba(0,240,255,.85)">2 · New post — step 2 · Add photos</p>
+      <x-import component-from-global-scope="IOSDevice" from="./ios-frame.jsx" dark="{{ true }}" hint-size="402px,874px">
+        <div data-screen-label="Create step 2" style="position:relative;width:100%;height:874px;overflow:hidden;background:#120A14;display:flex;flex-direction:column">
+          <button aria-label="Open filters" style="position:absolute;top:62px;left:16px;z-index:50;width:56px;height:56px;border-radius:9999px;border:1px solid rgba(255,255,255,.1);background:rgba(18,10,20,.9);color:rgba(255,255,255,.8);display:flex;align-items:center;justify-content:center;cursor:pointer">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><line x1="4" y1="6" x2="20" y2="6"></line><circle cx="9" cy="6" r="2" fill="#120A14"></circle><line x1="4" y1="12" x2="20" y2="12"></line><circle cx="15" cy="12" r="2" fill="#120A14"></circle><line x1="4" y1="18" x2="20" y2="18"></line><circle cx="11" cy="18" r="2" fill="#120A14"></circle></svg>
+          </button>
+          <button aria-label="Open profile" style="position:absolute;top:62px;right:16px;z-index:50;width:56px;height:56px;border-radius:9999px;border:1px solid rgba(255,255,255,.1);background:rgba(18,10,20,.9);display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0">
+            <span style="width:40px;height:40px;border-radius:9999px;background:linear-gradient(135deg,#3d1a2a,#241436);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:600;color:rgba(255,255,255,.9)">K</span>
+          </button>
+          <header style="flex:none;display:flex;flex-direction:column;border-bottom:1px solid rgba(255,255,255,.05);padding:62px 88px 12px;background:rgba(255,255,255,.02)">
+            <span style="align-self:center;width:44px;height:5px;border-radius:9999px;background:rgba(255,255,255,.2);margin-bottom:10px"></span>
+            <p style="margin:0;font-family:Anton,Impact,sans-serif;font-style:italic;font-size:17px;letter-spacing:.05em;text-transform:uppercase;color:#FF2D8A">Posts</p>
+            <p style="margin:2px 0 0;font-size:11px;color:rgba(255,255,255,.4)">Get on. <span style="color:#00F0FF">Then get off.</span></p>
+            <p style="margin:2px 0 0;font-size:11px;color:rgba(255,255,255,.45)">▼ tap to close</p>
+          </header>
+          <div style="flex:none;display:flex;align-items:center;gap:8px;padding:10px 16px;border-bottom:1px solid rgba(255,255,255,.05);font-size:12px;color:rgba(255,255,255,.5)"><span style="width:8px;height:8px;border-radius:9999px;background:#00F0FF;box-shadow:0 0 6px #00F0FF"></span><span>Live</span><span style="margin-left:6px">0 nearby now</span></div>
+          <div style="flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;scrollbar-width:none;padding:12px 16px 14px;display:flex;flex-direction:column">
+            <div style="display:flex;align-items:center;justify-content:space-between">
+              <button style="background:none;border:none;padding:0;font-size:12px;color:rgba(255,255,255,.5);cursor:pointer">← Back</button>
+              <span style="font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.4)">Step <span style="color:#00F0FF">2</span> of 2</span>
+            </div>
+            <p style="margin:10px 0 0;font-family:Anton,Impact,sans-serif;font-style:italic;font-size:22px;letter-spacing:.04em;text-transform:uppercase;color:#fff">Add photos</p>
+            <p style="margin:4px 0 0;font-size:12.5px;line-height:1.45;color:rgba(255,255,255,.55)">Posts with photos get answered. Up to <span style="color:#fff;font-weight:600">4 photos</span>, or <span style="color:#fff;font-weight:600">2 photos + 2 videos</span>. Videos max <span style="color:#00F0FF;font-weight:600">10 seconds</span>.</p>
+            <div style="margin-top:14px;display:grid;grid-template-columns:1fr 1fr;gap:10px">
+              <sc-for list="{{ mediaSlots }}" as="m" hint-placeholder-count="4">
+                <div style="position:relative;aspect-ratio:1;border-radius:14px;overflow:hidden;border:1px solid {{ m.border }};background:{{ m.bg }};display:flex;align-items:center;justify-content:center">
+                  <sc-if value="{{ m.filled }}" hint-placeholder-val="{{ true }}">
+                    <span style="position:absolute;top:8px;left:8px;padding:3px 8px;border-radius:9999px;background:rgba(7,6,11,.7);font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:{{ m.tagColor }}">{{ m.tag }}</span>
+                    <button aria-label="Remove" style="position:absolute;top:6px;right:6px;width:26px;height:26px;border-radius:9999px;border:none;background:rgba(7,6,11,.75);color:#fff;font-size:14px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center">×</button>
+                  </sc-if>
+                  <sc-if value="{{ m.isVideo }}" hint-placeholder-val="{{ false }}">
+                    <span style="width:40px;height:40px;border-radius:9999px;background:rgba(7,6,11,.6);border:1px solid rgba(255,255,255,.4);display:flex;align-items:center;justify-content:center"><svg width="16" height="16" viewBox="0 0 24 24" fill="#fff"><path d="M8 5v14l11-7z"></path></svg></span>
+                    <span style="position:absolute;bottom:8px;right:8px;padding:2px 7px;border-radius:6px;background:rgba(7,6,11,.75);font-size:11px;font-weight:600;color:#fff;font-variant-numeric:tabular-nums">{{ m.duration }}</span>
+                  </sc-if>
+                  <sc-if value="{{ m.isEmpty }}" hint-placeholder-val="{{ false }}">
+                    <div style="display:flex;flex-direction:column;align-items:center;gap:6px;color:rgba(255,255,255,.45)">
+                      <span style="width:36px;height:36px;border-radius:9999px;border:1.5px dashed rgba(255,255,255,.3);display:flex;align-items:center;justify-content:center;font-size:20px;line-height:1">+</span>
+                      <span style="font-size:11px;font-weight:600">{{ m.hint }}</span>
+                    </div>
+                  </sc-if>
+                </div>
+              </sc-for>
+            </div>
+            <div style="margin-top:12px;display:flex;align-items:center;justify-content:space-between;font-size:11px;color:rgba(255,255,255,.45)">
+              <span><span style="color:#fff;font-weight:600">2</span> photos · <span style="color:#fff;font-weight:600">1</span> video · 1 slot left</span>
+              <span style="color:rgba(255,255,255,.35)">Screened before they show</span>
+            </div>
+            <div style="margin-top:12px;display:flex;gap:8px">
+              <button style="flex:1;display:flex;align-items:center;justify-content:center;gap:8px;border-radius:10px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.04);padding:11px;font-size:13px;font-weight:600;color:#fff;cursor:pointer"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>Camera</button>
+              <button style="flex:1;display:flex;align-items:center;justify-content:center;gap:8px;border-radius:10px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.04);padding:11px;font-size:13px;font-weight:600;color:#fff;cursor:pointer"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="3"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><path d="M21 15l-5-5L5 21"></path></svg>Library</button>
+            </div>
+          </div>
+          <div style="flex:none;padding:10px 16px 110px;border-top:1px solid rgba(255,255,255,.05);display:flex;flex-direction:column;gap:8px">
+            <div style="display:flex;gap:8px">
+              <button style="flex:1;border:none;border-radius:10px;background:#FF2D8A;padding:13px;font-size:15px;font-weight:700;color:#07060B;cursor:pointer" style-hover="filter:brightness(1.08)">Post Now</button>
+              <button style="border-radius:10px;border:1px solid rgba(255,255,255,.1);background:none;padding:13px 18px;font-size:15px;color:rgba(255,255,255,.6);cursor:pointer">Cancel</button>
+            </div>
+            <button style="align-self:center;background:none;border:none;padding:4px 8px;font-size:12px;color:rgba(255,255,255,.4);cursor:pointer" style-hover="color:#fff">Post without photos</button>
+          </div>
+          <button aria-label="Messages" style="position:absolute;bottom:34px;left:16px;z-index:50;width:56px;height:56px;border-radius:9999px;border:1px solid rgba(255,255,255,.1);background:rgba(18,10,20,.9);color:rgba(255,255,255,.8);display:flex;align-items:center;justify-content:center;cursor:pointer"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg></button>
+          <button aria-label="Posts" style="position:absolute;bottom:34px;right:16px;z-index:50;width:56px;height:56px;border-radius:9999px;border:1px solid rgba(255,255,255,.1);background:rgba(18,10,20,.9);color:rgba(255,255,255,.8);display:flex;align-items:center;justify-content:center;cursor:pointer"><span style="position:relative;display:flex"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16.5 19v-1.2a3.3 3.3 0 0 0-3.3-3.3H6.8a3.3 3.3 0 0 0-3.3 3.3V19"></path><circle cx="9.7" cy="8.3" r="2.8"></circle><path d="M20.5 19v-1.2a2.8 2.8 0 0 0-2-2.7"></path><path d="M14.9 5.2a2.8 2.8 0 0 1 0 5.5"></path></svg><span style="position:absolute;bottom:-2px;right:-2px;width:10px;height:10px;border-radius:9999px;border:2px solid #120A14;background:#00F0FF;box-shadow:0 0 6px #00F0FF"></span></span></button>
+        </div>
+      </x-import>
+    </div>
+
+    <!-- ═══ FRAME 3 · Thread with post reference + popup ═══ -->
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <p style="margin:0;font-size:11px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:rgba(0,240,255,.85)">3 · Message thread · latest post reference (tap row)</p>
+      <x-import component-from-global-scope="IOSDevice" from="./ios-frame.jsx" dark="{{ true }}" hint-size="402px,874px">
+        <div data-screen-label="Thread" style="position:relative;width:100%;height:874px;overflow:hidden;background:#120A14;display:flex;flex-direction:column">
+          <button aria-label="Open filters" style="position:absolute;top:62px;left:16px;z-index:50;width:56px;height:56px;border-radius:9999px;border:1px solid rgba(255,255,255,.1);background:rgba(18,10,20,.9);color:rgba(255,255,255,.8);display:flex;align-items:center;justify-content:center;cursor:pointer">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><line x1="4" y1="6" x2="20" y2="6"></line><circle cx="9" cy="6" r="2" fill="#120A14"></circle><line x1="4" y1="12" x2="20" y2="12"></line><circle cx="15" cy="12" r="2" fill="#120A14"></circle><line x1="4" y1="18" x2="20" y2="18"></line><circle cx="11" cy="18" r="2" fill="#120A14"></circle></svg>
+          </button>
+          <button aria-label="Open profile" style="position:absolute;top:62px;right:16px;z-index:50;width:56px;height:56px;border-radius:9999px;border:1px solid rgba(255,255,255,.1);background:rgba(18,10,20,.9);display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0">
+            <span style="width:40px;height:40px;border-radius:9999px;background:linear-gradient(135deg,#3d1a2a,#241436);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:600;color:rgba(255,255,255,.9)">K</span>
+          </button>
+          <header style="flex:none;display:flex;flex-direction:column;border-bottom:1px solid rgba(255,255,255,.05);padding:62px 88px 12px;background:rgba(255,255,255,.02)">
+            <span style="align-self:center;width:44px;height:5px;border-radius:9999px;background:rgba(255,255,255,.2);margin-bottom:10px"></span>
+            <div style="display:flex;align-items:flex-start;justify-content:space-between">
+              <div><p style="margin:0;font-family:Anton,Impact,sans-serif;font-style:italic;font-size:17px;letter-spacing:.05em;text-transform:uppercase;color:#FF2D8A">Messages</p><p style="margin:2px 0 0;font-size:11px;color:rgba(255,255,255,.4)">···-···-6618</p><p style="margin:2px 0 0;font-size:11px;color:rgba(255,255,255,.45)">▼ tap to close</p></div>
+              <button style="border-radius:8px;border:1px solid rgba(255,255,255,.1);background:none;padding:6px 10px;font-size:12px;color:rgba(255,255,255,.6);cursor:pointer">Log out</button>
+            </div>
+          </header>
+          <div style="flex:1;min-height:0;display:flex;flex-direction:column;padding:12px 16px 0">
+            <button style="align-self:flex-start;background:none;border:none;padding:0;font-size:12px;color:rgba(255,255,255,.5);cursor:pointer">← Back to conversations</button>
+            <div style="margin-top:12px;display:flex;align-items:center;gap:8px;padding-bottom:10px">
+              <span style="width:36px;height:36px;border-radius:9999px;background:#F7D12A;display:flex;align-items:center;justify-content:center;font-size:16px;color:#1a1a1a;font-weight:700">×_×</span>
+              <span style="width:8px;height:8px;border-radius:9999px;background:#00F0FF;box-shadow:0 0 6px #00F0FF"></span>
+              <span style="font-size:15px;font-weight:600;color:#fff">Anonymous</span>
+              <span style="font-size:10px;color:#00F0FF">Online</span>
+              <button style="margin-left:auto;background:none;border:none;padding:0;font-size:10px;color:rgba(255,255,255,.3);cursor:pointer">Block</button>
+            </div>
+            <!-- ★ Latest-post reference row -->
+            <button onClick="{{ openPost }}" aria-label="Open their latest post" style="display:flex;align-items:center;gap:10px;width:100%;text-align:left;border-radius:12px;border:1px solid rgba(255,45,138,.35);background:linear-gradient(90deg,rgba(255,45,138,.14),rgba(255,45,138,.04));padding:10px 12px;cursor:pointer;transition:border-color .15s" style-hover="border-color:#FF2D8A">
+              <span style="flex:none;font-size:10px;font-weight:800;letter-spacing:.14em;color:{{ refColor }}">{{ refCode }}</span>
+              <span style="min-width:0;flex:1;display:flex;flex-direction:column;gap:1px">
+                <span style="font-size:9.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.4)">Their latest post · {{ refAge }}</span>
+                <span style="font-family:Anton,Impact,sans-serif;font-style:italic;font-size:15px;letter-spacing:.02em;text-transform:uppercase;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ refTitle }}</span>
+              </span>
+              <sc-if value="{{ refHasMedia }}" hint-placeholder-val="{{ true }}">
+                <span style="flex:none;display:flex">
+                  <span style="width:26px;height:26px;border-radius:7px;border:1.5px solid #120A14;background:{{ refThumb1 }}"></span>
+                  <span style="width:26px;height:26px;margin-left:-10px;border-radius:7px;border:1.5px solid #120A14;background:{{ refThumb2 }}"></span>
+                </span>
+              </sc-if>
+              <span style="flex:none;color:rgba(255,255,255,.5);font-size:14px">›</span>
+            </button>
+            <div style="height:1px;background:rgba(255,255,255,.05);margin:10px 0"></div>
+            <div style="flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;scrollbar-width:none;display:flex;flex-direction:column;gap:8px">
+              <div style="margin-right:24px;border-radius:12px;border:1px solid rgba(255,255,255,.05);background:rgba(255,255,255,.05);padding:10px 12px">
+                <div style="height:230px;border-radius:10px;background:radial-gradient(ellipse at 30% 30%,#3a2d8f,#151029 70%);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;color:rgba(255,255,255,.55)">
+                  <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M17.9 17.9A10 10 0 0 1 2 12a10.6 10.6 0 0 1 3.1-4.5M9.9 4.2A10 10 0 0 1 22 12a10.7 10.7 0 0 1-2 2.9"></path><line x1="2" y1="2" x2="22" y2="22"></line></svg>
+                  <span style="font-size:12px">Hidden</span>
+                </div>
+              </div>
+              <div style="margin-left:24px;border-radius:12px;border:1px solid rgba(255,45,138,.2);background:rgba(255,45,138,.1);padding:10px 12px;font-size:14px;color:#fff">still on the patio?</div>
+            </div>
+            <div style="flex:none;border-top:1px solid rgba(255,255,255,.05);padding:12px 0 110px;display:flex;align-items:center;gap:8px">
+              <span style="width:40px;height:40px;border-radius:10px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.04);display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.5)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="3"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><path d="M21 15l-5-5L5 21"></path></svg></span>
+              <input placeholder="Reply..." style="min-width:0;flex:1;border-radius:10px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.05);padding:11px 12px;font-size:14px;color:#fff;outline:none">
+              <button style="border:none;border-radius:10px;background:#FF2D8A;padding:11px 16px;font-size:14px;font-weight:700;color:#07060B;cursor:pointer">Send</button>
+            </div>
+          </div>
+          <!-- ★ Post popup over the messenger -->
+          <sc-if value="{{ postOpen }}" hint-placeholder-val="{{ true }}">
+            <div onClick="{{ closePost }}" style="position:absolute;inset:0;z-index:60;background:rgba(7,6,11,.7);backdrop-filter:blur(6px);display:flex;align-items:flex-end;justify-content:center;padding:0 12px 24px">
+              <div onClick="{{ stop }}" data-screen-label="Post popup" style="width:100%;max-height:720px;display:flex;flex-direction:column;border-radius:20px;border:1px solid rgba(255,255,255,.12);background:#160C19;box-shadow:0 30px 60px -12px rgba(0,0,0,.8);overflow:hidden">
+                <div style="flex:none;display:flex;align-items:center;justify-content:space-between;padding:14px 16px 0">
+                  <span style="font-size:11px;font-weight:800;letter-spacing:.18em;color:{{ refColor }}">{{ refCode }}</span>
+                  <button onClick="{{ closePost }}" aria-label="Close" style="width:30px;height:30px;border-radius:9999px;border:1px solid rgba(255,255,255,.12);background:none;color:rgba(255,255,255,.7);font-size:16px;line-height:1;cursor:pointer">×</button>
+                </div>
+                <div style="min-height:0;overflow-y:auto;overflow-x:hidden;scrollbar-width:none;padding:8px 16px 16px">
+                  <p style="margin:0;font-family:Anton,Impact,sans-serif;font-style:italic;font-size:26px;line-height:1.05;letter-spacing:.02em;text-transform:uppercase;color:#fff">{{ refTitle }}</p>
+                  <p style="margin:6px 0 0;font-size:11px;color:rgba(255,255,255,.4)">Anonymous · 0.5 mi · {{ refAge }} · expires in 23h</p>
+                  <p style="margin:12px 0 0;font-size:14.5px;line-height:1.5;color:rgba(255,255,255,.8);white-space:pre-wrap">{{ refBody }}</p>
+                  <sc-if value="{{ refHasMedia }}" hint-placeholder-val="{{ true }}">
+                    <div style="margin-top:14px;display:grid;grid-template-columns:1fr 1fr;gap:8px">
+                      <sc-for list="{{ postMedia }}" as="m" hint-placeholder-count="3">
+                        <div style="position:relative;aspect-ratio:1;border-radius:12px;overflow:hidden;border:1px solid rgba(255,255,255,.08);background:{{ m.bg }};display:flex;align-items:center;justify-content:center">
+                          <sc-if value="{{ m.isVideo }}" hint-placeholder-val="{{ false }}">
+                            <span style="width:40px;height:40px;border-radius:9999px;background:rgba(7,6,11,.6);border:1px solid rgba(255,255,255,.4);display:flex;align-items:center;justify-content:center"><svg width="16" height="16" viewBox="0 0 24 24" fill="#fff"><path d="M8 5v14l11-7z"></path></svg></span>
+                            <span style="position:absolute;bottom:8px;right:8px;padding:2px 7px;border-radius:6px;background:rgba(7,6,11,.75);font-size:11px;font-weight:600;color:#fff">{{ m.duration }}</span>
+                          </sc-if>
+                        </div>
+                      </sc-for>
+                    </div>
+                  </sc-if>
+                  <button onClick="{{ closePost }}" style="margin-top:16px;width:100%;border-radius:10px;border:1px solid rgba(0,240,255,.35);background:rgba(0,240,255,.1);padding:11px;font-size:13px;font-weight:600;color:#00F0FF;cursor:pointer" style-hover="background:rgba(0,240,255,.2)">Close</button>
+                </div>
+              </div>
+            </div>
+          </sc-if>
+          <button aria-label="Messages" style="position:absolute;bottom:34px;left:16px;z-index:50;width:56px;height:56px;border-radius:9999px;border:1px solid rgba(255,255,255,.1);background:rgba(18,10,20,.9);color:rgba(255,255,255,.8);display:flex;align-items:center;justify-content:center;cursor:pointer"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg></button>
+          <button aria-label="Posts" style="position:absolute;bottom:34px;right:16px;z-index:50;width:56px;height:56px;border-radius:9999px;border:1px solid rgba(255,255,255,.1);background:rgba(18,10,20,.9);color:rgba(255,255,255,.8);display:flex;align-items:center;justify-content:center;cursor:pointer"><span style="position:relative;display:flex"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16.5 19v-1.2a3.3 3.3 0 0 0-3.3-3.3H6.8a3.3 3.3 0 0 0-3.3 3.3V19"></path><circle cx="9.7" cy="8.3" r="2.8"></circle><path d="M20.5 19v-1.2a2.8 2.8 0 0 0-2-2.7"></path><path d="M14.9 5.2a2.8 2.8 0 0 1 0 5.5"></path></svg><span style="position:absolute;top:-6px;right:-6px;display:flex;height:20px;min-width:20px;align-items:center;justify-content:center;border-radius:9999px;background:#00F0FF;padding:0 4px;font-size:10px;font-weight:700;color:#07060B">1</span><span style="position:absolute;bottom:-2px;right:-2px;width:10px;height:10px;border-radius:9999px;border:2px solid #120A14;background:#00F0FF;box-shadow:0 0 6px #00F0FF"></span></span></button>
+        </div>
+      </x-import>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;popupOpen&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:null,&quot;tsType&quot;:&quot;boolean | null&quot;,&quot;section&quot;:&quot;Thread&quot;},&quot;postHasMedia&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Thread&quot;}}">
+class Component extends DCLogic {
+  state = { postOpen: false };
+  TOK = { M: "Man", W: "Woman", T: "Trans person", MW: "M/W couple", MM: "Two men", WW: "Two women", ANY: "Anyone" };
+  P1 = "linear-gradient(135deg,#5a2144 0%,#2a1340 55%,#13263a 100%)";
+  P2 = "linear-gradient(160deg,#7a3a2a 0%,#3a1a2a 60%,#1a1230 100%)";
+  V1 = "linear-gradient(135deg,#123a44 0%,#1a1a3a 60%,#2a1030 100%)";
+  chips(tokens, active) {
+    return tokens.map((t) => {
+      const on = t === active;
+      return { label: t + " · " + this.TOK[t], border: on ? "rgba(255,45,138,.6)" : "rgba(255,255,255,.1)", bg: on ? "rgba(255,45,138,.2)" : "transparent", fg: on ? "#FF2D8A" : "rgba(255,255,255,.5)" };
+    });
+  }
+  renderVals() {
+    const open = this.props.popupOpen ?? this.state.postOpen;
+    const hasMedia = this.props.postHasMedia ?? true;
+    return {
+      youChips: this.chips(["M", "W", "T", "MW", "MM", "WW"], "MW"),
+      lookChips: this.chips(["M", "W", "T", "MW", "MM", "WW", "ANY"], "ANY"),
+      mediaSlots: [
+        { filled: true, isVideo: false, isEmpty: false, tag: "Photo", tagColor: "#fff", bg: this.P1, border: "rgba(255,255,255,.12)" },
+        { filled: true, isVideo: false, isEmpty: false, tag: "Photo", tagColor: "#fff", bg: this.P2, border: "rgba(255,255,255,.12)" },
+        { filled: true, isVideo: true, isEmpty: false, tag: "Video", tagColor: "#00F0FF", duration: "0:08", bg: this.V1, border: "rgba(0,240,255,.35)" },
+        { filled: false, isVideo: false, isEmpty: true, hint: "Photo or video", bg: "rgba(255,255,255,.03)", border: "rgba(255,255,255,.12)" }
+      ],
+      refCode: "MW4ANY", refColor: "#FF2D8A", refAge: "26 min ago",
+      refTitle: "Patio drinks in the Mission",
+      refBody: "Sunny table for two, margaritas ordered. Low pressure, good stories required.",
+      refHasMedia: hasMedia, refThumb1: this.P1, refThumb2: this.P2,
+      postMedia: [
+        { isVideo: false, bg: this.P1 },
+        { isVideo: false, bg: this.P2 },
+        { isVideo: true, duration: "0:08", bg: this.V1 }
+      ],
+      postOpen: open,
+      openPost: () => this.setState({ postOpen: true }),
+      closePost: (e) => { e.stopPropagation(); this.setState({ postOpen: false }); },
+      stop: (e) => e.stopPropagation()
+    };
+  }
+}
+</script>
+</body>
+</html>

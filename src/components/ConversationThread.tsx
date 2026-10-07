@@ -7,9 +7,11 @@ import { usePhotoLibrary } from "@/hooks/usePhotoLibrary";
 import { FEATURES } from "@/lib/flags";
 import type { MessageView } from "@/lib/photoTypes";
 import { MAX_PHOTOS_PER_MESSAGE } from "@/lib/photoTypes";
+import { POST_TTL_MS } from "@/lib/postConfig";
 import { useEffect, useRef, useState } from "react";
 import MessagePhotos from "./MessagePhotos";
 import PhotoSheet from "./PhotoSheet";
+import { PostReferencePopup, PostReferenceRow } from "./PostReference";
 import ProfileAvatar from "./ProfileAvatar";
 
 /**
@@ -38,6 +40,8 @@ type Props = {
   onSend: (body: string, photoIds: string[]) => Promise<void>;
   onRevealPhoto: (messageId: string, photoId: string) => void;
   onToggleHidePhoto: (messageId: string, photoId: string, current: boolean) => void;
+  /** For the "0.5 mi" in the post popup; null hides the distance. */
+  viewerLocation?: { lat: number; lng: number } | null;
 };
 
 export default function ConversationThread({
@@ -50,8 +54,10 @@ export default function ConversationThread({
   onSend,
   onRevealPhoto,
   onToggleHidePhoto,
+  viewerLocation = null,
 }: Props) {
   const [draft, setDraft] = useState("");
+  const [postOpen, setPostOpen] = useState(false);
   const [sending, setSending] = useState(false);
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   const [highlightedId, setHighlightedId] = useState<string | null>(null);
@@ -70,12 +76,23 @@ export default function ConversationThread({
 
   const expired = otherUser?.isExpired;
 
+  // Their latest live post — hidden once the post expires, while blocked,
+  // or after an anonymous session ends. The server already drops expired
+  // posts; the client check covers a thread left open past the TTL.
+  const latestPost = otherUser?.latestPost ?? null;
+  const latestPostLive =
+    latestPost !== null &&
+    !blocked &&
+    !expired &&
+    Date.now() - new Date(latestPost.createdAt).getTime() < POST_TTL_MS;
+
   // Load the block state whenever the thread's other user changes, so a
   // block made earlier (or on another device) shows as "Blocked" with an
   // Unblock action instead of a composer the API will refuse.
   const otherUserId = otherUser?.id;
   useEffect(() => {
     setBlocked(false);
+    setPostOpen(false);
     if (!otherUserId) return;
     let cancelled = false;
     void fetchIsBlocked(otherUserId).then((value) => {
@@ -232,7 +249,9 @@ export default function ConversationThread({
   const sendDisabled = sending || (!draft.trim() && selectedIds.length === 0);
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col">
+    // `relative` so the post popup can cover just the thread (above the
+    // composer, below the panel chrome) rather than the whole screen.
+    <div className="relative flex min-h-0 flex-1 flex-col">
       <div className="mb-3 flex shrink-0 items-center gap-2 border-b border-white/5 pb-3">
         <ProfileAvatar
           photoUrl={otherUser?.photoUrl}
@@ -274,6 +293,10 @@ export default function ConversationThread({
 
       {otherUser?.statement && (
         <p className="mb-3 shrink-0 text-xs text-white/50">{otherUser.statement}</p>
+      )}
+
+      {latestPostLive && latestPost && (
+        <PostReferenceRow post={latestPost} onOpen={() => setPostOpen(true)} />
       )}
 
       <div ref={scrollRef} className="min-h-0 flex-1 space-y-2 overflow-y-auto overscroll-contain pr-1">
@@ -331,6 +354,14 @@ export default function ConversationThread({
           );
         })}
       </div>
+
+      {postOpen && latestPostLive && latestPost && (
+        <PostReferencePopup
+          post={latestPost}
+          viewerLocation={viewerLocation}
+          onClose={() => setPostOpen(false)}
+        />
+      )}
 
       {showContactWarning && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">

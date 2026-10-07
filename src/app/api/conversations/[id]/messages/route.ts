@@ -97,7 +97,8 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
     return NextResponse.json(refusal, { status: 403 });
   }
 
-  // Every attached photo must belong to the sender and be `ready`.
+  // Every attached photo must belong to the sender, be `ready`, and come
+  // from the DM library (post media — including videos — can't be sent).
   const photoIds = parsed.data.photoIds;
   if (photoIds.length > 0) {
     const owned = await db
@@ -107,7 +108,9 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
         and(
           inArray(userPhotos.id, photoIds),
           eq(userPhotos.userId, user.id),
-          eq(userPhotos.status, "ready")
+          eq(userPhotos.status, "ready"),
+          eq(userPhotos.kind, "photo"),
+          eq(userPhotos.purpose, "library")
         )
       );
     if (owned.length !== new Set(photoIds).size) {

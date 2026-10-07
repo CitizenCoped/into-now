@@ -50,6 +50,13 @@
       "when": 1789320000000,
       "tag": "0006_management_moderation",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1791331200000,
+      "tag": "0007_post_media",
+      "breakpoints": true
     }
   ]
 }

@@ -1,10 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import type { Post } from "@/lib/schema";
-import { getCodeColor, type IdentityToken, type LookingForToken } from "@/lib/codes";
+import { getCodeColor, type IdentityToken } from "@/lib/codes";
+import type { PostWithMedia } from "@/lib/photoTypes";
 import CornerControl from "./CornerControl";
-import PostCreateForm from "./PostCreateForm";
+import PostCreateForm, { type PostSubmission } from "./PostCreateForm";
+import PostMediaStrip from "./PostMediaStrip";
 
 type PanelView = "list" | "create";
 
@@ -13,22 +14,15 @@ type Props = {
   view: PanelView;
   onExpandedChange: (expanded: boolean) => void;
   onViewChange: (view: PanelView) => void;
-  posts: Post[];
+  posts: PostWithMedia[];
   search: string;
   onSearchChange: (value: string) => void;
-  onPostClick: (post: Post) => void;
+  onPostClick: (post: PostWithMedia) => void;
   selectedId: string | null;
   liveCount: number;
   connected: boolean;
   sharing: boolean;
-  onSubmitPost: (data: {
-    title: string;
-    description: string;
-    posterIs: IdentityToken;
-    lookingFor: LookingForToken;
-    lat: number;
-    lng: number;
-  }) => Promise<void>;
+  onSubmitPost: (data: PostSubmission) => Promise<void>;
   defaultLat: number;
   defaultLng: number;
   defaultPosterIs?: IdentityToken | null;
@@ -165,6 +159,7 @@ export default function PostPanel({
             defaultLat={defaultLat}
             defaultLng={defaultLng}
             defaultPosterIs={defaultPosterIs}
+            canAttachMedia={Boolean(currentUserId)}
           />
         ) : (
           <>
@@ -211,6 +206,7 @@ export default function PostPanel({
                           ? `${post.description.substring(0, 65)}...`
                           : post.description}
                       </p>
+                      <PostMediaStrip media={post.media} className="mt-2" />
                     </button>
                     {canMessage && (
                       <button

@@ -34,6 +34,8 @@ type Props = {
   onSendMessage: (body: string, photoIds: string[]) => Promise<void>;
   onRevealPhoto: (messageId: string, photoId: string) => void;
   onToggleHidePhoto: (messageId: string, photoId: string, current: boolean) => void;
+  /** Viewer's GPS fix, for distances in the thread's post popup. */
+  viewerLocation?: { lat: number; lng: number } | null;
   unreadCount: number;
   pushPermission: NotificationPermission;
   pushSubscribed: boolean;
@@ -73,6 +75,7 @@ export default function MessagePanel({
   onSendMessage,
   onRevealPhoto,
   onToggleHidePhoto,
+  viewerLocation = null,
   unreadCount,
   pushPermission,
   pushSubscribed,
@@ -190,6 +193,7 @@ export default function MessagePanel({
               onSend={onSendMessage}
               onRevealPhoto={onRevealPhoto}
               onToggleHidePhoto={onToggleHidePhoto}
+              viewerLocation={viewerLocation}
             />
           </>
         ) : (

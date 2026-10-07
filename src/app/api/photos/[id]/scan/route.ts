@@ -2,7 +2,7 @@ import { logActivity } from "@/lib/activity";
 import { notifyAdminPhotoRejection } from "@/lib/adminNotify";
 import { getAuthUserFromRequest } from "@/lib/auth";
 import { getDb } from "@/lib/db";
-import { scanImageUrl } from "@/lib/moderation";
+import { ModerationUnavailableError, scanImageUrl, scanVideoUrl } from "@/lib/moderation";
 import { REJECT_HOLD_MS } from "@/lib/moderationCatalog";
 import { userPhotos } from "@/lib/schema";
 import { isSpacesConfigured, presignView } from "@/lib/spaces";
@@ -41,7 +41,9 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
   try {
     const scanUrl = isSpacesConfigured() ? await presignView(photo.objectKey) : null;
     result = scanUrl
-      ? await scanImageUrl(scanUrl)
+      ? photo.kind === "video"
+        ? await scanVideoUrl(scanUrl)
+        : await scanImageUrl(scanUrl)
       : {
           ok: true,
           skipped: true,
@@ -52,6 +54,20 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
           raw: null,
         };
   } catch (error) {
+    // Fail closed: media that can't be screened never becomes `ready`.
+    // The client DELETEs the row on a non-OK scan, so nothing lingers.
+    if (error instanceof ModerationUnavailableError) {
+      console.warn(`photo scan unavailable (${photo.kind}):`, error.message);
+      return NextResponse.json(
+        {
+          error:
+            photo.kind === "video"
+              ? "Video screening isn't available yet — photos only for now."
+              : "Photo screening isn't available right now.",
+        },
+        { status: 503 }
+      );
+    }
     console.error("photo scan failed:", error);
     return NextResponse.json({ error: "Scan failed, try again" }, { status: 502 });
   }
@@ -73,6 +89,7 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
       phone: user.phone,
       metadata: {
         photoId: params.id,
+        kind: photo.kind,
         moderationSkipped: result.skipped,
         topClass: result.topClass,
         topScore: result.topScore,
