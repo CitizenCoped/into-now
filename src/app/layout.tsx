@@ -1,6 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import { Anton } from "next/font/google";
 import SerwistRegister from "@/components/SerwistRegister";
+import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import "./globals.css";
 
 /** Display face — italic uppercase wordmark, titles and CTA labels (see tailwind `font-display`). */
@@ -81,6 +83,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="antialiased">
         <SerwistRegister />
         {children}
+        {/* Vercel Web Analytics + Speed Insights — emit only on Vercel deployments. */}
+        <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );
