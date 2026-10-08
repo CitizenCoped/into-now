@@ -169,3 +169,27 @@ export function normalizeSettings(input: unknown): ModerationSettingsMap {
   }
   return next;
 }
+
+/** Threshold profiles. `dm` = DM library photos; `posts` = post photos
+ *  and videos. Scans pick the profile from the media row's `purpose`. */
+export type ModerationSurface = "dm" | "posts";
+
+export const MODERATION_SURFACES: readonly ModerationSurface[] = ["dm", "posts"];
+
+export const SURFACE_LABELS: Record<ModerationSurface, string> = {
+  dm: "DM",
+  posts: "Posts",
+};
+
+export function isModerationSurface(value: unknown): value is ModerationSurface {
+  return value === "dm" || value === "posts";
+}
+
+export function surfaceForPurpose(purpose: string): ModerationSurface {
+  return purpose === "post" ? "posts" : "dm";
+}
+
+/** The `user_photos.purpose` value a surface governs. */
+export function purposeForSurface(surface: ModerationSurface): "library" | "post" {
+  return surface === "posts" ? "post" : "library";
+}

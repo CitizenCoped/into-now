@@ -3,7 +3,7 @@ import { notifyAdminPhotoRejection } from "@/lib/adminNotify";
 import { getAuthUserFromRequest } from "@/lib/auth";
 import { getDb } from "@/lib/db";
 import { ModerationUnavailableError, scanImageUrl, scanVideoUrl } from "@/lib/moderation";
-import { REJECT_HOLD_MS } from "@/lib/moderationCatalog";
+import { REJECT_HOLD_MS, surfaceForPurpose } from "@/lib/moderationCatalog";
 import { userPhotos } from "@/lib/schema";
 import { isSpacesConfigured, presignView } from "@/lib/spaces";
 import { and, eq } from "drizzle-orm";
@@ -37,16 +37,20 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
     return NextResponse.json({ status: photo.status });
   }
 
+  // DM library photos and post media are judged by different profiles.
+  const surface = surfaceForPurpose(photo.purpose);
+
   let result;
   try {
     const scanUrl = isSpacesConfigured() ? await presignView(photo.objectKey) : null;
     result = scanUrl
       ? photo.kind === "video"
-        ? await scanVideoUrl(scanUrl)
-        : await scanImageUrl(scanUrl)
+        ? await scanVideoUrl(scanUrl, { surface })
+        : await scanImageUrl(scanUrl, { surface })
       : {
           ok: true,
           skipped: true,
+          surface,
           topScore: 0,
           topClass: null,
           scores: {},
@@ -90,6 +94,8 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
       metadata: {
         photoId: params.id,
         kind: photo.kind,
+        purpose: photo.purpose,
+        surface,
         moderationSkipped: result.skipped,
         topClass: result.topClass,
         topScore: result.topScore,
@@ -118,6 +124,9 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
     phone: user.phone,
     metadata: {
       photoId: params.id,
+      kind: photo.kind,
+      purpose: photo.purpose,
+      surface,
       topClass: result.topClass,
       topScore: result.topScore,
       scores: result.scores,
@@ -128,6 +137,8 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
   void notifyAdminPhotoRejection({
     photoId: params.id,
     userId: user.id,
+    kind: photo.kind,
+    surface,
     topClass: result.topClass,
     topScore: result.topScore,
   });

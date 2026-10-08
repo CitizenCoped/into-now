@@ -1,4 +1,5 @@
 import { getAppUrl } from "@/lib/appUrl";
+import { SURFACE_LABELS, type ModerationSurface } from "@/lib/moderationCatalog";
 import { getDisplayLabel } from "@/lib/auth";
 import { getDb } from "@/lib/db";
 import { pushoverAlert } from "@/lib/pushover";
@@ -119,15 +120,19 @@ export async function notifyAdminNewMessage(params: {
 export async function notifyAdminPhotoRejection(params: {
   photoId: string;
   userId: string;
+  kind: string;
+  surface: ModerationSurface;
   topClass: string | null;
   topScore: number;
 }) {
   const owner = await lookupUser(params.userId);
   const contact = owner ? formatUserContact(owner) : "unknown";
   const url = `${getAppUrl()}/management/moderation/${params.photoId}`;
+  const noun = params.kind === "video" ? "Video" : "Photo";
+  const where = params.surface === "posts" ? "a post" : "DMs";
   pushoverAlert(
-    "Photo Rejection",
-    `A photo was held for review.\n\nUser: ${contact}\nTop class: ${params.topClass ?? "none"}\nTop score: ${params.topScore.toFixed(3)}`,
+    `${noun} rejection — ${SURFACE_LABELS[params.surface]}`,
+    `A ${noun.toLowerCase()} for ${where} was held for review.\n\nUser: ${contact}\nTop class: ${params.topClass ?? "none"}\nTop score: ${params.topScore.toFixed(3)}`,
     { url, urlTitle: "Open review" }
   );
 }

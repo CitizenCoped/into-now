@@ -1,6 +1,6 @@
 import { getDb } from "@/lib/db";
 import { requireManagementAdmin } from "@/lib/managementAuth";
-import { getModerationSettings } from "@/lib/moderationSettings";
+import { getAllModerationSettings } from "@/lib/moderationSettings";
 import { allowRejectedPhoto, serializeReviewCard, upholdRejectedPhoto } from "@/lib/photoReview";
 import { userPhotos } from "@/lib/schema";
 import { eq } from "drizzle-orm";
@@ -24,7 +24,7 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
 
   return NextResponse.json({
     photo: await serializeReviewCard(photo),
-    settings: await getModerationSettings(),
+    settings: await getAllModerationSettings(),
   });
 }
 
@@ -50,5 +50,5 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
     return NextResponse.json({ error: result.error }, { status: result.status });
   }
 
-  return NextResponse.json({ photo: result.card, settings: await getModerationSettings() });
+  return NextResponse.json({ photo: result.card, settings: await getAllModerationSettings() });
 }

@@ -68,8 +68,12 @@ export type PostMediaView = {
   durationMs: number | null;
 };
 
+/** A post as clients see it — admin hide fields are stripped server-side
+ *  (src/lib/postMedia.ts withMedia) so takedown reasons never leak. */
+export type PublicPost = Omit<Post, "hiddenAt" | "hiddenBy" | "hiddenReason">;
+
 /** A post plus its ordered media strip. */
-export type PostWithMedia = Post & { media: PostMediaView[] };
+export type PostWithMedia = PublicPost & { media: PostMediaView[] };
 
 /** Pusher event payload when a sender toggles the closed-eye state. */
 export type PhotoUpdatedPayload = {

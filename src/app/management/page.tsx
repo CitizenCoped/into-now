@@ -5,12 +5,16 @@ import { useEffect, useState } from "react";
 
 type Dashboard = {
   pendingCount: number;
+  pendingBySurface: { dm: number; posts: number };
+  posts: { liveMedia: number; hiddenMedia: number; hiddenPosts: number };
   sightengineConfigured: boolean;
   last24h: {
     autoApproved: number;
     autoRejected: number;
     allowed: number;
     upheld: number;
+    takenDown: number;
+    postsHidden: number;
   };
 };
 
@@ -32,7 +36,8 @@ export default function ManagementDashboardPage() {
     <div className="mx-auto max-w-4xl px-4 py-8">
       <h1 className="text-2xl font-semibold text-white">Dashboard</h1>
       <p className="mt-1 text-sm text-white/50">
-        Photo moderation is the first surface. Sightengine queues borderline photos for a human.
+        Sightengine screens DM photos and post media with separate profiles and queues borderline
+        items for a human. Posts shows everything currently live.
       </p>
 
       {error ? <p className="mt-4 text-sm text-red-300">{error}</p> : null}
@@ -48,7 +53,10 @@ export default function ManagementDashboardPage() {
               <p className="mt-1 text-2xl font-semibold text-white">
                 {data.pendingCount} photo{data.pendingCount === 1 ? "" : "s"} to review
               </p>
-              <p className="mt-1 text-xs text-white/50">Open the queue — allow or keep rejected.</p>
+              <p className="mt-1 text-xs text-white/50">
+                DM {data.pendingBySurface.dm} · Posts {data.pendingBySurface.posts} — open the queue
+                to allow or keep rejected.
+              </p>
             </Link>
           ) : (
             <div className="rounded-2xl border border-white/10 px-4 py-4">
@@ -57,12 +65,31 @@ export default function ManagementDashboardPage() {
             </div>
           )}
 
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-3 sm:grid-cols-3">
+            {[
+              ["Live post media", data.posts.liveMedia, "/management/posts"],
+              ["Taken down", data.posts.hiddenMedia, "/management/posts?state=hidden"],
+              ["Hidden posts", data.posts.hiddenPosts, "/management/posts?state=hidden"],
+            ].map(([label, value, href]) => (
+              <Link
+                key={String(label)}
+                href={String(href)}
+                className="rounded-xl border border-white/10 px-3 py-3 hover:border-white/25"
+              >
+                <p className="text-xs text-white/40">{label}</p>
+                <p className="mt-1 text-xl font-semibold text-white">{value}</p>
+                <p className="text-[11px] text-white/30">in the public Posts section</p>
+              </Link>
+            ))}
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
             {[
               ["Auto-approved", data.last24h.autoApproved],
               ["Held for review", data.last24h.autoRejected],
               ["You allowed", data.last24h.allowed],
               ["You upheld", data.last24h.upheld],
+              ["Taken down", data.last24h.takenDown + data.last24h.postsHidden],
             ].map(([label, value]) => (
               <div key={String(label)} className="rounded-xl border border-white/10 px-3 py-3">
                 <p className="text-xs text-white/40">{label}</p>
