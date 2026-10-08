@@ -1,6 +1,8 @@
 import { getDb } from "@/lib/db";
 import { requireManagementAdmin } from "@/lib/managementAuth";
 import { isModerationConfigured } from "@/lib/moderation";
+import { pendingCountBySurface } from "@/lib/photoReview";
+import { postMediaCounts } from "@/lib/postModeration";
 import { activityLog, userPhotos } from "@/lib/schema";
 import { and, count, eq, gte } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
@@ -27,12 +29,16 @@ export async function GET(request: NextRequest) {
 
   return NextResponse.json({
     pendingCount: Number(pending?.n ?? 0),
+    pendingBySurface: await pendingCountBySurface(),
+    posts: await postMediaCounts(),
     sightengineConfigured: isModerationConfigured(),
     last24h: {
       autoApproved: await actionCount("photo.approved"),
       autoRejected: await actionCount("photo.rejected"),
       allowed: await actionCount("admin.photo_allowed"),
       upheld: await actionCount("admin.photo_upheld"),
+      takenDown: await actionCount("admin.post_media_taken_down"),
+      postsHidden: await actionCount("admin.post_hidden"),
     },
   });
 }

@@ -19,6 +19,7 @@ import {
   decide,
   type Decision,
   type ModerationClassPath,
+  type ModerationSurface,
   type TriggeredClass,
 } from "@/lib/moderationCatalog";
 import { getModerationSettings } from "@/lib/moderationSettings";
@@ -32,6 +33,8 @@ const DEFAULT_MODELS = "nudity-2.1,gore-2.0,offensive";
 export type ModerationResult = {
   ok: boolean;
   skipped: boolean;
+  /** Which threshold profile decided. */
+  surface: ModerationSurface;
   topScore: number;
   topClass: ModerationClassPath | null;
   scores: Partial<Record<ModerationClassPath, number>>;
@@ -113,15 +116,25 @@ async function parseSightengineResponse(res: Response): Promise<Record<string, u
   return data;
 }
 
-export async function decideFromRaw(raw: Record<string, unknown>): Promise<Decision> {
-  const settings = await getModerationSettings();
+/** Options shared by every scan entry point. */
+export type ScanOptions = {
+  /** Threshold profile; defaults to the DM profile. */
+  surface?: ModerationSurface;
+};
+
+export async function decideFromRaw(
+  raw: Record<string, unknown>,
+  surface: ModerationSurface = "dm"
+): Promise<Decision> {
+  const settings = await getModerationSettings(surface);
   return decide(collectCatalogScores(raw), settings);
 }
 
-function skippedResult(): ModerationResult {
+function skippedResult(surface: ModerationSurface): ModerationResult {
   return {
     ok: true,
     skipped: true,
+    surface,
     topScore: 0,
     topClass: null,
     scores: {},
@@ -130,10 +143,15 @@ function skippedResult(): ModerationResult {
   };
 }
 
-function toResult(decision: Decision, raw: Record<string, unknown>): ModerationResult {
+function toResult(
+  decision: Decision,
+  raw: Record<string, unknown>,
+  surface: ModerationSurface
+): ModerationResult {
   return {
     ok: decision.ok,
     skipped: false,
+    surface,
     topScore: decision.topScore,
     topClass: decision.topClass,
     scores: decision.scores,
@@ -147,35 +165,25 @@ function toResult(decision: Decision, raw: Record<string, unknown>): ModerationR
  * Throws on network/API failure so the caller can leave the photo in
  * `scanning` rather than silently approving it.
  */
-export async function scanImageUrl(imageUrl: string): Promise<ModerationResult> {
+export async function scanImageUrl(
+  imageUrl: string,
+  options: ScanOptions = {}
+): Promise<ModerationResult> {
+  const surface = options.surface ?? "dm";
   if (!isModerationConfigured()) {
     console.warn("moderation: SIGHTENGINE_USER/SECRET not set — scan skipped (photo passes)");
-    return skippedResult();
+    return skippedResult(surface);
   }
   const raw = await fetchSightengineByUrl(imageUrl);
-  return toResult(await decideFromRaw(raw), raw);
+  return toResult(await decideFromRaw(raw, surface), raw, surface);
 }
 
-/**
- * Scan a short video Sightengine can fetch. Each sampled frame is scored
- * like an image; the clip's score per class is the max across frames, so
- * one bad frame rejects the whole clip. Same throw semantics as images.
- */
-export async function scanVideoUrl(videoUrl: string): Promise<ModerationResult> {
-  if (!isModerationConfigured()) {
-    console.warn("moderation: SIGHTENGINE_USER/SECRET not set — video scan skipped (passes)");
-    return skippedResult();
-  }
-  const { apiUser, apiSecret, models } = credentials();
-  const params = new URLSearchParams({
-    stream_url: videoUrl,
-    models,
-    api_user: apiUser,
-    api_secret: apiSecret,
-  });
-  const res = await fetch(`${SIGHTENGINE_VIDEO_ENDPOINT}?${params.toString()}`);
-  const raw = await parseSightengineResponse(res);
-
+/** A video response carries one score set per sampled frame. The clip's
+ *  score per class is the max across frames, so one bad frame rejects
+ *  the whole clip. */
+export function mergeVideoFrameScores(
+  raw: Record<string, unknown>
+): Partial<Record<ModerationClassPath, number>> {
   const frames = ((raw.data as { frames?: unknown } | undefined)?.frames ?? []) as Record<
     string,
     unknown
@@ -187,18 +195,46 @@ export async function scanVideoUrl(videoUrl: string): Promise<ModerationResult> 
       merged[path] = Math.max(merged[path] ?? 0, score);
     }
   }
+  return merged;
+}
 
-  const settings = await getModerationSettings();
-  return toResult(decide(merged, settings), raw);
+/**
+ * Scan a short video Sightengine can fetch. Each sampled frame is scored
+ * like an image; the clip's score per class is the max across frames, so
+ * one bad frame rejects the whole clip. Same throw semantics as images.
+ */
+export async function scanVideoUrl(
+  videoUrl: string,
+  options: ScanOptions = {}
+): Promise<ModerationResult> {
+  const surface = options.surface ?? "dm";
+  if (!isModerationConfigured()) {
+    console.warn("moderation: SIGHTENGINE_USER/SECRET not set — video scan skipped (passes)");
+    return skippedResult(surface);
+  }
+  const { apiUser, apiSecret, models } = credentials();
+  const params = new URLSearchParams({
+    stream_url: videoUrl,
+    models,
+    api_user: apiUser,
+    api_secret: apiSecret,
+  });
+  const res = await fetch(`${SIGHTENGINE_VIDEO_ENDPOINT}?${params.toString()}`);
+  const raw = await parseSightengineResponse(res);
+
+  const settings = await getModerationSettings(surface);
+  return toResult(decide(mergeVideoFrameScores(raw), settings), raw, surface);
 }
 
 export async function scanImageBytes(
   bytes: Uint8Array,
-  filename = "photo.jpg"
+  filename = "photo.jpg",
+  options: ScanOptions = {}
 ): Promise<ModerationResult> {
+  const surface = options.surface ?? "dm";
   if (!isModerationConfigured()) {
-    return skippedResult();
+    return skippedResult(surface);
   }
   const raw = await fetchSightengineByBytes(bytes, filename);
-  return toResult(await decideFromRaw(raw), raw);
+  return toResult(await decideFromRaw(raw, surface), raw, surface);
 }

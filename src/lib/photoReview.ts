@@ -1,15 +1,21 @@
 import { logActivity } from "@/lib/activity";
 import { getDb } from "@/lib/db";
 import type { ReviewCard, ReviewStatus } from "@/lib/managementTypes";
-import { decide, type ModerationSettingsMap } from "@/lib/moderationCatalog";
-import { MAX_LIBRARY_PHOTOS } from "@/lib/photoTypes";
-import { adminUsers, userPhotos, users } from "@/lib/schema";
+import {
+  decide,
+  purposeForSurface,
+  surfaceForPurpose,
+  type ModerationSettingsMap,
+  type ModerationSurface,
+} from "@/lib/moderationCatalog";
+import { MAX_LIBRARY_PHOTOS, type MediaKind, type MediaPurpose } from "@/lib/photoTypes";
+import { adminUsers, postPhotos, userPhotos, users } from "@/lib/schema";
 import { deleteObject, isSpacesConfigured, presignView } from "@/lib/spaces";
 import { and, count, eq, inArray, isNotNull, lt, sql } from "drizzle-orm";
 
 export type { ReviewCard, ReviewStatus };
 
-function contactFor(user: {
+export function contactFor(user: {
   phone: string | null;
   email: string | null;
   displayName: string | null;
@@ -47,6 +53,12 @@ export async function serializeReviewCard(photo: typeof userPhotos.$inferSelect)
     }
   }
 
+  const [attachment] = await getDb()
+    .select({ postId: postPhotos.postId })
+    .from(postPhotos)
+    .where(eq(postPhotos.photoId, photo.id))
+    .limit(1);
+
   return {
     id: photo.id,
     userId: photo.userId,
@@ -62,15 +74,43 @@ export async function serializeReviewCard(photo: typeof userPhotos.$inferSelect)
     objectPurgeAt: photo.objectPurgeAt?.toISOString() ?? null,
     reviewedAt: photo.reviewedAt?.toISOString() ?? null,
     imageUrl,
+    kind: photo.kind as MediaKind,
+    purpose: photo.purpose as MediaPurpose,
+    surface: surfaceForPurpose(photo.purpose),
+    durationMs: photo.durationMs,
+    postId: attachment?.postId ?? null,
+    adminHiddenAt: photo.adminHiddenAt?.toISOString() ?? null,
+    rescannedAt: photo.rescannedAt?.toISOString() ?? null,
   };
 }
 
+/** Ready photos in the user's DM library — the only thing the 10-slot
+ *  cap applies to. Post media is bounded per post, not per user. */
 export async function readyPhotoCount(userId: string): Promise<number> {
   const [row] = await getDb()
     .select({ n: count() })
     .from(userPhotos)
-    .where(and(eq(userPhotos.userId, userId), eq(userPhotos.status, "ready")));
+    .where(
+      and(
+        eq(userPhotos.userId, userId),
+        eq(userPhotos.status, "ready"),
+        eq(userPhotos.purpose, "library")
+      )
+    );
   return Number(row?.n ?? 0);
+}
+
+export async function pendingCountBySurface(): Promise<Record<ModerationSurface, number>> {
+  const rows = await getDb()
+    .select({ purpose: userPhotos.purpose, n: count() })
+    .from(userPhotos)
+    .where(eq(userPhotos.reviewStatus, "pending"))
+    .groupBy(userPhotos.purpose);
+  const result: Record<ModerationSurface, number> = { dm: 0, posts: 0 };
+  for (const row of rows) {
+    result[surfaceForPurpose(row.purpose)] += Number(row.n ?? 0);
+  }
+  return result;
 }
 
 export async function allowRejectedPhoto(
@@ -87,13 +127,16 @@ export async function allowRejectedPhoto(
     return { ok: false, error: "Image is no longer available", status: 409 };
   }
 
-  const ready = await readyPhotoCount(photo.userId);
-  if (ready >= MAX_LIBRARY_PHOTOS) {
-    return {
-      ok: false,
-      error: `User already has ${MAX_LIBRARY_PHOTOS} ready photos`,
-      status: 409,
-    };
+  // Only DM library photos occupy library slots.
+  if (photo.purpose === "library") {
+    const ready = await readyPhotoCount(photo.userId);
+    if (ready >= MAX_LIBRARY_PHOTOS) {
+      return {
+        ok: false,
+        error: `User already has ${MAX_LIBRARY_PHOTOS} ready photos`,
+        status: 409,
+      };
+    }
   }
 
   const [updated] = await db
@@ -115,7 +158,14 @@ export async function allowRejectedPhoto(
     .limit(1);
 
   logActivity("admin.photo_allowed", {
-    metadata: { photoId, userId: photo.userId, adminId, adminUsername: admin?.username ?? null },
+    metadata: {
+      photoId,
+      userId: photo.userId,
+      kind: photo.kind,
+      purpose: photo.purpose,
+      adminId,
+      adminUsername: admin?.username ?? null,
+    },
   });
 
   return { ok: true, card: await serializeReviewCard(updated) };
@@ -159,7 +209,14 @@ export async function upholdRejectedPhoto(
     .limit(1);
 
   logActivity("admin.photo_upheld", {
-    metadata: { photoId, userId: photo.userId, adminId, adminUsername: admin?.username ?? null },
+    metadata: {
+      photoId,
+      userId: photo.userId,
+      kind: photo.kind,
+      purpose: photo.purpose,
+      adminId,
+      adminUsername: admin?.username ?? null,
+    },
   });
 
   return { ok: true, card: await serializeReviewCard(updated) };
@@ -167,13 +224,15 @@ export async function upholdRejectedPhoto(
 
 export async function applySettingsToPending(
   settings: ModerationSettingsMap,
-  adminId: string
+  adminId: string,
+  surface: ModerationSurface
 ): Promise<{ allowed: number; skippedCap: number; stillPending: number }> {
   const db = getDb();
-  const pending = await db
-    .select()
-    .from(userPhotos)
-    .where(eq(userPhotos.reviewStatus, "pending"));
+  const pendingOnSurface = and(
+    eq(userPhotos.reviewStatus, "pending"),
+    eq(userPhotos.purpose, purposeForSurface(surface))
+  );
+  const pending = await db.select().from(userPhotos).where(pendingOnSurface);
 
   let allowed = 0;
   let skippedCap = 0;
@@ -186,13 +245,10 @@ export async function applySettingsToPending(
     else if (result.status === 409) skippedCap += 1;
   }
 
-  const [row] = await db
-    .select({ n: count() })
-    .from(userPhotos)
-    .where(eq(userPhotos.reviewStatus, "pending"));
+  const [row] = await db.select({ n: count() }).from(userPhotos).where(pendingOnSurface);
 
   logActivity("admin.moderation_apply_pending", {
-    metadata: { adminId, allowed, skippedCap, stillPending: Number(row?.n ?? 0) },
+    metadata: { adminId, surface, allowed, skippedCap, stillPending: Number(row?.n ?? 0) },
   });
 
   return { allowed, skippedCap, stillPending: Number(row?.n ?? 0) };
@@ -243,7 +299,7 @@ export async function expireDueRejectedPhotos(): Promise<number> {
   return due.length;
 }
 
-export async function replayWhatIf(settings: ModerationSettingsMap) {
+export async function replayWhatIf(settings: ModerationSettingsMap, surface: ModerationSurface) {
   const db = getDb();
   const rows = await db
     .select({
@@ -253,7 +309,12 @@ export async function replayWhatIf(settings: ModerationSettingsMap) {
       scores: userPhotos.moderationScores,
     })
     .from(userPhotos)
-    .where(isNotNull(userPhotos.moderationScores))
+    .where(
+      and(
+        isNotNull(userPhotos.moderationScores),
+        eq(userPhotos.purpose, purposeForSurface(surface))
+      )
+    )
     .orderBy(sql`${userPhotos.createdAt} desc`)
     .limit(200);
 

@@ -11,6 +11,7 @@ import {
   smallint,
   text,
   timestamp,
+  uniqueIndex,
   uuid,
 } from "drizzle-orm/pg-core";
 
@@ -64,6 +65,12 @@ export const posts = pgTable(
     lat: doublePrecision("lat").notNull(),
     lng: doublePrecision("lng").notNull(),
     authorId: uuid("author_id").references(() => users.id, { onDelete: "set null" }),
+    /** Admin hide — the whole post (text + media) leaves the public feed,
+     *  map, and thread reference while set. Reversible. Never serialized
+     *  to clients (see PublicPost in photoTypes.ts). */
+    hiddenAt: timestamp("hidden_at", { withTimezone: true }),
+    hiddenBy: uuid("hidden_by").references(() => adminUsers.id, { onDelete: "set null" }),
+    hiddenReason: text("hidden_reason"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => ({
@@ -214,12 +221,21 @@ export const adminInvites = pgTable("admin_invites", {
 
 export type AdminInvite = typeof adminInvites.$inferSelect;
 
-export const moderationSettings = pgTable("moderation_settings", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  classes: jsonb("classes").$type<Record<string, { enabled: boolean; threshold: number }>>().notNull(),
-  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
-  updatedBy: uuid("updated_by").references(() => adminUsers.id, { onDelete: "set null" }),
-});
+/** One Sightengine threshold profile per surface: `dm` (DM library photos)
+ *  and `posts` (post photos + videos). */
+export const moderationSettings = pgTable(
+  "moderation_settings",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    surface: text("surface").notNull().default("dm"),
+    classes: jsonb("classes").$type<Record<string, { enabled: boolean; threshold: number }>>().notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedBy: uuid("updated_by").references(() => adminUsers.id, { onDelete: "set null" }),
+  },
+  (table) => ({
+    surfaceIdx: uniqueIndex("moderation_settings_surface_idx").on(table.surface),
+  })
+);
 
 /** Reusable per-user photo library (max 10 ready photos, enforced in API).
  *  `objectKey` is the private DO Spaces key — never a public URL; viewers
@@ -254,12 +270,21 @@ export const userPhotos = pgTable(
     reviewedAt: timestamp("reviewed_at", { withTimezone: true }),
     reviewedBy: uuid("reviewed_by").references(() => adminUsers.id, { onDelete: "set null" }),
     objectPurgeAt: timestamp("object_purge_at", { withTimezone: true }),
+    /** Admin takedown overlay (post media). Orthogonal to `status`: the
+     *  item stays `ready` but leaves the public feed and can't be attached
+     *  to a new post while set. Reversible. */
+    adminHiddenAt: timestamp("admin_hidden_at", { withTimezone: true }),
+    adminHiddenBy: uuid("admin_hidden_by").references(() => adminUsers.id, { onDelete: "set null" }),
+    adminHiddenReason: text("admin_hidden_reason"),
+    /** Last on-demand admin re-scan; scores/raw are overwritten then. */
+    rescannedAt: timestamp("rescanned_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => ({
     userIdx: index("user_photos_user_idx").on(table.userId),
     reviewIdx: index("user_photos_review_idx").on(table.reviewStatus),
     purgeIdx: index("user_photos_purge_idx").on(table.objectPurgeAt),
+    purposeCreatedIdx: index("user_photos_purpose_created_idx").on(table.purpose, table.createdAt),
   })
 );
 

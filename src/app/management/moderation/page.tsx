@@ -2,7 +2,7 @@
 
 import ReviewCard from "@/components/management/ReviewCard";
 import type { ReviewCard as ReviewCardData, ReviewStatus } from "@/lib/managementTypes";
-import type { ModerationSettingsMap } from "@/lib/moderationCatalog";
+import type { ModerationSettingsMap, ModerationSurface } from "@/lib/moderationCatalog";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useEffect, useState } from "react";
@@ -14,21 +14,40 @@ const FILTERS: { id: ReviewStatus; label: string }[] = [
   { id: "expired", label: "Expired" },
 ];
 
+type SurfaceFilter = "all" | ModerationSurface;
+
+const SURFACES: { id: SurfaceFilter; label: string }[] = [
+  { id: "all", label: "All" },
+  { id: "dm", label: "DM" },
+  { id: "posts", label: "Posts" },
+];
+
+function hrefFor(status: ReviewStatus, surface: SurfaceFilter) {
+  const params = new URLSearchParams();
+  if (status !== "pending") params.set("status", status);
+  if (surface !== "all") params.set("surface", surface);
+  const qs = params.toString();
+  return qs ? `/management/moderation?${qs}` : "/management/moderation";
+}
+
 function Queue() {
   const search = useSearchParams();
   const status = (search.get("status") as ReviewStatus) || "pending";
+  const surface = (search.get("surface") as SurfaceFilter) || "all";
   const [photos, setPhotos] = useState<ReviewCardData[]>([]);
-  const [settings, setSettings] = useState<ModerationSettingsMap | null>(null);
+  const [settings, setSettings] = useState<Record<ModerationSurface, ModerationSettingsMap> | null>(
+    null
+  );
   const [error, setError] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
 
   const load = useCallback(async () => {
-    const res = await fetch(`/api/management/moderation?status=${status}`);
+    const res = await fetch(`/api/management/moderation?status=${status}&surface=${surface}`);
     const data = await res.json();
     if (!res.ok) throw new Error(data.error ?? "Failed to load");
     setPhotos(data.photos ?? []);
     setSettings(data.settings);
-  }, [status]);
+  }, [status, surface]);
 
   useEffect(() => {
     setError(null);
@@ -60,21 +79,38 @@ function Queue() {
         <div>
           <h1 className="text-2xl font-semibold text-white">Photo review</h1>
           <p className="mt-1 text-sm text-white/50">
-            Sightengine held these. Allow puts the photo back in the user’s library.
+            Sightengine held these. Allow puts a DM photo back in the user’s library; post media
+            becomes attachable again.
           </p>
         </div>
-        <div className="flex gap-1">
-          {FILTERS.map((filter) => (
-            <Link
-              key={filter.id}
-              href={filter.id === "pending" ? "/management/moderation" : `/management/moderation?status=${filter.id}`}
-              className={`rounded-lg px-3 py-1.5 text-xs ${
-                status === filter.id ? "bg-white/10 text-white" : "text-white/50 hover:text-white"
-              }`}
-            >
-              {filter.label}
-            </Link>
-          ))}
+        <div className="flex flex-col items-end gap-2">
+          <div className="flex gap-1">
+            {FILTERS.map((filter) => (
+              <Link
+                key={filter.id}
+                href={hrefFor(filter.id, surface)}
+                className={`rounded-lg px-3 py-1.5 text-xs ${
+                  status === filter.id ? "bg-white/10 text-white" : "text-white/50 hover:text-white"
+                }`}
+              >
+                {filter.label}
+              </Link>
+            ))}
+          </div>
+          <div className="flex items-center gap-1">
+            <span className="mr-1 text-[11px] uppercase tracking-wide text-white/30">Surface</span>
+            {SURFACES.map((item) => (
+              <Link
+                key={item.id}
+                href={hrefFor(status, item.id)}
+                className={`rounded-lg px-3 py-1.5 text-xs ${
+                  surface === item.id ? "bg-white/10 text-white" : "text-white/50 hover:text-white"
+                }`}
+              >
+                {item.label}
+              </Link>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -94,7 +130,7 @@ function Queue() {
                 </Link>
                 <ReviewCard
                   photo={photo}
-                  settings={settings}
+                  settings={settings[photo.surface]}
                   busy={busyId === photo.id}
                   onAllow={() => void act(photo.id, "allow")}
                   onUphold={() => void act(photo.id, "uphold")}

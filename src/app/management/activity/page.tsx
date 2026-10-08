@@ -40,6 +40,15 @@ const ACTION_LABELS: Record<string, string> = {
   "admin.photo_upheld": "Admin kept rejection",
   "admin.moderation_settings_updated": "Sensitivity updated",
   "admin.moderation_apply_pending": "Applied sensitivity to queue",
+  "admin.photo_review_expired": "Held media expired",
+  "admin.post_media_taken_down": "Admin took down post media",
+  "admin.post_media_restored": "Admin restored post media",
+  "admin.post_media_rescanned": "Admin re-scanned post media",
+  "admin.post_hidden": "Admin hid post",
+  "admin.post_unhidden": "Admin unhid post",
+  "post.reported": "Post reported",
+  "post.rejected_solicitation": "Post refused (solicitation)",
+  "photo.archived": "Photo archived",
 };
 
 function formatAction(action: string) {

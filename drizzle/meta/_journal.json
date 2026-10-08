@@ -57,6 +57,13 @@
       "when": 1791331200000,
       "tag": "0007_post_media",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1791417600000,
+      "tag": "0008_moderation_surfaces_takedowns",
+      "breakpoints": true
     }
   ]
 }

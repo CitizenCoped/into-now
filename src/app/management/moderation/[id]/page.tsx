@@ -2,7 +2,7 @@
 
 import ReviewCard from "@/components/management/ReviewCard";
 import type { ReviewCard as ReviewCardData } from "@/lib/managementTypes";
-import type { ModerationSettingsMap } from "@/lib/moderationCatalog";
+import type { ModerationSettingsMap, ModerationSurface } from "@/lib/moderationCatalog";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -10,7 +10,9 @@ import { useEffect, useState } from "react";
 export default function ModerationDetailPage() {
   const params = useParams<{ id: string }>();
   const [photo, setPhoto] = useState<ReviewCardData | null>(null);
-  const [settings, setSettings] = useState<ModerationSettingsMap | null>(null);
+  const [settings, setSettings] = useState<Record<ModerationSurface, ModerationSettingsMap> | null>(
+    null
+  );
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -56,7 +58,7 @@ export default function ModerationDetailPage() {
         <div className="mt-6">
           <ReviewCard
             photo={photo}
-            settings={settings}
+            settings={settings[photo.surface]}
             busy={busy}
             onAllow={() => void act("allow")}
             onUphold={() => void act("uphold")}

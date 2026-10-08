@@ -10,10 +10,10 @@
 
 import { getDb } from "@/lib/db";
 import { POST_TTL_MS } from "@/lib/postConfig";
-import type { MediaKind, PostMediaView, PostWithMedia } from "@/lib/photoTypes";
+import type { MediaKind, PostMediaView, PostWithMedia, PublicPost } from "@/lib/photoTypes";
 import { type Post, postPhotos, posts, userPhotos } from "@/lib/schema";
 import { isSpacesConfigured, presignView } from "@/lib/spaces";
-import { and, desc, eq, gt, inArray } from "drizzle-orm";
+import { and, desc, eq, gt, inArray, isNull } from "drizzle-orm";
 
 /** Presigned GET TTL for post media. */
 const POST_MEDIA_URL_TTL_SECONDS = 60 * 60;
@@ -37,7 +37,8 @@ export async function loadPostMedia(postIds: string[]): Promise<Map<string, Post
     })
     .from(postPhotos)
     .innerJoin(userPhotos, eq(userPhotos.id, postPhotos.photoId))
-    .where(inArray(postPhotos.postId, postIds));
+    // Admin takedowns drop out here; the row stays for the audit trail.
+    .where(and(inArray(postPhotos.postId, postIds), isNull(userPhotos.adminHiddenAt)));
 
   rows.sort((a, b) => a.position - b.position);
 
@@ -61,10 +62,19 @@ export async function loadPostMedia(postIds: string[]): Promise<Map<string, Post
   return result;
 }
 
-/** Attach media strips to post rows. */
+/** Strip admin-only hide fields before a post reaches any client. */
+export function toPublicPost(post: Post): PublicPost {
+  const rest: Partial<Post> = { ...post };
+  delete rest.hiddenAt;
+  delete rest.hiddenBy;
+  delete rest.hiddenReason;
+  return rest as PublicPost;
+}
+
+/** Attach media strips to post rows (public shape). */
 export async function withMedia(rows: Post[]): Promise<PostWithMedia[]> {
   const mediaByPost = await loadPostMedia(rows.map((p) => p.id));
-  return rows.map((post) => ({ ...post, media: mediaByPost.get(post.id) ?? [] }));
+  return rows.map((post) => ({ ...toPublicPost(post), media: mediaByPost.get(post.id) ?? [] }));
 }
 
 /** Each author's most recent non-expired post, with media. Authors with no
@@ -81,7 +91,8 @@ export async function latestPostsByAuthor(
     .where(
       and(
         inArray(posts.authorId, authorIds),
-        gt(posts.createdAt, new Date(Date.now() - POST_TTL_MS))
+        gt(posts.createdAt, new Date(Date.now() - POST_TTL_MS)),
+        isNull(posts.hiddenAt)
       )
     )
     .orderBy(desc(posts.createdAt));
@@ -89,7 +100,7 @@ export async function latestPostsByAuthor(
   const latest: Post[] = [];
   for (const row of rows) {
     if (row.authorId && !result.has(row.authorId)) {
-      result.set(row.authorId, { ...row, media: [] });
+      result.set(row.authorId, { ...toPublicPost(row), media: [] });
       latest.push(row);
     }
   }

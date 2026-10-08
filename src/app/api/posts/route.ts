@@ -45,8 +45,10 @@ export async function GET(request: NextRequest) {
   const conditions = [];
 
   // Posts are ephemeral: only the last 24h surface, even before the
-  // expiry cron physically deletes older rows.
+  // expiry cron physically deletes older rows. Admin-hidden posts never
+  // surface.
   conditions.push(gt(posts.createdAt, new Date(Date.now() - POST_TTL_MS)));
+  conditions.push(isNull(posts.hiddenAt));
 
   if (search) {
     const pattern = `%${search}%`;
@@ -108,9 +110,10 @@ export async function POST(request: NextRequest) {
   const uniqueMediaIds = Array.from(new Set(mediaIds));
   const db = getDb();
 
-  // Every attached item must be the poster's own `ready` post media, and
-  // the mix must fit: ≤4 total, ≤2 videos, each video ≤10s. Anonymous
-  // (signed-out) posts can't carry media — there's no owner to check.
+  // Every attached item must be the poster's own `ready` post media that
+  // an admin hasn't taken down, and the mix must fit: ≤4 total, ≤2 videos,
+  // each video ≤10s. Anonymous (signed-out) posts can't carry media —
+  // there's no owner to check.
   if (uniqueMediaIds.length > 0) {
     if (!authUser) {
       return NextResponse.json(
@@ -130,7 +133,8 @@ export async function POST(request: NextRequest) {
           inArray(userPhotos.id, uniqueMediaIds),
           eq(userPhotos.userId, authUser.id),
           eq(userPhotos.purpose, "post"),
-          eq(userPhotos.status, "ready")
+          eq(userPhotos.status, "ready"),
+          isNull(userPhotos.adminHiddenAt)
         )
       );
     if (owned.length !== uniqueMediaIds.length) {
